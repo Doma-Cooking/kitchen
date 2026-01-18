@@ -1,4 +1,5 @@
 import { TaskModel } from "../../data/model/taskModel.js";
+import { CookStatusMessageEntity, toCookStatusMessageEntity, toCookStatusMessageModel } from "./cookMessageEntity.js";
 
 export enum TaskStatus {
     Pending = 'pending',
@@ -13,6 +14,7 @@ export interface TaskEntity {
     procedureName: string | null;
     stationId: string | null;
     status: TaskStatus;
+    messages: CookStatusMessageEntity[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -24,6 +26,7 @@ export function toTaskEntity(model: TaskModel): TaskEntity {
         procedureName: model.procedureName,
         stationId: model.stationId,
         status: model.status as TaskStatus,
+        messages: model.messages.map(toCookStatusMessageEntity),
         createdAt: new Date(model.createdAt),
         updatedAt: new Date(model.updatedAt),
     };
@@ -36,6 +39,7 @@ export function toTaskModel(entity: TaskEntity): TaskModel {
         procedureName: entity.procedureName,
         stationId: entity.stationId,
         status: entity.status,
+        messages: entity.messages.map(toCookStatusMessageModel),
         createdAt: entity.createdAt.toISOString(),
         updatedAt: entity.updatedAt.toISOString(),
     };
