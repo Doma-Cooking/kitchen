@@ -1,5 +1,5 @@
-function main(): void {
-  console.log('Kitchen server starting...');
-}
+import app from './server/app.js';
 
-main();
+app.listen(3000, () => {
+  console.log('Kitchen server is running on port 3000');
+});
