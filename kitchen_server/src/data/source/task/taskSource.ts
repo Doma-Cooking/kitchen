@@ -1,3 +1,4 @@
+import { Observable } from "rxjs";
 import { TaskModel } from "../../model/taskModel.js";
 
 export interface TaskSource {
@@ -5,4 +6,5 @@ export interface TaskSource {
     getTaskById(taskId: string): Promise<TaskModel | null>;
     updateTask(task: TaskModel): Promise<void>;
     deleteTask(taskId: string): Promise<void>;
+    watchAll(): Observable<TaskModel[]>;
 }

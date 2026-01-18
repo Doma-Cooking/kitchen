@@ -4,4 +4,6 @@ export interface TaskModel {
     procedureName: string | null;
     stationId: string | null;
     status: string;
+    createdAt: string;
+    updatedAt: string;
 }

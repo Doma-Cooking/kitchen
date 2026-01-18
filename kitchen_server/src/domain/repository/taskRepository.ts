@@ -1,3 +1,4 @@
+import { map, Observable } from 'rxjs';
 import { TaskSource } from '../../data/source/task/taskSource.js';
 import { TaskEntity, toTaskEntity, toTaskModel } from '../entity/taskEntity.js';
 
@@ -6,6 +7,7 @@ export interface TaskRepository {
     getTaskById(taskId: string): Promise<TaskEntity | null>;
     updateTask(task: TaskEntity): Promise<void>;
     deleteTask(taskId: string): Promise<void>;
+    watchAll(): Observable<TaskEntity[]>;
 }
 
 export class TaskRepositoryImpl implements TaskRepository {
@@ -30,5 +32,11 @@ export class TaskRepositoryImpl implements TaskRepository {
 
     async deleteTask(taskId: string): Promise<void> {
         await this.source.deleteTask(taskId);
+    }
+
+    watchAll(): Observable<TaskEntity[]> {
+        return this.source.watchAll().pipe(
+            map(models => models.map(toTaskEntity))
+        );
     }
 }

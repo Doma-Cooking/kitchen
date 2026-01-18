@@ -13,6 +13,8 @@ export interface TaskEntity {
     procedureName: string | null;
     stationId: string | null;
     status: TaskStatus;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export function toTaskEntity(model: TaskModel): TaskEntity {
@@ -21,7 +23,9 @@ export function toTaskEntity(model: TaskModel): TaskEntity {
         input: model.input,
         procedureName: model.procedureName,
         stationId: model.stationId,
-        status: model.status as TaskStatus
+        status: model.status as TaskStatus,
+        createdAt: new Date(model.createdAt),
+        updatedAt: new Date(model.updatedAt),
     };
 }
 
@@ -32,5 +36,7 @@ export function toTaskModel(entity: TaskEntity): TaskModel {
         procedureName: entity.procedureName,
         stationId: entity.stationId,
         status: entity.status,
+        createdAt: entity.createdAt.toISOString(),
+        updatedAt: entity.updatedAt.toISOString(),
     };
 }

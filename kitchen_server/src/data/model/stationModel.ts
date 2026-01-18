@@ -1,9 +1,6 @@
-export class StationModel {
+export interface StationModel {
     id: string;
     contextBytes: Uint8Array;
-
-    constructor(id: string, contextBytes: Uint8Array) {
-        this.id = id;
-        this.contextBytes = contextBytes;
-    }
+    createdAt: string;
+    updatedAt: string;
 }
