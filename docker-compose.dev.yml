@@ -1,0 +1,10 @@
+services:
+  kitchen-server:
+    build:
+      context: ./kitchen_server
+      target: development
+    volumes:
+      - ./kitchen_server/src:/server/src:ro
+      - ./kitchen_server/tsconfig.json:/server/tsconfig.json:ro
+    environment:
+      - NODE_ENV=development

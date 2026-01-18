@@ -9,7 +9,7 @@ export class MockCookSource implements CookSource {
         return new Observable(observer => {
             observer.next({
                 type: 'status',
-                id: '',
+                id: `${task.id}-starting`,
                 message: `Starting task ${task.id} on station ${station ? station.id : 'null'}`,
                 timestamp: new Date().toISOString()
             });
@@ -17,7 +17,7 @@ export class MockCookSource implements CookSource {
             setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: '',
+                    id: `${task.id}-halfway`,
                     message: `Halfway through task ${task.id}`,
                     timestamp: new Date().toISOString()
                 });
@@ -26,7 +26,7 @@ export class MockCookSource implements CookSource {
             setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: '',
+                    id: `${task.id}-complete`,
                     message: `Completed task ${task.id}`,
                     timestamp: new Date().toISOString()
                 });
