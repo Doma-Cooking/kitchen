@@ -1,5 +1,5 @@
 import express from 'express';
-import taskRoutes from './httpRoutes/taskRoutes.js';
+import orderRoutes from './httpRoutes/orderRoutes.js';
 import stationRoutes from './httpRoutes/stationRoutes.js';
 import healthRoutes from './httpRoutes/healthRoutes.js';
 
@@ -8,7 +8,7 @@ httpServer.use(express.json());
 
 // Routes.
 httpServer.use('/health', healthRoutes);
-httpServer.use('/api/tasks', taskRoutes);
+httpServer.use('/api/orders', orderRoutes);
 httpServer.use('/api/stations', stationRoutes);
 
 export default httpServer;

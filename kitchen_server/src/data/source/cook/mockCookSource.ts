@@ -1,24 +1,24 @@
 import { Observable } from "rxjs";
 import { CookMessageModel } from "../../model/cookMessageModel.js";
 import { StationModel } from "../../model/stationModel.js";
-import { TaskModel } from "../../model/taskModel.js";
+import { OrderModel } from "../../model/orderModel.js";
 import { CookSource } from "./cookSource.js";
 
 export class MockCookSource implements CookSource {
-    executeTask(task: TaskModel, station: StationModel | null): Observable<CookMessageModel> {
+    executeOrder(order: OrderModel, station: StationModel | null): Observable<CookMessageModel> {
         return new Observable(observer => {
             observer.next({
                 type: 'status',
-                id: `${task.id}-starting`,
-                message: `Starting task ${task.id} on station ${station ? station.id : 'null'}`,
+                id: `${order.id}-starting`,
+                message: `Starting order ${order.id} on station ${station ? station.id : 'null'}`,
                 timestamp: new Date().toISOString()
             });
 
             setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: `${task.id}-halfway`,
-                    message: `Halfway through task ${task.id}`,
+                    id: `${order.id}-halfway`,
+                    message: `Halfway through order ${order.id}`,
                     timestamp: new Date().toISOString()
                 });
             }, 1000);
@@ -26,8 +26,8 @@ export class MockCookSource implements CookSource {
             setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: `${task.id}-complete`,
-                    message: `Completed task ${task.id}`,
+                    id: `${order.id}-complete`,
+                    message: `Completed order ${order.id}`,
                     timestamp: new Date().toISOString()
                 });
 

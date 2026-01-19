@@ -42,12 +42,12 @@ export class MemoryStationSource implements StationSource {
     async deleteStation(stationId: string): Promise<void> {
         await new Promise((resolve) => setTimeout(resolve, _memoryDelayMs));
 
-        const relevantTasks = Array
-            .from(this.db.tasks.value.values())
-            .filter(task => task.stationId === stationId && (task.status === 'Pending' || task.status === 'Running'));
+        const relevantOrders = Array
+            .from(this.db.orders.value.values())
+            .filter(order => order.stationId === stationId && (order.status === 'Pending' || order.status === 'Running'));
 
-        if (relevantTasks.length > 0) {
-            throw new Error(`Cannot delete station ${stationId} because it has pending/running tasks.`);
+        if (relevantOrders.length > 0) {
+            throw new Error(`Cannot delete station ${stationId} because it has pending/running orders.`);
         }
 
         const updatedStations = new Map(this.db.stations.value);

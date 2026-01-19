@@ -1,6 +1,6 @@
 import { CookStatusMessageModel } from "./cookMessageModel.js";
 
-export interface TaskModel {
+export interface OrderModel {
     id: string;
     input: string | null;
     procedureName: string | null;

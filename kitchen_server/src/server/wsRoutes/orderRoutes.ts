@@ -1,12 +1,12 @@
 import { WebSocket } from "ws";
 import { dependencies } from "../../server.js";
-import { TaskEntity } from "../../domain/entity/taskEntity.js";
+import { OrderEntity } from "../../domain/entity/orderEntity.js";
 import { createMessage } from "../wsServer.js";
 
-export function watchTasks(ws: WebSocket): void {
-    const subscription = dependencies.watchTasksUseCase.execute().subscribe({
-        next: (tasks: TaskEntity[]) => {
-            ws.send(createMessage('data', tasks));
+export function watchOrders(ws: WebSocket): void {
+    const subscription = dependencies.watchOrdersUseCase.execute().subscribe({
+        next: (orders: OrderEntity[]) => {
+            ws.send(createMessage('data', orders));
         },
         error: (err: Error) => {
             ws.send(createMessage('error', err.message));

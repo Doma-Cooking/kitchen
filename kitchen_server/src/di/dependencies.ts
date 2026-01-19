@@ -3,58 +3,58 @@ import { MockCookSource } from "../data/source/cook/mockCookSource.js";
 import { MemoryDb } from "../data/source/memoryDb.js";
 import { MemoryStationSource } from "../data/source/station/memoryStationSource.js";
 import { StationSource } from "../data/source/station/stationSource.js";
-import { MemoryTaskSource } from "../data/source/task/memoryTaskSource.js";
-import { TaskSource } from "../data/source/task/taskSource.js";
+import { MemoryOrderSource } from "../data/source/order/memoryOrderSource.js";
+import { OrderSource } from "../data/source/order/orderSource.js";
 import { CookRepository, CookRepositoryImpl } from "../domain/repository/cookRepository.js";
 import { StationRepository, StationRepositoryImpl } from "../domain/repository/stationRepository.js";
-import { TaskRepository, TaskRepositoryImpl } from "../domain/repository/taskRepository.js";
+import { OrderRepository, OrderRepositoryImpl } from "../domain/repository/orderRepository.js";
 import { CleanupStationUseCase, CleanupStationUseCaseImpl } from "../domain/usecase/station/cleanupStationUseCase.js";
 import { WatchStationsUseCase, WatchStationsUseCaseImpl } from "../domain/usecase/station/watchStationsUseCase.js";
-import { QueueTaskUseCase, QueueTaskUseCaseImpl } from "../domain/usecase/task/queueTaskUseCase.js";
-import { WatchTasksUseCase, WatchTasksUseCaseImpl } from "../domain/usecase/task/watchTasksUseCase.js";
+import { QueueOrderUseCase, QueueOrderUseCaseImpl } from "../domain/usecase/order/queueOrderUseCase.js";
+import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from "../domain/usecase/order/watchOrdersUseCase.js";
 
 export class Dependencies {
     memoryDb: MemoryDb;
 
     stationSource: StationSource;
-    taskSource: TaskSource;
+    orderSource: OrderSource;
     cookSource: CookSource;
 
     stationRepository: StationRepository;
-    taskRepository: TaskRepository;
+    orderRepository: OrderRepository;
     cookRepository: CookRepository;
 
-    queueTaskUseCase: QueueTaskUseCase;
+    queueOrderUseCase: QueueOrderUseCase;
     cleanupStationUseCase: CleanupStationUseCase;
     watchStationsUseCase: WatchStationsUseCase;
-    watchTasksUseCase: WatchTasksUseCase;
+    watchOrdersUseCase: WatchOrdersUseCase;
 
     constructor(
         memoryDb: MemoryDb | null = null,
         stationSource: StationSource | null = null,
-        taskSource: TaskSource | null = null,
+        orderSource: OrderSource | null = null,
         cookSource: CookSource | null = null,
         stationRepository: StationRepository | null = null,
-        taskRepository: TaskRepository | null = null,
+        orderRepository: OrderRepository | null = null,
         cookRepository: CookRepository | null = null,
-        queueTaskUseCase: QueueTaskUseCase | null = null,
+        queueOrderUseCase: QueueOrderUseCase | null = null,
         cleanupStationUseCase: CleanupStationUseCase | null = null,
         watchStationsUseCase: WatchStationsUseCase | null = null,
-        watchTasksUseCase: WatchTasksUseCase | null = null
+        watchOrdersUseCase: WatchOrdersUseCase | null = null
     ) {
         this.memoryDb = memoryDb ?? new MemoryDb();;
 
         this.stationSource = stationSource ?? new MemoryStationSource(this.memoryDb);
-        this.taskSource = taskSource ?? new MemoryTaskSource(this.memoryDb);
+        this.orderSource = orderSource ?? new MemoryOrderSource(this.memoryDb);
         this.cookSource = cookSource ?? new MockCookSource();
 
         this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
-        this.taskRepository = taskRepository ?? new TaskRepositoryImpl(this.taskSource);
-        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.taskRepository, this.stationRepository);
+        this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.orderSource);
+        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.orderRepository, this.stationRepository);
 
-        this.queueTaskUseCase = queueTaskUseCase ?? new QueueTaskUseCaseImpl(this.taskRepository, this.stationRepository, this.cookRepository);
+        this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository, this.stationRepository, this.cookRepository);
         this.cleanupStationUseCase = cleanupStationUseCase ?? new CleanupStationUseCaseImpl(this.stationRepository);
         this.watchStationsUseCase = watchStationsUseCase ?? new WatchStationsUseCaseImpl(this.stationRepository);
-        this.watchTasksUseCase = watchTasksUseCase ?? new WatchTasksUseCaseImpl(this.taskRepository);
+        this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
     }
 }

@@ -9,8 +9,8 @@ router.post('/queue', async (req, res) => {
     const procedureName = args.procedureName as string | null ?? null;
     const stationId = args.stationId as string | null ?? null;
 
-    await dependencies.queueTaskUseCase.execute(input, procedureName, stationId);
-    res.send(`Task queued with input: ${input ?? "N/A"}, procedureName: ${procedureName ?? "N/A"}, stationId: ${stationId ?? "N/A"}`);
+    await dependencies.queueOrderUseCase.execute(input, procedureName, stationId);
+    res.send(`Order queued with input: ${input ?? "N/A"}, procedureName: ${procedureName ?? "N/A"}, stationId: ${stationId ?? "N/A"}`);
 });
 
 export default router;

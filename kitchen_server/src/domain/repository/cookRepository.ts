@@ -1,53 +1,53 @@
 import { concatMap, lastValueFrom, map } from "rxjs";
 import { StationEntity, toStationModel } from "../entity/stationEntity.js";
-import { TaskEntity, TaskStatus, toTaskModel } from "../entity/taskEntity.js";
+import { OrderEntity, OrderStatus, toOrderModel } from "../entity/orderEntity.js";
 import { toCookMessageEntity } from "../entity/cookMessageEntity.js";
 import { CookSource } from "../../data/source/cook/cookSource.js";
 import { StationRepository } from "./stationRepository.js";
-import { TaskRepository } from "./taskRepository.js";
+import { OrderRepository } from "./orderRepository.js";
 
 export interface CookRepository {
-    executeTask(task: TaskEntity, station: StationEntity | null): Promise<void>;
+    executeOrder(order: OrderEntity, station: StationEntity | null): Promise<void>;
 }
 
 export class CookRepositoryImpl implements CookRepository {
     private source: CookSource;
-    private taskRepository: TaskRepository;
+    private orderRepository: OrderRepository;
     private stationRepository: StationRepository;
 
     constructor(
         source: CookSource,
-        taskRepository: TaskRepository,
+        orderRepository: OrderRepository,
         stationRepository: StationRepository
     ) {
         this.source = source;
-        this.taskRepository = taskRepository;
+        this.orderRepository = orderRepository;
         this.stationRepository = stationRepository;
     }
 
-    async executeTask(task: TaskEntity, station: StationEntity | null): Promise<void> {
-        await this.taskRepository.updateTaskStatus(task.id, TaskStatus.InProgress);
+    async executeOrder(order: OrderEntity, station: StationEntity | null): Promise<void> {
+        await this.orderRepository.updateOrderStatus(order.id, OrderStatus.InProgress);
 
         try {
             await lastValueFrom(
-                this.source.executeTask(
-                    toTaskModel(task),
+                this.source.executeOrder(
+                    toOrderModel(order),
                     station ? toStationModel(station) : null,
                 ).pipe(
                     map(model => toCookMessageEntity(model)),
                     concatMap((message) => {
                         switch (message.type) {
                             case 'status':
-                                return this.taskRepository.addMessageToTask(task.id, message);
+                                return this.orderRepository.addMessageToOrder(order.id, message);
                             case 'station':
                                 return this.stationRepository.updateStation(message.station);
                         }
                     }),
                 )
             );
-            await this.taskRepository.updateTaskStatus(task.id, TaskStatus.Completed);
+            await this.orderRepository.updateOrderStatus(order.id, OrderStatus.Completed);
         } catch (err) {
-            await this.taskRepository.updateTaskStatus(task.id, TaskStatus.Failed);
+            await this.orderRepository.updateOrderStatus(order.id, OrderStatus.Failed);
             throw err;
         }
     }

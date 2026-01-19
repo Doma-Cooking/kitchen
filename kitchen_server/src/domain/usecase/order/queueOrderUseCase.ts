@@ -1,31 +1,31 @@
 import { CookRepository } from "../../repository/cookRepository.js";
 import { StationRepository } from "../../repository/stationRepository.js";
-import { TaskRepository } from "../../repository/taskRepository.js";
+import { OrderRepository } from "../../repository/orderRepository.js";
 
-export interface QueueTaskUseCase {
+export interface QueueOrderUseCase {
     execute(input: string | null, procedureName: string | null, stationId: string | null): Promise<void>;
 }
 
-export class QueueTaskUseCaseImpl implements QueueTaskUseCase {
-    taskRepository: TaskRepository;
+export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
+    orderRepository: OrderRepository;
     stationRepository: StationRepository;
     cookRepository: CookRepository;
 
     constructor(
-        taskRepository: TaskRepository,
+        orderRepository: OrderRepository,
         stationRepository: StationRepository,
         cookRepository: CookRepository
     ) {
-        this.taskRepository = taskRepository;
+        this.orderRepository = orderRepository;
         this.stationRepository = stationRepository;
         this.cookRepository = cookRepository;
     }
 
     async execute(input: string | null, procedureName: string | null, stationId: string | null): Promise<void> {
-        const task = await this.taskRepository.createTask(input, procedureName, stationId);
+        const order = await this.orderRepository.createOrder(input, procedureName, stationId);
         const station = stationId ? await this.stationRepository.getStationById(stationId) ?? await this.stationRepository.createStation(stationId) : null;
 
         // TODO: Rather than executing immediately, add to a queue system.
-        await this.cookRepository.executeTask(task, station);
+        await this.cookRepository.executeOrder(order, station);
     }
 }
