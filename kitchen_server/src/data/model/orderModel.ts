@@ -7,6 +7,6 @@ export interface OrderModel {
     stationId: string | null;
     status: string;
     messages: CookStatusMessageModel[];
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }

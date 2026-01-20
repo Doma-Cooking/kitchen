@@ -1,8 +1,8 @@
 import { map, Observable } from "rxjs";
 import { OrderModel } from "../../model/orderModel.js";
 import { OrderSource } from "./orderSource.js";
-import { MemoryDb } from "../memoryDb.js";
 import { CookStatusMessageModel } from "../../model/cookMessageModel.js";
+import { MemoryDb } from "../../../db/memory/memoryDb.js";
 
 const _memoryDelayMs = 100;
 
@@ -23,13 +23,18 @@ export class MemoryOrderSource implements OrderSource {
             stationId,
             status: 'Pending',
             messages: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            createdAt: new Date(),
+            updatedAt: new Date()
         };
         const updatedOrders = new Map(this.db.orders.value);
         updatedOrders.set(order.id, order);
         this.db.orders.next(updatedOrders);
         return order;
+    }
+
+    async getOrders(): Promise<OrderModel[]> {
+        await new Promise((resolve) => setTimeout(resolve, _memoryDelayMs));
+        return Array.from(this.db.orders.value.values());
     }
 
     async getOrderById(orderId: string): Promise<OrderModel | null> {

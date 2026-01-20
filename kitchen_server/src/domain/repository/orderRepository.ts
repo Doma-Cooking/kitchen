@@ -1,9 +1,10 @@
-import { map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 import { OrderSource } from '../../data/source/order/orderSource.js';
 import { OrderEntity, OrderStatus, toOrderEntity } from '../entity/orderEntity.js';
 import { CookStatusMessageEntity, toCookStatusMessageModel } from '../entity/cookMessageEntity.js';
+import { Disposable } from '../../di/disposable.js';
 
-export interface OrderRepository {
+export interface OrderRepository extends Disposable {
     createOrder(input: string | null, procedureName: string | null, stationId: string | null): Promise<OrderEntity>;
     getOrderById(orderId: string): Promise<OrderEntity | null>;
     addMessageToOrder(orderId: string, message: CookStatusMessageEntity): Promise<void>;
@@ -14,9 +15,29 @@ export interface OrderRepository {
 
 export class OrderRepositoryImpl implements OrderRepository {
     private source: OrderSource;
+    private ordersSubject = new BehaviorSubject<OrderEntity[]>([]);
+    private subscription: Subscription | null = null;
 
     constructor(source: OrderSource) {
         this.source = source;
+    }
+
+    async initialize(): Promise<void> {
+        await Promise.resolve();
+
+        this.subscription = this.source.watchAll().pipe(
+            map(models => models.map(toOrderEntity))
+        ).subscribe({
+            next: orders => { this.ordersSubject.next(orders); },
+            error: err => { console.error('Order watch error:', err); }
+        });
+    }
+
+    async dispose(): Promise<void> {
+        await Promise.resolve();
+
+        this.subscription?.unsubscribe();
+        this.subscription = null;
     }
 
     async createOrder(input: string | null, procedureName: string | null, stationId: string | null): Promise<OrderEntity> {
@@ -42,8 +63,6 @@ export class OrderRepositoryImpl implements OrderRepository {
     }
 
     watchAll(): Observable<OrderEntity[]> {
-        return this.source.watchAll().pipe(
-            map(models => models.map(toOrderEntity))
-        );
+        return this.ordersSubject.asObservable();
     }
 }

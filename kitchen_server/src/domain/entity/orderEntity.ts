@@ -40,7 +40,7 @@ export function toOrderModel(entity: OrderEntity): OrderModel {
         stationId: entity.stationId,
         status: entity.status,
         messages: entity.messages.map(toCookStatusMessageModel),
-        createdAt: entity.createdAt.toISOString(),
-        updatedAt: entity.updatedAt.toISOString(),
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
     };
 }

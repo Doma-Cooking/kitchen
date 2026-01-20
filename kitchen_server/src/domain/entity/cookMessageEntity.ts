@@ -7,13 +7,13 @@ export interface CookStatusMessageEntity {
     type: 'status';
     id: string;
     message: string;
-    timestamp: string;
+    timestamp: Date;
 }
 
 export interface CookStationMessageEntity {
     type: 'station';
     station: StationEntity;
-    timestamp: string;
+    timestamp: Date;
 }
 
 export function toCookMessageEntity(model: CookMessageModel): CookMessageEntity {

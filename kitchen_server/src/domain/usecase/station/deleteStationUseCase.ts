@@ -1,10 +1,10 @@
 import { StationRepository } from "../../repository/stationRepository.js";
 
-export interface CleanupStationUseCase {
+export interface DeleteStationUseCase {
     execute(stationId: string): Promise<void>;
 }
 
-export class CleanupStationUseCaseImpl implements CleanupStationUseCase {
+export class DeleteStationUseCaseImpl implements DeleteStationUseCase {
     stationRepository: StationRepository;
 
     constructor(stationRepository: StationRepository) {

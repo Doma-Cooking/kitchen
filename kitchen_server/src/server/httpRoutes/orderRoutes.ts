@@ -13,4 +13,11 @@ router.post('/queue', async (req, res) => {
     res.send(`Order queued with input: ${input ?? "N/A"}, procedureName: ${procedureName ?? "N/A"}, stationId: ${stationId ?? "N/A"}`);
 });
 
+router.delete('/:id', async (req, res) => {
+    const id = req.params.id;
+
+    await dependencies.deleteOrderUseCase.execute(id);
+    res.send(`Order with ID ${id} deleted`);
+});
+
 export default router;

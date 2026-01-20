@@ -11,16 +11,30 @@ const HOST = '0.0.0.0';
 const server = createServer(httpServer);
 setupWsServer(server);
 
-server.listen(PORT, HOST, () => {
-  console.log(`Kitchen server is running on http://${HOST}:${String(PORT)}`);
-});
+async function start() {
+  await dependencies.initialize();
+
+  server.listen(PORT, HOST, () => {
+    console.log(`Kitchen server is running on http://${HOST}:${String(PORT)}`);
+  });
+}
 
 // Graceful shutdown handlers.
 const shutdown = (signal: string) => {
   console.log(`\nReceived ${signal}, shutting down gracefully...`);
+
   server.close(() => {
     console.log('HTTP server closed');
-    process.exit(0);
+
+    dependencies.close()
+      .then(() => {
+        console.log('Dependencies closed');
+        process.exit(0);
+      })
+      .catch((err: unknown) => {
+        console.error('Error closing dependencies:', err);
+        process.exit(1);
+      });
   });
 
   // Force exit if graceful shutdown takes too long.
@@ -35,4 +49,9 @@ process.on('SIGTERM', () => {
 });
 process.on('SIGINT', () => {
   shutdown('SIGINT');
+});
+
+start().catch((err: unknown) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
