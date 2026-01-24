@@ -1,7 +1,7 @@
-import { Observable, from, startWith, switchMap } from "rxjs";
-import { StationModel } from "../../model/stationModel.js";
-import { StationSource } from "./stationSource.js";
-import { PostgresDb } from "../../../db/postgres/postgresDb.js";
+import { Observable, from, startWith, switchMap } from 'rxjs';
+import { StationModel } from '../../model/stationModel.js';
+import { StationSource } from './stationSource.js';
+import { PostgresDb } from '../../../db/postgres/postgresDb.js';
 
 interface StationRow {
     id: string;

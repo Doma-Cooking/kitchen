@@ -1,12 +1,14 @@
-import { CookStatusMessageModel } from "./cookMessageModel.js";
+import { CookStatusMessageModel } from './cookMessageModel.js';
+
+export type OrderStatusModel = 'queued' | 'cooking' | 'succeeded' | 'failed' | 'unknown';
 
 export interface OrderModel {
     id: string;
+    name: string;
     input: string | null;
-    procedureName: string | null;
+    recipeId: string | null;
     stationId: string | null;
-    status: string;
+    status: OrderStatusModel;
     messages: CookStatusMessageModel[];
-    createdAt: Date;
-    updatedAt: Date;
+    updatedAt: Date
 }

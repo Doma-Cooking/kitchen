@@ -1,7 +1,7 @@
-import { Server as HttpServer } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-import { watchStations } from "./wsRoutes/stationRoutes.js";
-import { watchOrders } from "./wsRoutes/orderRoutes.js";
+import { Server as HttpServer } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
+import { watchStations } from './wsRoutes/stationRoutes.js';
+import { watchOrders } from './wsRoutes/orderRoutes.js';
 
 interface WsMessage<T> {
     type: 'data' | 'error';
@@ -25,11 +25,11 @@ export function setupWsServer(server: HttpServer): WebSocketServer {
         const path = request.url;
 
         switch (path) {
-            case '/ws/stations':
-                watchStations(ws);
-                break;
             case '/ws/orders':
                 watchOrders(ws);
+                break;
+            case '/ws/stations':
+                watchStations(ws);
                 break;
             default:
                 ws.send(createMessage('error', `Unknown path: ${path ?? 'undefined'}`));

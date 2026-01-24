@@ -1,4 +1,4 @@
-import { StationModel } from "../../data/model/stationModel.js";
+import { StationModel } from '../../data/model/stationModel.js';
 
 export interface StationEntity {
     id: string;

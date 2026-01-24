@@ -1,6 +1,6 @@
-import { Observable } from "rxjs";
-import { StationEntity } from "../../entity/stationEntity.js";
-import { StationRepository } from "../../repository/stationRepository.js";
+import { Observable } from 'rxjs';
+import { StationEntity } from '../../entity/stationEntity.js';
+import { StationRepository } from '../../repository/stationRepository.js';
 
 export interface WatchStationsUseCase {
     execute(): Observable<StationEntity[]>;

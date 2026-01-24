@@ -1,7 +1,7 @@
-import { WebSocket } from "ws";
+import { WebSocket } from 'ws';
 import { dependencies } from "../../server.js";
-import { OrderEntity } from "../../domain/entity/orderEntity.js";
-import { createMessage } from "../wsServer.js";
+import { createMessage } from '../wsServer.js';
+import { OrderEntity } from '../../domain/entity/orderEntity.js';
 
 export function watchOrders(ws: WebSocket): void {
     const subscription = dependencies.watchOrdersUseCase.execute().subscribe({

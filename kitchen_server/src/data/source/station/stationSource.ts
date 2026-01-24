@@ -1,5 +1,5 @@
-import { Observable } from "rxjs";
-import { StationModel } from "../../model/stationModel.js";
+import { Observable } from 'rxjs';
+import { StationModel } from '../../model/stationModel.js';
 
 export interface StationSource {
     createStation(stationId: string): Promise<StationModel>;

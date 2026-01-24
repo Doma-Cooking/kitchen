@@ -1,33 +1,28 @@
-import { OrderModel } from "../../data/model/orderModel.js";
-import { CookStatusMessageEntity, toCookStatusMessageEntity, toCookStatusMessageModel } from "./cookMessageEntity.js";
+import { OrderModel, OrderStatusModel } from '../../data/model/orderModel.js';
+import { CookStatusMessageEntity, toCookStatusMessageEntity, toCookStatusMessageModel } from './cookMessageEntity.js';
 
-export enum OrderStatus {
-    Pending = 'pending',
-    InProgress = 'in_progress',
-    Completed = 'completed',
-    Failed = 'failed'
-}
+export type OrderStatusEntity = 'queued' | 'cooking' | 'succeeded' | 'failed' | 'unknown';
 
 export interface OrderEntity {
     id: string;
+    name: string;
     input: string | null;
-    procedureName: string | null;
+    recipeId: string | null;
     stationId: string | null;
-    status: OrderStatus;
+    status: OrderStatusEntity;
     messages: CookStatusMessageEntity[];
-    createdAt: Date;
     updatedAt: Date;
 }
 
 export function toOrderEntity(model: OrderModel): OrderEntity {
     return {
         id: model.id,
+        name: model.name,
         input: model.input,
-        procedureName: model.procedureName,
+        recipeId: model.recipeId,
         stationId: model.stationId,
-        status: model.status as OrderStatus,
+        status: toOrderStatusEntity(model.status),
         messages: model.messages.map(toCookStatusMessageEntity),
-        createdAt: new Date(model.createdAt),
         updatedAt: new Date(model.updatedAt),
     };
 }
@@ -35,12 +30,20 @@ export function toOrderEntity(model: OrderModel): OrderEntity {
 export function toOrderModel(entity: OrderEntity): OrderModel {
     return {
         id: entity.id,
+        name: entity.name,
         input: entity.input,
-        procedureName: entity.procedureName,
+        recipeId: entity.recipeId,
         stationId: entity.stationId,
-        status: entity.status,
+        status: toOrderStatusModel(entity.status),
         messages: entity.messages.map(toCookStatusMessageModel),
-        createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
     };
+}
+
+export function toOrderStatusEntity(model: OrderStatusModel): OrderStatusEntity {
+    return model;
+}
+
+export function toOrderStatusModel(entity: OrderStatusEntity): OrderStatusModel {
+    return entity;
 }

@@ -12,7 +12,11 @@ const server = createServer(httpServer);
 setupWsServer(server);
 
 async function start() {
-  await dependencies.initialize();
+  // TODO: Init cooks based on configuration.
+  await Promise.all([
+    dependencies.createCookUseCase.execute("cook-0", "Jaewon"),
+    dependencies.createCookUseCase.execute("cook-1", "Rebekah"),
+  ]);
 
   server.listen(PORT, HOST, () => {
     console.log(`Kitchen server is running on http://${HOST}:${String(PORT)}`);

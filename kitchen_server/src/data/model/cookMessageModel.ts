@@ -1,11 +1,10 @@
-import { StationModel } from "./stationModel.js";
+import { StationModel } from './stationModel.js';
 
 export type CookMessageModel = CookStatusMessageModel | CookStationMessageModel;
 
 export interface CookStatusMessageModel {
     [key: string]: string | Date;
     type: 'status';
-    id: string;
     message: string;
     timestamp: Date;
 }

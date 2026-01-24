@@ -1,4 +1,4 @@
-import { StationRepository } from "../../repository/stationRepository.js";
+import { StationRepository } from '../../repository/stationRepository.js';
 
 export interface DeleteStationUseCase {
     execute(stationId: string): Promise<void>;

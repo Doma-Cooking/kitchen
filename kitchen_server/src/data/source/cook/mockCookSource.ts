@@ -1,50 +1,58 @@
-import { Observable } from "rxjs";
-import { CookMessageModel } from "../../model/cookMessageModel.js";
-import { StationModel } from "../../model/stationModel.js";
-import { OrderModel } from "../../model/orderModel.js";
-import { CookSource } from "./cookSource.js";
+import { Observable } from 'rxjs';
+import { CookMessageModel } from '../../model/cookMessageModel.js';
+import { CookSource } from './cookSource.js';
+import { TaskModel } from '../../model/taskModel.js';
 
 export class MockCookSource implements CookSource {
-    executeOrder(order: OrderModel, station: StationModel | null): Observable<CookMessageModel> {
+    executeOrder(task: TaskModel, signal: AbortSignal | undefined): Observable<CookMessageModel> {
         return new Observable(observer => {
-            observer.next({
-                type: 'status',
-                id: `${order.id}-starting`,
-                message: `Starting order ${order.id} on station ${station ? station.id : 'null'}`,
-                timestamp: new Date().toISOString()
+            let currentTimeout: NodeJS.Timeout | null = null;
+
+            signal?.addEventListener('abort', () => {
+                observer.complete();
+                if (currentTimeout) {
+                    clearTimeout(currentTimeout);
+                }
             });
 
-            setTimeout(() => {
+            observer.next({
+                type: 'status',
+                id: `${task.order.id}-starting`,
+                message: `Starting order ${task.order.id} on station ${task.station?.id ?? 'none'}`,
+                timestamp: new Date()
+            });
+
+            currentTimeout = setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: `${order.id}-halfway`,
-                    message: `Halfway through order ${order.id}`,
-                    timestamp: new Date().toISOString()
+                    id: `${task.order.id}-halfway`,
+                    message: `Halfway through order ${task.order.id}`,
+                    timestamp: new Date()
                 });
             }, 1000);
 
-            setTimeout(() => {
+            currentTimeout = setTimeout(() => {
                 observer.next({
                     type: 'status',
-                    id: `${order.id}-complete`,
-                    message: `Completed order ${order.id}`,
-                    timestamp: new Date().toISOString()
+                    id: `${task.order.id}-complete`,
+                    message: `Completed order ${task.order.id}`,
+                    timestamp: new Date()
                 });
 
-                if (station) {
+                if (task.station) {
                     const updatedStation = Object.assign(
                         {},
-                        station,
+                        task.station,
                         {
-                            contextBytes: new Uint8Array([...station.contextBytes, 1]),
-                            updatedAt: new Date().toISOString()
+                            contextBytes: new Uint8Array([...task.station.contextBytes, 1]),
+                            updatedAt: new Date()
                         }
                     );
 
                     observer.next({
                         type: 'station',
                         station: updatedStation,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date()
                     });
                 }
 

@@ -1,9 +1,16 @@
-import { CookRepository } from "../../repository/cookRepository.js";
-import { StationRepository } from "../../repository/stationRepository.js";
-import { OrderRepository } from "../../repository/orderRepository.js";
+import { CookRepository } from '../../repository/cookRepository.js';
+import { StationRepository } from '../../repository/stationRepository.js';
+import { OrderRepository } from '../../repository/orderRepository.js';
+import { randomUUID } from 'crypto';
 
 export interface QueueOrderUseCase {
-    execute(input: string | null, procedureName: string | null, stationId: string | null): Promise<void>;
+    execute(
+        id: string | null,
+        name: string | null,
+        input: string | null,
+        recipeId: string | null,
+        stationId: string | null
+    ): Promise<void>;
 }
 
 export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
@@ -21,11 +28,31 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
         this.cookRepository = cookRepository;
     }
 
-    async execute(input: string | null, procedureName: string | null, stationId: string | null): Promise<void> {
-        const order = await this.orderRepository.createOrder(input, procedureName, stationId);
-        const station = stationId ? await this.stationRepository.getStationById(stationId) ?? await this.stationRepository.createStation(stationId) : null;
+    async execute(
+        id: string | null,
+        name: string | null,
+        input: string | null,
+        recipeId: string | null,
+        stationId: string | null
+    ): Promise<void> {
+        if (!input && !recipeId) {
+            throw new Error("An order must have either an input or a recipe ID");
+        }
 
-        // TODO: Rather than executing immediately, add to a queue system.
-        await this.cookRepository.executeOrder(order, station);
+        const orderId = id ?? randomUUID();
+        const orderName = name ?? `order-${orderId}`;
+
+        await this.orderRepository.queueOrder(
+            {
+                id: orderId,
+                name: orderName,
+                input: input,
+                recipeId: recipeId,
+                stationId: stationId,
+                status: 'queued',
+                messages: [],
+                updatedAt: new Date()
+            }
+        );
     }
 }

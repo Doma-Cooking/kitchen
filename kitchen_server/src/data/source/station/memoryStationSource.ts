@@ -1,7 +1,7 @@
-import { map, Observable } from "rxjs";
-import { StationModel } from "../../model/stationModel.js";
-import { StationSource } from "./stationSource.js";
-import { MemoryDb } from "../../../db/memory/memoryDb.js";
+import { map, Observable } from 'rxjs';
+import { StationModel } from '../../model/stationModel.js';
+import { StationSource } from './stationSource.js';
+import { MemoryDb } from '../../../db/memory/memoryDb.js';
 
 const _memoryDelayMs = 100;
 
@@ -44,7 +44,7 @@ export class MemoryStationSource implements StationSource {
 
         const relevantOrders = Array
             .from(this.db.orders.value.values())
-            .filter(order => order.stationId === stationId && (order.status === 'Pending' || order.status === 'Running'));
+            .filter(order => order.stationId === stationId && (order.status === 'queued' || order.status === 'cooking'));
 
         if (relevantOrders.length > 0) {
             throw new Error(`Cannot delete station ${stationId} because it has pending/running orders.`);
