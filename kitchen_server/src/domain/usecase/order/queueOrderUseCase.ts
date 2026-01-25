@@ -48,10 +48,7 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
                 name: orderName,
                 input: input,
                 recipeId: recipeId,
-                stationId: stationId,
-                status: 'queued',
-                messages: [],
-                updatedAt: new Date()
+                stationId: stationId
             }
         );
     }

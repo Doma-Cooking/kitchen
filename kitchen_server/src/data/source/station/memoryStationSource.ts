@@ -41,15 +41,6 @@ export class MemoryStationSource implements StationSource {
 
     async deleteStation(stationId: string): Promise<void> {
         await new Promise((resolve) => setTimeout(resolve, _memoryDelayMs));
-
-        const relevantOrders = Array
-            .from(this.db.orders.value.values())
-            .filter(order => order.stationId === stationId && (order.status === 'queued' || order.status === 'cooking'));
-
-        if (relevantOrders.length > 0) {
-            throw new Error(`Cannot delete station ${stationId} because it has pending/running orders.`);
-        }
-
         const updatedStations = new Map(this.db.stations.value);
         updatedStations.delete(stationId);
         this.db.stations.next(updatedStations);

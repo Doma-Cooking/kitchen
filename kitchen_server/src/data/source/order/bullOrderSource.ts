@@ -1,6 +1,6 @@
 import { Queue, QueueEvents, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
-import { OrderModel, OrderStatusModel } from '../../model/orderModel.js';
+import { OrderModel } from '../../model/orderModel.js';
 import { OrderSource } from './orderSource.js';
 import { CookStatusMessageModel } from '../../model/cookMessageModel.js';
 import { concatMap, Observable } from 'rxjs';
@@ -55,50 +55,7 @@ export class BullOrderSource implements OrderSource {
 
     async getOrders(): Promise<OrderModel[]> {
         const jobs = await this.queue.getJobs();
-
-        const promises = jobs.map(async (job) => {
-            const status = await job.getState();
-            let orderStatus: OrderStatusModel = 'unknown';
-            switch (status) {
-                case 'delayed':
-                case 'prioritized':
-                case 'waiting':
-                case 'waiting-children':
-                    orderStatus = 'queued';
-                    break;
-                case 'active':
-                    orderStatus = 'cooking';
-                    break;
-                case 'completed':
-                    orderStatus = 'succeeded';
-                    break;
-                case 'failed':
-                    orderStatus = 'failed';
-                    break;
-                case 'unknown':
-                    orderStatus = 'unknown';
-                    break;
-            };
-
-            const logs = await this.queue.getJobLogs(job.data.id);
-            const messages = logs.logs.map((log) => {
-                return JSON.parse(log) as CookStatusMessageModel;
-            });
-
-            const model: OrderModel = Object.assign(
-                {},
-                job.data,
-                {
-                    status: orderStatus,
-                    messages: messages,
-                    updatedAt: new Date()
-                }
-            )
-
-            return model;
-        });
-
-        return await Promise.all(promises);
+        return jobs.map((job) => job.data);
     }
 
     async deleteOrder(orderId: string): Promise<void> {

@@ -29,7 +29,7 @@ export class MockCookSource implements CookSource {
                     message: `Halfway through order ${task.order.id}`,
                     timestamp: new Date()
                 });
-            }, 1000);
+            }, 10000);
 
             currentTimeout = setTimeout(() => {
                 observer.next({
@@ -57,7 +57,7 @@ export class MockCookSource implements CookSource {
                 }
 
                 observer.complete();
-            }, 2000);
+            }, 20000);
         });
     }
 }

@@ -86,6 +86,11 @@ export class Dependencies {
     }
 
     async close(): Promise<void> {
-        await this.postgresDb.close();
+        this.redis.disconnect();
+
+        await Promise.all([
+            this.postgresDb.close(),
+            this.queue.close(),
+        ]);
     }
 }

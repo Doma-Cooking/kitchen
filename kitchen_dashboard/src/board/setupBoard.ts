@@ -4,12 +4,7 @@ import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
 import type { Configuration } from "../config/configuration.js";
 
-export interface BoardSetup {
-  serverAdapter: ExpressAdapter;
-  queue: Queue;
-}
-
-export function setupBoard(config: Configuration): BoardSetup {
+export function setupBoard(config: Configuration): ExpressAdapter {
   const queue = new Queue(config.kitchenQueueName, {
     connection: config.redisConnection,
   });
@@ -22,5 +17,5 @@ export function setupBoard(config: Configuration): BoardSetup {
     serverAdapter,
   });
 
-  return { serverAdapter, queue };
+  return serverAdapter;
 }

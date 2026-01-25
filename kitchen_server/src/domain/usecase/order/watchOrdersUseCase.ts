@@ -13,6 +13,7 @@ export class WatchOrdersUseCaseImpl implements WatchOrdersUseCase {
         this.orderRepository = orderRepository;
     }
 
+    // TODO: Update this to watch a Job Entity, which should include as order as well as its messages and status.
     execute(): Observable<OrderEntity[]> {
         return this.orderRepository.watchAll();
     }

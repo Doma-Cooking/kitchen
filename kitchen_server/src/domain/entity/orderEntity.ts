@@ -1,7 +1,4 @@
-import { OrderModel, OrderStatusModel } from '../../data/model/orderModel.js';
-import { CookStatusMessageEntity, toCookStatusMessageEntity, toCookStatusMessageModel } from './cookMessageEntity.js';
-
-export type OrderStatusEntity = 'queued' | 'cooking' | 'succeeded' | 'failed' | 'unknown';
+import { OrderModel } from '../../data/model/orderModel.js';
 
 export interface OrderEntity {
     id: string;
@@ -9,9 +6,6 @@ export interface OrderEntity {
     input: string | null;
     recipeId: string | null;
     stationId: string | null;
-    status: OrderStatusEntity;
-    messages: CookStatusMessageEntity[];
-    updatedAt: Date;
 }
 
 export function toOrderEntity(model: OrderModel): OrderEntity {
@@ -20,10 +14,7 @@ export function toOrderEntity(model: OrderModel): OrderEntity {
         name: model.name,
         input: model.input,
         recipeId: model.recipeId,
-        stationId: model.stationId,
-        status: toOrderStatusEntity(model.status),
-        messages: model.messages.map(toCookStatusMessageEntity),
-        updatedAt: new Date(model.updatedAt),
+        stationId: model.stationId
     };
 }
 
@@ -33,17 +24,6 @@ export function toOrderModel(entity: OrderEntity): OrderModel {
         name: entity.name,
         input: entity.input,
         recipeId: entity.recipeId,
-        stationId: entity.stationId,
-        status: toOrderStatusModel(entity.status),
-        messages: entity.messages.map(toCookStatusMessageModel),
-        updatedAt: entity.updatedAt,
+        stationId: entity.stationId
     };
-}
-
-export function toOrderStatusEntity(model: OrderStatusModel): OrderStatusEntity {
-    return model;
-}
-
-export function toOrderStatusModel(entity: OrderStatusEntity): OrderStatusModel {
-    return entity;
 }

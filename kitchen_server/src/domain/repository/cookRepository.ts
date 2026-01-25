@@ -28,11 +28,13 @@ export class CookRepositoryImpl implements CookRepository {
         await this.orderSource.createCook(
             id,
             async (order, signal) => {
-                const station = order.stationId ? await this.stationRepository.getStationById(order.stationId) : null;
+                const station = order.stationId
+                    ? (await this.stationRepository.getStationById(order.stationId)) ?? (await this.stationRepository.createStation(order.stationId))
+                    : null;
                 const task: TaskModel = { order: order, station: station ? toStationModel(station) : null };
                 const observable = this.cookSource.executeOrder(task, signal);
 
-                observable.pipe(
+                const processed = observable.pipe(
                     concatMap(async messageModel => {
                         switch (messageModel.type) {
                             case 'status':
@@ -45,7 +47,7 @@ export class CookRepositoryImpl implements CookRepository {
                     })
                 );
 
-                await lastValueFrom(observable);
+                await lastValueFrom(processed);
             }
         );
     }

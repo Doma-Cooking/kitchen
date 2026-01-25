@@ -4,7 +4,7 @@ import { Configuration } from "./config/configuration.js";
 import { setupBoard } from "./board/setupBoard.js";
 
 const config = new Configuration();
-const { serverAdapter, queue } = setupBoard(config);
+const serverAdapter = setupBoard(config);
 
 const app = express();
 
@@ -18,20 +18,19 @@ app.use(
     challenge: true,
     realm: "Kitchen Dashboard",
   }),
-  serverAdapter.getRouter()
+  serverAdapter.getRouter() as express.RequestHandler
 );
 
 const server = app.listen(config.dashboardPort, () => {
   console.log(
-    `Kitchen Dashboard running at http://localhost:${config.dashboardPort}`
+    `Kitchen Dashboard running at http://localhost:${config.dashboardPort.toString()}`
   );
   console.log(`Monitoring queue: ${config.kitchenQueueName}`);
 });
 
-async function shutdown() {
+const shutdown = () => {
   console.log("Shutting down gracefully...");
   server.close();
-  await queue.close();
   process.exit(0);
 }
 

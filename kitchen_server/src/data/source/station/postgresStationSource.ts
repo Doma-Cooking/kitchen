@@ -62,16 +62,6 @@ export class PostgresStationSource implements StationSource {
 
     async deleteStation(stationId: string): Promise<void> {
         const sql = this.db.sql;
-        const pendingOrders = await sql<{ id: string }[]>`
-            SELECT id FROM orders
-            WHERE station_id = ${stationId} AND status IN ('Pending', 'Running')
-            LIMIT 1
-        `;
-
-        if (pendingOrders.length > 0) {
-            throw new Error(`Cannot delete station ${stationId} because it has pending/running orders.`);
-        }
-
         await sql`DELETE FROM stations WHERE id = ${stationId}`;
     }
 
