@@ -8,3 +8,13 @@ services:
       - ./kitchen_server/tsconfig.json:/server/tsconfig.json:ro
     environment:
       - NODE_ENV=development
+
+  kitchen-dashboard:
+    build:
+      context: ./kitchen_dashboard
+      target: development
+    volumes:
+      - ./kitchen_dashboard/src:/dashboard/src:ro
+      - ./kitchen_dashboard/tsconfig.json:/dashboard/tsconfig.json:ro
+    environment:
+      - NODE_ENV=development

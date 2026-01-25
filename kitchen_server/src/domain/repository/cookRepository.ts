@@ -6,7 +6,7 @@ import { OrderSource } from '../../data/source/order/orderSource.js';
 import { TaskModel } from '../../data/model/taskModel.js';
 
 export interface CookRepository {
-    createCook(id: string, name: string): Promise<void>;
+    createCook(id: string): Promise<void>;
 }
 
 export class CookRepositoryImpl implements CookRepository {
@@ -24,10 +24,9 @@ export class CookRepositoryImpl implements CookRepository {
         this.stationRepository = stationRepository;
     }
 
-    async createCook(id: string, name: string): Promise<void> {
+    async createCook(id: string): Promise<void> {
         await this.orderSource.createCook(
             id,
-            name,
             async (order, signal) => {
                 const station = order.stationId ? await this.stationRepository.getStationById(order.stationId) : null;
                 const task: TaskModel = { order: order, station: station ? toStationModel(station) : null };

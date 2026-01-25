@@ -24,14 +24,13 @@ export class BullOrderSource implements OrderSource {
 
     async createCook(
         id: string,
-        name: string,
         execute: (order: OrderModel, signal: AbortSignal | undefined) => Promise<void>
     ): Promise<void> {
         await Promise.resolve();
         this.workers.set(
             id,
             new Worker(
-                name,
+                this.queue.name,
                 async (job, _, signal) => {
                     await execute(job.data, signal);
                 },

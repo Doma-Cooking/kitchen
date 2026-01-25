@@ -3,7 +3,7 @@ import { CookMessageModel } from '../../model/cookMessageModel.js';
 import { OrderModel } from '../../model/orderModel.js';
 
 export interface OrderSource {
-    createCook(id: string, name: string, execute: (order: OrderModel, signal: AbortSignal | undefined) => Promise<void>): Promise<void>;
+    createCook(id: string, execute: (order: OrderModel, signal: AbortSignal | undefined) => Promise<void>): Promise<void>;
     queueOrder(order: OrderModel): Promise<void>;
     addOrderMessage(orderId: string, message: CookMessageModel): Promise<void>;
     getOrders(): Promise<OrderModel[]>;

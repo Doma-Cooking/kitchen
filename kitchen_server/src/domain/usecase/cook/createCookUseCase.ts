@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { CookRepository } from "../../repository/cookRepository.js";
 
 export interface CreateCookUseCase {
-    execute(id: string | null, name: string | null): Promise<void>;
+    execute(id: string | null): Promise<void>;
 }
 
 export class CreateCookUseCaseImpl implements CreateCookUseCase {
@@ -12,10 +12,9 @@ export class CreateCookUseCaseImpl implements CreateCookUseCase {
         this.cookRepository = cookRepository;
     }
 
-    async execute(id: string | null, name: string | null): Promise<void> {
+    async execute(id: string | null): Promise<void> {
         const cookId = id ?? randomUUID();
-        const cookName = name ?? `cook-${cookId}`;
 
-        await this.cookRepository.createCook(cookId, cookName);
+        await this.cookRepository.createCook(cookId);
     }
 }
