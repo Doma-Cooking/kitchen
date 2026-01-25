@@ -2,15 +2,14 @@ import express from "express";
 import basicAuth from "express-basic-auth";
 import { Configuration } from "./config/configuration.js";
 import { setupBoard } from "./board/setupBoard.js";
+import healthRoutes from "./routes/healthRoutes.js";
 
 const config = new Configuration();
 const serverAdapter = setupBoard(config);
 
 const app = express();
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+app.use("/health", healthRoutes);
 
 app.use(
   basicAuth({
