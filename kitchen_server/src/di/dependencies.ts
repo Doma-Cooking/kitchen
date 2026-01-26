@@ -80,7 +80,7 @@ export class Dependencies {
 
         this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
         this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.orderSource);
-        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.orderSource, this.stationRepository);
+        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.orderSource);
 
         this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository, this.stationRepository, this.cookRepository);
         this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);

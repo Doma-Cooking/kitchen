@@ -1,16 +1,4 @@
-import { StationModel } from 'kitchen_station';
-
-export type CookMessageModel = CookStatusMessageModel | CookStationMessageModel;
-
-export interface CookStatusMessageModel {
-    [key: string]: string | Date;
-    type: 'status';
+export interface CookMessageModel {
     message: string;
-    timestamp: Date;
-}
-
-export interface CookStationMessageModel {
-    type: 'station';
-    station: StationModel;
     timestamp: Date;
 }

@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { CookMessageModel } from '../../model/cookMessageModel.js';
-import { TaskModel } from '../../model/taskModel.js';
+import { OrderModel } from '../../model/orderModel.js';
 
 export interface CookSource {
-    executeOrder(task: TaskModel, signal: AbortSignal | undefined): Observable<CookMessageModel>;
+    executeOrder(order: OrderModel, signal: AbortSignal | undefined): Observable<CookMessageModel>;
 }
