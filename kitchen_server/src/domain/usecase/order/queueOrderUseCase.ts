@@ -1,5 +1,5 @@
 import { CookRepository } from '../../repository/cookRepository.js';
-import { StationRepository } from '../../repository/stationRepository.js';
+import { StationRepository } from 'kitchen_station';
 import { OrderRepository } from '../../repository/orderRepository.js';
 import { randomUUID } from 'crypto';
 

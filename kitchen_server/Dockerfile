@@ -1,22 +1,47 @@
 # Base image
 FROM node:22-slim AS base
-WORKDIR /server
+WORKDIR /app
 
 # Install all dependencies
 FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
+# Copy local packages first
+COPY kitchen_database/package.json kitchen_database/package-lock.json ./kitchen_database/
+COPY kitchen_station/package.json kitchen_station/package-lock.json ./kitchen_station/
+COPY kitchen_server/package.json kitchen_server/package-lock.json ./kitchen_server/
+
+# Build local packages
+COPY kitchen_database/tsconfig.json ./kitchen_database/
+COPY kitchen_database/src ./kitchen_database/src
+RUN cd kitchen_database && npm ci && npm run build
+
+COPY kitchen_station/tsconfig.json ./kitchen_station/
+COPY kitchen_station/src ./kitchen_station/src
+RUN cd kitchen_station && npm ci && npm run build
+
+# Install server dependencies
+RUN cd kitchen_server && npm ci
 
 # Build TypeScript
 FROM deps AS build
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build
+COPY kitchen_server/tsconfig.json ./kitchen_server/
+COPY kitchen_server/src ./kitchen_server/src
+RUN cd kitchen_server && npm run build
 
 # Production dependencies only
 FROM base AS prod-deps
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+COPY kitchen_database/package.json kitchen_database/package-lock.json ./kitchen_database/
+COPY kitchen_station/package.json kitchen_station/package-lock.json ./kitchen_station/
+COPY kitchen_server/package.json kitchen_server/package-lock.json ./kitchen_server/
+
+COPY kitchen_database/tsconfig.json ./kitchen_database/
+COPY kitchen_database/src ./kitchen_database/src
+RUN cd kitchen_database && npm ci --omit=dev && npm run build
+
+COPY kitchen_station/tsconfig.json ./kitchen_station/
+COPY kitchen_station/src ./kitchen_station/src
+RUN cd kitchen_station && npm ci --omit=dev && npm run build
+
+RUN cd kitchen_server && npm ci --omit=dev
 
 # Production image
 FROM node:22-slim AS production
@@ -27,9 +52,11 @@ RUN groupadd --gid 1001 kitchen && \
     useradd --uid 1001 --gid kitchen --shell /bin/bash --create-home kitchen
 
 # Copy production dependencies and built files
-COPY --from=prod-deps /server/node_modules ./node_modules
-COPY --from=build /server/dist ./dist
-COPY package.json ./
+COPY --from=prod-deps /app/kitchen_database ./node_modules/kitchen_database
+COPY --from=prod-deps /app/kitchen_station ./node_modules/kitchen_station
+COPY --from=prod-deps /app/kitchen_server/node_modules ./node_modules
+COPY --from=build /app/kitchen_server/dist ./dist
+COPY kitchen_server/package.json ./
 
 # Set ownership
 RUN chown -R kitchen:kitchen /server
@@ -48,10 +75,7 @@ CMD ["node", "dist/server.js"]
 
 # Development image
 FROM deps AS development
-WORKDIR /server
-
-COPY tsconfig.json ./
-COPY src ./src
+WORKDIR /app/kitchen_server
 
 ENV NODE_ENV=development
 ENV PORT=3000

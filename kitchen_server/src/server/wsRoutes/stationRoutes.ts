@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 import { dependencies } from '../../server.js';
-import { StationEntity } from '../../domain/entity/stationEntity.js';
+import { StationEntity } from 'kitchen_station';
 import { createMessage } from '../wsServer.js';
 
 export function watchStations(ws: WebSocket): void {

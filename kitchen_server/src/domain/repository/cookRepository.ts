@@ -1,7 +1,6 @@
 import { concatMap, lastValueFrom } from 'rxjs';
-import { toStationEntity, toStationModel } from '../entity/stationEntity.js';
+import { toStationEntity, toStationModel, StationRepository } from 'kitchen_station';
 import { CookSource } from '../../data/source/cook/cookSource.js';
-import { StationRepository } from './stationRepository.js';
 import { OrderSource } from '../../data/source/order/orderSource.js';
 import { TaskModel } from '../../data/model/taskModel.js';
 
@@ -28,9 +27,7 @@ export class CookRepositoryImpl implements CookRepository {
         await this.orderSource.createCook(
             id,
             async (order, signal) => {
-                const station = order.stationId
-                    ? (await this.stationRepository.getStationById(order.stationId)) ?? (await this.stationRepository.createStation(order.stationId))
-                    : null;
+                const station = order.stationId ? (await this.stationRepository.getStationById(order.stationId)) ?? (await this.stationRepository.createStation(order.stationId)) : null;
                 const task: TaskModel = { order: order, station: station ? toStationModel(station) : null };
                 const observable = this.cookSource.executeOrder(task, signal);
 

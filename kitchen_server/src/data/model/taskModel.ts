@@ -1,5 +1,5 @@
 import { OrderModel } from './orderModel.js';
-import { StationModel } from './stationModel.js';
+import { StationModel } from 'kitchen_station';
 
 export interface TaskModel {
     order: OrderModel,

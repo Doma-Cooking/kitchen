@@ -1,21 +1,15 @@
 import { Observable, from, startWith, switchMap } from 'rxjs';
-import { StationModel } from '../../model/stationModel.js';
+import { StationModel } from '../model/stationModel.js';
 import { StationSource } from './stationSource.js';
-import { PostgresDb } from '../../../db/postgres/postgresDb.js';
+import { PostgresDb } from 'kitchen_database';
 
 interface StationRow {
-    id: string;
     context_bytes: Buffer;
-    created_at: Date;
-    updated_at: Date;
 }
 
 function rowToModel(row: StationRow): StationModel {
     return {
-        id: row.id,
-        contextBytes: new Uint8Array(row.context_bytes),
-        createdAt: row.created_at.toISOString(),
-        updatedAt: row.updated_at.toISOString()
+        contextBytes: new Uint8Array(row.context_bytes)
     };
 }
 
@@ -52,11 +46,11 @@ export class PostgresStationSource implements StationSource {
         return rowToModel(row);
     }
 
-    async updateStation(station: StationModel): Promise<void> {
+    async updateStation(stationId: string, station: StationModel): Promise<void> {
         const sql = this.db.sql;
         const contextBuffer = Buffer.from(station.contextBytes);
         await sql`
-            UPDATE stations SET context_bytes = ${contextBuffer} WHERE id = ${station.id}
+            UPDATE stations SET context_bytes = ${contextBuffer} WHERE id = ${stationId}
         `;
     }
 

@@ -1,5 +1,5 @@
 import { CookMessageModel, CookStationMessageModel, CookStatusMessageModel } from '../../data/model/cookMessageModel.js';
-import { StationEntity, toStationEntity, toStationModel } from './stationEntity.js';
+import { StationEntity, toStationEntity, toStationModel } from 'kitchen_station';
 
 export type CookMessageEntity = CookStatusMessageEntity | CookStationMessageEntity;
 

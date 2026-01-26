@@ -1,4 +1,4 @@
-import { StationModel } from './stationModel.js';
+import { StationModel } from 'kitchen_station';
 
 export type CookMessageModel = CookStatusMessageModel | CookStationMessageModel;
 

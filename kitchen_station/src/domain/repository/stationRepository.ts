@@ -1,11 +1,11 @@
 import { map, Observable } from 'rxjs';
-import { StationSource } from '../../data/source/station/stationSource.js';
+import { StationSource } from '../../data/source/stationSource.js';
 import { StationEntity, toStationEntity, toStationModel } from '../entity/stationEntity.js';
 
 export interface StationRepository {
     createStation(stationId: string): Promise<StationEntity>;
     getStationById(stationId: string): Promise<StationEntity | null>;
-    updateStation(station: StationEntity): Promise<void>;
+    updateStation(stationId: string, station: StationEntity): Promise<void>;
     deleteStation(stationId: string): Promise<void>;
     watchAll(): Observable<StationEntity[]>;
 }
@@ -27,8 +27,8 @@ export class StationRepositoryImpl implements StationRepository {
         return model ? toStationEntity(model) : null;
     }
 
-    async updateStation(station: StationEntity): Promise<void> {
-        await this.source.updateStation(toStationModel(station));
+    async updateStation(stationId: string, station: StationEntity): Promise<void> {
+        await this.source.updateStation(stationId, toStationModel(station));
     }
 
     async deleteStation(stationId: string): Promise<void> {
