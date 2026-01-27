@@ -1,4 +1,4 @@
-import { OrderSource } from '../../data/source/order/orderSource.js';
+import { QueueSource } from '../../data/source/queue/queueSource.js';
 import { OrderEntity, toOrderEntity, toOrderModel } from '../entity/orderEntity.js';
 import { map, Observable } from 'rxjs';
 
@@ -10,9 +10,9 @@ export interface OrderRepository {
 }
 
 export class OrderRepositoryImpl implements OrderRepository {
-    private source: OrderSource;
+    private source: QueueSource;
 
-    constructor(source: OrderSource) {
+    constructor(source: QueueSource) {
         this.source = source;
     }
 

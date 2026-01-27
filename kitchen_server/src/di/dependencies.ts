@@ -1,7 +1,7 @@
 import { CookSource } from '../data/source/cook/cookSource.js';
 import { MockCookSource } from '../data/source/cook/mockCookSource.js';
 import { PostgresDb } from 'kitchen_database';
-import { OrderSource } from '../data/source/order/orderSource.js';
+import { QueueSource } from '../data/source/queue/queueSource.js';
 import { CookRepository, CookRepositoryImpl } from '../domain/repository/cookRepository.js';
 import { OrderRepository, OrderRepositoryImpl } from '../domain/repository/orderRepository.js';
 import {
@@ -17,7 +17,7 @@ import {
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
-import { BullOrderSource } from '../data/source/order/bullOrderSource.js';
+import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
 import { OrderModel } from '../data/model/orderModel.js';
 import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/order/watchOrdersUseCase.js';
 import { Configuration, EnvConfiguration } from './configuration.js';
@@ -33,7 +33,7 @@ export class Dependencies {
     postgresDb: PostgresDb;
 
     stationSource: StationSource;
-    orderSource: OrderSource;
+    queueSource: QueueSource;
     cookSource: CookSource;
 
     stationRepository: StationRepository;
@@ -54,7 +54,7 @@ export class Dependencies {
         queueEvents: QueueEvents | null = null,
         postgresDb: PostgresDb | null = null,
         stationSource: PostgresStationSource | null = null,
-        orderSource: BullOrderSource | null = null,
+        queueSource: BullQueueSource | null = null,
         cookSource: CookSource | null = null,
         stationRepository: StationRepository | null = null,
         orderRepository: OrderRepository | null = null,
@@ -75,12 +75,12 @@ export class Dependencies {
         this.postgresDb = postgresDb ?? new PostgresDb(`postgres://${this.config.dbUser}:${this.config.dbPassword}@${this.config.dbHost}:${this.config.dbPort.toString()}/${this.config.dbName}`);
 
         this.stationSource = stationSource ?? new PostgresStationSource(this.postgresDb);
-        this.orderSource = orderSource ?? new BullOrderSource(this.queue, this.queueEvents, this.redis);
+        this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis);
         this.cookSource = cookSource ?? new MockCookSource();
 
         this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
-        this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.orderSource);
-        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.orderSource);
+        this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);
+        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.queueSource);
 
         this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository, this.stationRepository, this.cookRepository);
         this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);

@@ -1,11 +1,11 @@
 import { Queue, QueueEvents, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { OrderModel } from '../../model/orderModel.js';
-import { OrderSource } from './orderSource.js';
+import { QueueSource } from './queueSource.js';
 import { CookMessageModel } from '../../model/cookMessageModel.js';
 import { concatMap, Observable } from 'rxjs';
 
-export class BullOrderSource implements OrderSource {
+export class BullQueueSource implements QueueSource {
     private queue: Queue<OrderModel, void>;
     private queueEvents: QueueEvents;
     private connection: Redis
