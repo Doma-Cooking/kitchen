@@ -1,14 +1,14 @@
 import { createServer } from 'http';
 import { Dependencies } from './di/dependencies.js';
-import httpServer from './server/httpServer.js';
 import { setupWsServer } from './server/wsServer.js';
+import createHttpServer from './server/httpServer.js';
 
 export const dependencies = new Dependencies();
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 const HOST = '0.0.0.0';
 
-const server = createServer(httpServer);
+const server = createServer(createHttpServer());
 setupWsServer(server);
 
 async function start() {

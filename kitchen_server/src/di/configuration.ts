@@ -7,6 +7,7 @@ export interface Configuration {
     dbPassword: string;
     dbName: string;
     queueName: string;
+    githubWebhookSecret: string;
 }
 
 export class EnvConfiguration implements Configuration {
@@ -18,4 +19,5 @@ export class EnvConfiguration implements Configuration {
     readonly dbPassword = process.env.DB_PASSWORD ?? 'kitchen';
     readonly dbName = process.env.DB_NAME ?? 'kitchen';
     readonly queueName = process.env.KITCHEN_QUEUE_NAME ?? 'kitchenQueue';
+    readonly githubWebhookSecret = process.env.GITHUB_WEBHOOK_SECRET ?? '';
 }

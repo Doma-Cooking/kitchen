@@ -46,6 +46,7 @@ services:
       - DB_PASSWORD=kitchen
       - DB_NAME=kitchen
       - KITCHEN_QUEUE_NAME=kitchenQueue
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
