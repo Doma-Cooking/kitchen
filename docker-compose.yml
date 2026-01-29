@@ -52,6 +52,7 @@ services:
       - GITHUB_INSTALLATION_ID=${GITHUB_INSTALLATION_ID}
       - REPO_URL=${REPO_URL}
       - CLONE_PATH=${CLONE_PATH}
+      - MAIN_BRANCH=${MAIN_BRANCH}
     depends_on:
       postgres:
         condition: service_healthy
