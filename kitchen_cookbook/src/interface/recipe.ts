@@ -1,6 +1,6 @@
 import { Step } from "./step.js";
 
-const recipeInputKey = "recipeInitialInput";
+export const recipeInputKey = "recipeInitialInput";
 
 export class Recipe<I extends object, O extends object> {
     id: string;

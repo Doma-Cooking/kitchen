@@ -1,13 +1,14 @@
-import { execFile } from "node:child_process";
 import { access } from "node:fs/promises";
 import { Task } from "../../../interface/task.js";
+import { execTask } from "./execTask.js";
 
 export interface CloneTaskInput {
     token?: string;
+    path?: string;
 }
 
 export interface CloneTaskOutput {
-    alreadyExisted: boolean;
+    repoPath: string;
 }
 
 export const cloneTask: Task<CloneTaskInput, CloneTaskOutput> = {
@@ -16,20 +17,21 @@ export const cloneTask: Task<CloneTaskInput, CloneTaskOutput> = {
         if (!repoUrl) {
             throw new Error("REPO_URL environment variable is not set");
         }
-        const clonePath = process.env.CLONE_PATH;
-        if (!clonePath) {
-            throw new Error("CLONE_PATH environment variable is not set");
+
+        const repoPath = input.path ?? process.env.CLONE_PATH;
+        if (!repoPath) {
+            throw new Error("No path provided and CLONE_PATH environment variable is not set");
         }
 
         try {
-            await access(clonePath);
-            sendMessage(`Repository already exists at ${clonePath}`);
-            return { alreadyExisted: true };
+            await access(repoPath);
+            sendMessage(`Repository already exists at ${repoPath}`);
+            return { repoPath };
         } catch {
             // Directory does not exist, proceed with clone
         }
 
-        sendMessage(`Cloning repository to ${clonePath}`);
+        sendMessage(`Cloning repository to ${repoPath}`);
 
         let cloneUrl = repoUrl;
         if (input.token) {
@@ -39,22 +41,9 @@ export const cloneTask: Task<CloneTaskInput, CloneTaskOutput> = {
             cloneUrl = url.toString();
         }
 
-        await new Promise<void>((resolve, reject) => {
-            const child = execFile("git", ["clone", cloneUrl, clonePath], (error) => {
-                if (error) {
-                    reject(error as Error);
-                } else {
-                    resolve();
-                }
-            });
+        await execTask.execute({ command: "git", args: ["clone", cloneUrl, repoPath] }, sendMessage, signal);
 
-            signal?.addEventListener("abort", () => {
-                child.kill();
-                reject(new Error("Clone aborted", { cause: signal.reason }));
-            });
-        });
-
-        sendMessage(`Successfully cloned repository to ${clonePath}`);
-        return { alreadyExisted: false };
+        sendMessage(`Successfully cloned repository to ${repoPath}`);
+        return { repoPath };
     }
 };
