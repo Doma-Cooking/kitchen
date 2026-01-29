@@ -47,6 +47,11 @@ services:
       - DB_NAME=kitchen
       - KITCHEN_QUEUE_NAME=kitchenQueue
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
+      - GITHUB_INSTALLATION_ID=${GITHUB_INSTALLATION_ID}
+      - REPO_URL=${REPO_URL}
+      - CLONE_PATH=${CLONE_PATH}
     depends_on:
       postgres:
         condition: service_healthy

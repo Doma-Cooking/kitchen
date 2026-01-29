@@ -23,8 +23,8 @@ import { Configuration, EnvConfiguration } from './configuration.js';
 import { DeleteOrderUseCase, DeleteOrderUseCaseImpl } from '../domain/usecase/order/deleteOrderUseCase.js';
 import { CreateCookUseCase, CreateCookUseCaseImpl } from '../domain/usecase/cook/createCookUseCase.js';
 import { Cookbook } from '../../../kitchen_cookbook/dist/interface/cookbook.js';
-import { mockCookbook } from 'kitchen_cookbook';
 import { CookbookCookSource } from '../data/source/cook/cookbookCookSource.js';
+import { domaCookbook } from 'kitchen_cookbook';
 
 export class Dependencies {
     config: Configuration;
@@ -71,7 +71,7 @@ export class Dependencies {
         createCookUseCase?: CreateCookUseCase
     ) {
         this.config = config ?? new EnvConfiguration();
-        this.cookbook = cookbook ?? mockCookbook;
+        this.cookbook = cookbook ?? domaCookbook;
 
         const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
         this.redis = redis ?? new Redis(redisConnection);

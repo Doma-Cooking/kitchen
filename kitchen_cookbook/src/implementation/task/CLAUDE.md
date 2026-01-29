@@ -1,0 +1,1 @@
+Use @kitchen_cookbook/src/implementation/recipe/mockRecipe.ts as an example for how a Task should be structured.

@@ -1,5 +1,6 @@
 # Base image
 FROM node:22-slim AS base
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Install all dependencies
@@ -57,7 +58,11 @@ RUN cd kitchen_server && npm ci --omit=dev
 FROM node:22-slim AS production
 WORKDIR /server
 
+# Install git for repository cloning
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
+
 RUN groupadd --gid 1001 kitchen && \
     useradd --uid 1001 --gid kitchen --shell /bin/bash --create-home kitchen
 
