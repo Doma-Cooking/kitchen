@@ -306,7 +306,7 @@ interface Comment {
 }
 
 interface LinkedIssues {
-  parent: Issue | null;
+  parent?: Issue;
   children: Issue[];
 }
 

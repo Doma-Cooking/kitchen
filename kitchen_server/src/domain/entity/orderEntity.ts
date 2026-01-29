@@ -3,9 +3,9 @@ import { OrderModel } from '../../data/model/orderModel.js';
 export interface OrderEntity {
     id: string;
     name: string;
-    input: string | null;
-    recipeId: string | null;
-    stationId: string | null;
+    input?: object;
+    recipeId: string;
+    stationId?: string;
 }
 
 export function toOrderEntity(model: OrderModel): OrderEntity {

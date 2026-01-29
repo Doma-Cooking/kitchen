@@ -7,6 +7,7 @@ FROM base AS deps
 # Copy local packages first
 COPY kitchen_database/package.json kitchen_database/package-lock.json ./kitchen_database/
 COPY kitchen_station/package.json kitchen_station/package-lock.json ./kitchen_station/
+COPY kitchen_cookbook/package.json kitchen_cookbook/package-lock.json ./kitchen_cookbook/
 COPY kitchen_server/package.json kitchen_server/package-lock.json ./kitchen_server/
 
 # Build local packages
@@ -17,6 +18,10 @@ RUN cd kitchen_database && npm ci && npm run build
 COPY kitchen_station/tsconfig.json ./kitchen_station/
 COPY kitchen_station/src ./kitchen_station/src
 RUN cd kitchen_station && npm ci && npm run build
+
+COPY kitchen_cookbook/tsconfig.json ./kitchen_cookbook/
+COPY kitchen_cookbook/src ./kitchen_cookbook/src
+RUN cd kitchen_cookbook && npm ci && npm run build
 
 # Install server dependencies
 RUN cd kitchen_server && npm ci
@@ -31,6 +36,7 @@ RUN cd kitchen_server && npm run build
 FROM base AS prod-deps
 COPY kitchen_database/package.json kitchen_database/package-lock.json ./kitchen_database/
 COPY kitchen_station/package.json kitchen_station/package-lock.json ./kitchen_station/
+COPY kitchen_cookbook/package.json kitchen_cookbook/package-lock.json ./kitchen_cookbook/
 COPY kitchen_server/package.json kitchen_server/package-lock.json ./kitchen_server/
 
 COPY kitchen_database/tsconfig.json ./kitchen_database/
@@ -40,6 +46,10 @@ RUN cd kitchen_database && npm ci --omit=dev && npm run build
 COPY kitchen_station/tsconfig.json ./kitchen_station/
 COPY kitchen_station/src ./kitchen_station/src
 RUN cd kitchen_station && npm ci --omit=dev && npm run build
+
+COPY kitchen_cookbook/tsconfig.json ./kitchen_cookbook/
+COPY kitchen_cookbook/src ./kitchen_cookbook/src
+RUN cd kitchen_cookbook && npm ci --omit=dev && npm run build
 
 RUN cd kitchen_server && npm ci --omit=dev
 
@@ -54,6 +64,7 @@ RUN groupadd --gid 1001 kitchen && \
 # Copy production dependencies and built files
 COPY --from=prod-deps /app/kitchen_database ./node_modules/kitchen_database
 COPY --from=prod-deps /app/kitchen_station ./node_modules/kitchen_station
+COPY --from=prod-deps /app/kitchen_cookbook ./node_modules/kitchen_cookbook
 COPY --from=prod-deps /app/kitchen_server/node_modules ./node_modules
 COPY --from=build /app/kitchen_server/dist ./dist
 COPY kitchen_server/package.json ./

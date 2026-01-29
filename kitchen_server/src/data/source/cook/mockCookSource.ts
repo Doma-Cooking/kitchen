@@ -4,7 +4,7 @@ import { CookSource } from './cookSource.js';
 import { OrderModel } from '../../model/orderModel.js';
 
 export class MockCookSource implements CookSource {
-    executeOrder(order: OrderModel, signal: AbortSignal | undefined): Observable<CookMessageModel> {
+    executeOrder(order: OrderModel, signal?: AbortSignal): Observable<CookMessageModel> {
         return new Observable(observer => {
             let currentTimeout: NodeJS.Timeout | null = null;
 

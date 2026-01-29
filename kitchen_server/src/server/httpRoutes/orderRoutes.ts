@@ -5,17 +5,22 @@ const router = Router();
 
 router.post('/queue', async (req, res) => {
     const args = req.body as Record<string, unknown>;
-    const id = args.id as string | null ?? null;
-    const name = args.name as string | null ?? null;
-    const input = args.input as string | null ?? null;
-    const recipeId = args.recipeId as string | null ?? null;
-    const stationId = args.stationId as string | null ?? null;
+    const id = args.id as string | undefined;
+    const name = args.name as string | undefined;
+    const input = args.input as object | undefined;
+    const recipeId = args.recipeId as string | undefined;
+    const stationId = args.stationId as string | undefined;
+
+    if (!recipeId) {
+        res.status(400).send("recipeId is required to queue an order");
+        return;
+    }
 
     await dependencies.queueOrderUseCase.execute(
+        recipeId,
         id,
         name,
         input,
-        recipeId,
         stationId
     );
     res.send(`Order queued with input: ${JSON.stringify(args)}`);

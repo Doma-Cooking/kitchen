@@ -21,9 +21,10 @@ export class ExecutableStep<I extends object, O extends object> {
 
     async execute(
         previousOutputs: Map<string, object>,
-        sendMessage: (message: string) => void
+        sendMessage: (message: string) => void,
+        signal?: AbortSignal
     ): Promise<O> {
         const input = this.mapInput(previousOutputs);
-        return this.task.execute(input, sendMessage);
+        return this.task.execute(input, sendMessage, signal);
     }
 }

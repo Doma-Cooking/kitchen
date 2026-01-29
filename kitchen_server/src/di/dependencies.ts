@@ -1,5 +1,4 @@
 import { CookSource } from '../data/source/cook/cookSource.js';
-import { MockCookSource } from '../data/source/cook/mockCookSource.js';
 import { PostgresDb } from 'kitchen_database';
 import { QueueSource } from '../data/source/queue/queueSource.js';
 import { CookRepository, CookRepositoryImpl } from '../domain/repository/cookRepository.js';
@@ -23,9 +22,13 @@ import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/or
 import { Configuration, EnvConfiguration } from './configuration.js';
 import { DeleteOrderUseCase, DeleteOrderUseCaseImpl } from '../domain/usecase/order/deleteOrderUseCase.js';
 import { CreateCookUseCase, CreateCookUseCaseImpl } from '../domain/usecase/cook/createCookUseCase.js';
+import { Cookbook } from '../../../kitchen_cookbook/dist/interface/cookbook.js';
+import { mockCookbook } from 'kitchen_cookbook';
+import { CookbookCookSource } from '../data/source/cook/cookbookCookSource.js';
 
 export class Dependencies {
     config: Configuration;
+    cookbook: Cookbook;
 
     redis: Redis;
     queue: Queue<OrderModel, void>;
@@ -48,25 +51,27 @@ export class Dependencies {
     createCookUseCase: CreateCookUseCase;
 
     constructor(
-        config: Configuration | null = null,
-        redis: Redis | null = null,
-        queue: Queue<OrderModel, void> | null = null,
-        queueEvents: QueueEvents | null = null,
-        postgresDb: PostgresDb | null = null,
-        stationSource: PostgresStationSource | null = null,
-        queueSource: BullQueueSource | null = null,
-        cookSource: CookSource | null = null,
-        stationRepository: StationRepository | null = null,
-        orderRepository: OrderRepository | null = null,
-        cookRepository: CookRepository | null = null,
-        queueOrderUseCase: QueueOrderUseCase | null = null,
-        deleteOrderUseCase: DeleteOrderUseCase | null = null,
-        cleanupStationUseCase: DeleteStationUseCase | null = null,
-        watchStationsUseCase: WatchStationsUseCase | null = null,
-        watchOrdersUseCase: WatchOrdersUseCase | null = null,
-        createCookUseCase: CreateCookUseCase | null = null
+        config?: Configuration,
+        cookbook?: Cookbook,
+        redis?: Redis,
+        queue?: Queue<OrderModel, void>,
+        queueEvents?: QueueEvents,
+        postgresDb?: PostgresDb,
+        stationSource?: PostgresStationSource,
+        queueSource?: BullQueueSource,
+        cookSource?: CookSource,
+        stationRepository?: StationRepository,
+        orderRepository?: OrderRepository,
+        cookRepository?: CookRepository,
+        queueOrderUseCase?: QueueOrderUseCase,
+        deleteOrderUseCase?: DeleteOrderUseCase,
+        cleanupStationUseCase?: DeleteStationUseCase,
+        watchStationsUseCase?: WatchStationsUseCase,
+        watchOrdersUseCase?: WatchOrdersUseCase,
+        createCookUseCase?: CreateCookUseCase
     ) {
         this.config = config ?? new EnvConfiguration();
+        this.cookbook = cookbook ?? mockCookbook;
 
         const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
         this.redis = redis ?? new Redis(redisConnection);
@@ -76,7 +81,7 @@ export class Dependencies {
 
         this.stationSource = stationSource ?? new PostgresStationSource(this.postgresDb);
         this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis);
-        this.cookSource = cookSource ?? new MockCookSource();
+        this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook);
 
         this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
         this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);

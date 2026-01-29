@@ -24,7 +24,7 @@ export class BullQueueSource implements QueueSource {
 
     async createCook(
         id: string,
-        execute: (order: OrderModel, signal: AbortSignal | undefined) => Promise<void>
+        execute: (order: OrderModel, signal?: AbortSignal) => Promise<void>
     ): Promise<void> {
         await Promise.resolve();
         this.workers.set(

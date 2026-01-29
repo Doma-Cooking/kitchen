@@ -53,6 +53,7 @@
     "@octokit/webhooks": "^14.2.0",
     "bullmq": "^5.66.5",
     "express": "^5.2.1",
+    "kitchen_cookbook": "file:../kitchen_cookbook",
     "kitchen_database": "file:../kitchen_database",
     "kitchen_station": "file:../kitchen_station",
     "rxjs": "^7.8.1",

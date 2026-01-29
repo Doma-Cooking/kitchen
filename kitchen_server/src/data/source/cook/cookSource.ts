@@ -3,5 +3,5 @@ import { CookMessageModel } from '../../model/cookMessageModel.js';
 import { OrderModel } from '../../model/orderModel.js';
 
 export interface CookSource {
-    executeOrder(order: OrderModel, signal: AbortSignal | undefined): Observable<CookMessageModel>;
+    executeOrder(order: OrderModel, signal?: AbortSignal): Observable<CookMessageModel>;
 }

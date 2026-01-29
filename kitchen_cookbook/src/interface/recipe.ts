@@ -17,10 +17,10 @@ export class Recipe<I extends object, O extends object> {
         this.mapOutput = mapOutput;
     }
 
-    async execute(input: I, sendMessage: (message: string) => void): Promise<O> {
+    async execute(input: I, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<O> {
         const inputs = new Map<string, object>();
         inputs.set(recipeInputKey, input);
-        const outputs = await this.executeStep(this.instructions, input, inputs, sendMessage);
+        const outputs = await this.executeStep(this.instructions, input, inputs, sendMessage, signal);
         return this.mapOutput(outputs);
     }
 
@@ -28,16 +28,18 @@ export class Recipe<I extends object, O extends object> {
         step: Step,
         input: I,
         outputs: Map<string, object>,
-        sendMessage: (message: string) => void
+        sendMessage: (message: string) => void,
+        signal?: AbortSignal
     ): Promise<Map<string, object>> {
+        signal?.throwIfAborted();
         let currentOutputs = new Map(outputs);
 
         if (Array.isArray(step)) {
             for (const subStep of step) {
-                currentOutputs = await this.executeStep(subStep, input, currentOutputs, sendMessage);
+                currentOutputs = await this.executeStep(subStep, input, currentOutputs, sendMessage, signal);
             }
         } else {
-            const output = await step.execute(currentOutputs, sendMessage);
+            const output = await step.execute(currentOutputs, sendMessage, signal);
             currentOutputs.set(step.id, output);
         }
 

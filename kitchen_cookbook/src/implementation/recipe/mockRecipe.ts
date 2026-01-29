@@ -17,7 +17,7 @@ export const mockRecipe = new Recipe<MockRecipeInput, MockRecipeOutput>(
             "mockStep1",
             mockTask,
             (previousOutputs: Map<string, object>) => {
-                const randFactor = Math.random() * 0.4 + 0.8; // Random factor between 0.8 and 1.2
+                const randFactor = Math.random() * 0.4 + 0.8;
 
                 return {
                     taskTimeMs: (previousOutputs.get("recipeInitialInput") as MockRecipeInput).stepTimeMs * randFactor,
@@ -29,7 +29,7 @@ export const mockRecipe = new Recipe<MockRecipeInput, MockRecipeOutput>(
             "mockStep2",
             mockTask,
             (previousOutputs: Map<string, object>) => {
-                const randFactor = Math.random() * 0.4 + 0.8; // Random factor between 0.8 and 1.2
+                const randFactor = Math.random() * 0.4 + 0.8;
 
                 return {
                     taskTimeMs: (previousOutputs.get("recipeInitialInput") as MockRecipeInput).stepTimeMs * randFactor,
@@ -41,7 +41,7 @@ export const mockRecipe = new Recipe<MockRecipeInput, MockRecipeOutput>(
             "mockStep3",
             mockTask,
             (previousOutputs: Map<string, object>) => {
-                const randFactor = Math.random() * 0.4 + 0.8; // Random factor between 0.8 and 1.2
+                const randFactor = Math.random() * 0.4 + 0.8;
 
                 return {
                     taskTimeMs: (previousOutputs.get("recipeInitialInput") as MockRecipeInput).stepTimeMs * randFactor,
@@ -52,7 +52,9 @@ export const mockRecipe = new Recipe<MockRecipeInput, MockRecipeOutput>(
     ],
     (previousOutputs: Map<string, object>) => {
         const step1Time = (previousOutputs.get("mockStep1") as MockTaskOutput).actualTimeMs;
-        const totalTime = step1Time;
+        const step2Time = (previousOutputs.get("mockStep2") as MockTaskOutput).actualTimeMs;
+        const step3Time = (previousOutputs.get("mockStep3") as MockTaskOutput).actualTimeMs;
+        const totalTime = step1Time + step2Time + step3Time;
         return { runtimeMs: totalTime };
     }
 )

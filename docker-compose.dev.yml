@@ -9,6 +9,7 @@ services:
       - ./kitchen_server/tsconfig.json:/app/kitchen_server/tsconfig.json:ro
       - ./kitchen_database/dist:/app/kitchen_database/dist:ro
       - ./kitchen_station/dist:/app/kitchen_station/dist:ro
+      - ./kitchen_cookbook/dist:/app/kitchen_cookbook/dist:ro
     environment:
       - NODE_ENV=development
 

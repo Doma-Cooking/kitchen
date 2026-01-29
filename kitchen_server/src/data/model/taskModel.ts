@@ -3,5 +3,5 @@ import { StationModel } from 'kitchen_station';
 
 export interface TaskModel {
     order: OrderModel,
-    station: StationModel | null
+    station?: StationModel
 };

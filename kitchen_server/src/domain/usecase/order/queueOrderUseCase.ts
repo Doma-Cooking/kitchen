@@ -5,11 +5,11 @@ import { randomUUID } from 'crypto';
 
 export interface QueueOrderUseCase {
     execute(
-        id: string | null,
-        name: string | null,
-        input: string | null,
-        recipeId: string | null,
-        stationId: string | null
+        recipeId: string,
+        orderId?: string,
+        name?: string,
+        input?: object,
+        stationId?: string
     ): Promise<void>;
 }
 
@@ -29,22 +29,22 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
     }
 
     async execute(
-        id: string | null,
-        name: string | null,
-        input: string | null,
-        recipeId: string | null,
-        stationId: string | null
+        recipeId: string,
+        orderId?: string,
+        name?: string,
+        input?: object,
+        stationId?: string
     ): Promise<void> {
         if (!input && !recipeId) {
             throw new Error("An order must have either an input or a recipe ID");
         }
 
-        const orderId = id ?? randomUUID();
-        const orderName = name ?? `order-${orderId}`;
+        const id = orderId ?? randomUUID();
+        const orderName = name ?? `order-${id}`;
 
         await this.orderRepository.queueOrder(
             {
-                id: orderId,
+                id: id,
                 name: orderName,
                 input: input,
                 recipeId: recipeId,
