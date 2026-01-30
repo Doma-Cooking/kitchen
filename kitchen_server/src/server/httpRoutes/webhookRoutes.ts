@@ -25,7 +25,7 @@ function createWebhookRoutes(): Router {
             `issue-${String(payload.issue.number)}-comment-${String(payload.comment.id)}`,
             payload.issue.title,
             payload.comment.body,
-            null,
+            undefined,
             `${payload.repository.owner.login}/${payload.repository.name}`
         );
     });
@@ -38,7 +38,7 @@ function createWebhookRoutes(): Router {
             `pr-${String(payload.pull_request.number)}-review-${String(payload.review.id)}`,
             payload.pull_request.title,
             payload.review.body ?? 'Changes requested',
-            'implementation',
+            {},
             `${payload.repository.owner.login}/${payload.repository.name}`
         );
     });
@@ -51,7 +51,7 @@ function createWebhookRoutes(): Router {
             `pr-${String(payload.pull_request.number)}-comment-${String(payload.comment.id)}`,
             payload.pull_request.title,
             `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`,
-            'implementation',
+            {},
             `${payload.repository.owner.login}/${payload.repository.name}`
         );
     });

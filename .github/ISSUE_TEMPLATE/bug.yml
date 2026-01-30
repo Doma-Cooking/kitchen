@@ -1,0 +1,83 @@
+name: "Bug Report"
+description: "Report a bug for AI-powered investigation and fix"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "Bug Description"
+      description: "What is happening vs. what should be happening?"
+      placeholder: "Describe the bug..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Ordered steps to trigger the bug."
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "What the correct behavior should be."
+      placeholder: "Describe what should happen instead..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "OS, browser, version, config, etc."
+      placeholder: "e.g. macOS 14, Chrome 120, Node 20..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: estimated-size
+    attributes:
+      label: "Estimated Size"
+      options:
+        - "Small (hours)"
+        - "Medium (days)"
+        - "Large (week+)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-context
+    attributes:
+      label: "Technical Context"
+      description: "Relevant files, systems, APIs, or dependencies the agent should be aware of."
+      placeholder: "Point toward relevant code, systems, or APIs..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: "Additional Notes"
+      description: "Screenshots, logs, error messages, or any other context."
+      placeholder: "Any additional context..."
+    validations:
+      required: false

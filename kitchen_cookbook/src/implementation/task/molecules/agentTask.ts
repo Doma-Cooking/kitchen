@@ -51,6 +51,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
                 allowDangerouslySkipPermissions: true,
                 abortController,
                 resume,
+                model: "claude-opus-4-5-20251101",
                 env: { ...process.env, ...gitEnv, ...ghEnv },
                 stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
             },

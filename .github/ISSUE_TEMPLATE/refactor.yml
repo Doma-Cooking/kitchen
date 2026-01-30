@@ -1,0 +1,80 @@
+name: "Refactor"
+description: "Propose a refactor for AI-powered planning and implementation"
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: current-state
+    attributes:
+      label: "Current State"
+      description: "What exists today and why it's problematic (tech debt, complexity, performance, etc.)."
+      placeholder: "Describe what exists and why it needs to change..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired-state
+    attributes:
+      label: "Desired State"
+      description: "What the code/system should look like after the refactor."
+      placeholder: "Describe the target state..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Motivation"
+      description: "Why now? What does this unblock or improve?"
+      placeholder: "Explain the motivation for this refactor..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: "Constraints"
+      description: "Must maintain backward compatibility? Migration needed? Feature flags?"
+      placeholder: "Any constraints to be aware of..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: estimated-size
+    attributes:
+      label: "Estimated Size"
+      options:
+        - "Small (hours)"
+        - "Medium (days)"
+        - "Large (week+)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-context
+    attributes:
+      label: "Technical Context"
+      description: "Relevant files, systems, APIs, or dependencies the agent should be aware of."
+      placeholder: "Point toward relevant code, systems, or APIs..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: "Additional Notes"
+      description: "Anything else - links, screenshots, prior art, constraints."
+      placeholder: "Any additional context..."
+    validations:
+      required: false
