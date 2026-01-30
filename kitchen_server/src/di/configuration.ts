@@ -8,6 +8,12 @@ export interface Configuration {
     dbName: string;
     queueName: string;
     githubWebhookSecret: string;
+    githubAppId: string;
+    githubPrivateKey: string;
+    githubInstallationId: string;
+    columnPlanning: string;
+    columnImplementing: string;
+    labelEnabled: string;
 }
 
 export class EnvConfiguration implements Configuration {
@@ -20,4 +26,10 @@ export class EnvConfiguration implements Configuration {
     readonly dbName = process.env.DB_NAME ?? 'kitchen';
     readonly queueName = process.env.KITCHEN_QUEUE_NAME ?? 'kitchenQueue';
     readonly githubWebhookSecret = process.env.GITHUB_WEBHOOK_SECRET ?? '';
+    readonly githubAppId = process.env.GITHUB_APP_ID ?? '';
+    readonly githubPrivateKey = process.env.GITHUB_PRIVATE_KEY ?? '';
+    readonly githubInstallationId = process.env.GITHUB_INSTALLATION_ID ?? '';
+    readonly columnPlanning = process.env.KITCHEN_COLUMN_PLANNING ?? 'Planning';
+    readonly columnImplementing = process.env.KITCHEN_COLUMN_IMPLEMENTING ?? 'Implementing';
+    readonly labelEnabled = process.env.KITCHEN_LABEL_ENABLED ?? 'agent:enabled';
 }

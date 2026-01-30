@@ -1,11 +1,15 @@
 import { CookSource } from '../data/source/cook/cookSource.js';
 import { QueueSource } from '../data/source/queue/queueSource.js';
+import { GithubSource } from '../data/source/github/githubSource.js';
 import { CookRepository, CookRepositoryImpl } from '../domain/repository/cookRepository.js';
 import { OrderRepository, OrderRepositoryImpl } from '../domain/repository/orderRepository.js';
+import { GithubRepository, GithubRepositoryImpl } from '../domain/repository/githubRepository.js';
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
+import { ResolveProjectItemUseCase, ResolveProjectItemUseCaseImpl } from '../domain/usecase/github/resolveProjectItemUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
 import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
+import { GraphqlGithubSource } from '../data/source/github/graphqlGithubSource.js';
 import { OrderModel } from '../data/model/orderModel.js';
 import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/order/watchOrdersUseCase.js';
 import { Configuration, EnvConfiguration } from './configuration.js';
@@ -25,14 +29,17 @@ export class Dependencies {
 
     queueSource: QueueSource;
     cookSource: CookSource;
+    githubSource: GithubSource;
 
     orderRepository: OrderRepository;
     cookRepository: CookRepository;
+    githubRepository: GithubRepository;
 
     queueOrderUseCase: QueueOrderUseCase;
     deleteOrderUseCase: DeleteOrderUseCase;
     watchOrdersUseCase: WatchOrdersUseCase;
     createCookUseCase: CreateCookUseCase;
+    resolveProjectItemUseCase: ResolveProjectItemUseCase;
 
     constructor(
         config?: Configuration,
@@ -42,12 +49,15 @@ export class Dependencies {
         queueEvents?: QueueEvents,
         queueSource?: BullQueueSource,
         cookSource?: CookSource,
+        githubSource?: GithubSource,
         orderRepository?: OrderRepository,
         cookRepository?: CookRepository,
+        githubRepository?: GithubRepository,
         queueOrderUseCase?: QueueOrderUseCase,
         deleteOrderUseCase?: DeleteOrderUseCase,
         watchOrdersUseCase?: WatchOrdersUseCase,
-        createCookUseCase?: CreateCookUseCase
+        createCookUseCase?: CreateCookUseCase,
+        resolveProjectItemUseCase?: ResolveProjectItemUseCase
     ) {
         this.config = config ?? new EnvConfiguration();
         this.cookbook = cookbook ?? domaCookbook;
@@ -59,14 +69,24 @@ export class Dependencies {
 
         this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis);
         this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook);
+        this.githubSource = githubSource ?? new GraphqlGithubSource(
+            this.config.githubAppId,
+            this.config.githubPrivateKey,
+            this.config.githubInstallationId
+        );
 
         this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);
         this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.queueSource);
+        this.githubRepository = githubRepository ?? new GithubRepositoryImpl(this.githubSource);
 
         this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
         this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
         this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
         this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
+        this.resolveProjectItemUseCase = resolveProjectItemUseCase ?? new ResolveProjectItemUseCaseImpl(
+            this.githubRepository,
+            this.config.labelEnabled
+        );
     }
 
     async close(): Promise<void> {

@@ -9,6 +9,8 @@ const recipeId = "beginPlanningRecipe";
 
 export interface BeginPlanningRecipeInput {
     issueId: string;
+    issueTitle?: string;
+    repo?: string;
 }
 
 export type BeginPlanningRecipeOutput = object;
@@ -35,6 +37,11 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
                     workingDirectory: setupOutput.worktreePath,
                     stationId: stationId(recipeId, recipeInput.issueId),
                     token: setupOutput.token,
+                    context: {
+                        issue_number: recipeInput.issueId,
+                        issue_title: recipeInput.issueTitle ?? '',
+                        repo: recipeInput.repo ?? '',
+                    },
                 };
             }
         ),

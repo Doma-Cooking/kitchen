@@ -9,6 +9,7 @@ export interface AgentTaskInput {
     workingDirectory: string;
     station?: StationEntity;
     token?: string;
+    context?: Record<string, string>;
 }
 
 export interface AgentTaskOutput {
@@ -31,7 +32,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
         let sessionId: string | undefined;
 
         await agentConfigTask.execute({}, sendMessage, signal);
-        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId }, sendMessage, signal);
+        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId, context: input.context }, sendMessage, signal);
 
         const appId = process.env.GITHUB_APP_ID;
         const appSlug = process.env.GITHUB_APP_SLUG;

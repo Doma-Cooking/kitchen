@@ -10,11 +10,30 @@ function createWebhookRoutes(): Router {
     });
 
     // Project board column moves
-    webhooks.on('projects_v2_item.edited', ({ payload }) => {
-        // Queue order for planning/implementation based on column
-        // The payload contains information about the project item movement
-        // Implementation depends on how columns are configured
-        console.log('Project item edited:', payload.projects_v2_item.id);
+    webhooks.on('projects_v2_item.edited', async ({ payload }) => {
+        const fieldChange = payload.changes?.field_value;
+        if (fieldChange?.field_name !== 'Status') return;
+        if (payload.projects_v2_item.content_type !== 'Issue') return;
+
+        const contentNodeId = payload.projects_v2_item.content_node_id;
+        const itemNodeId = payload.projects_v2_item.node_id;
+        if (!contentNodeId || !itemNodeId) return;
+
+        const item = await dependencies.resolveProjectItemUseCase.execute(
+            contentNodeId,
+            itemNodeId
+        );
+        if (!item) return;
+
+        if (item.column === dependencies.config.columnPlanning) {
+            await dependencies.queueOrderUseCase.execute(
+                'domaBeginPlanningRecipe',
+                `planning-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
+                `Initial Planning: ${item.repo}#${String(item.number)}`,
+                { issueId: String(item.number), issueTitle: item.title, repo: item.repo },
+                `planning-${item.repo}-${String(item.number)}`
+            );
+        }
     });
 
     // Issue comments (user feedback)

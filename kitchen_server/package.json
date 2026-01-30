@@ -50,6 +50,8 @@
     "typescript-eslint": "^8.21.0"
   },
   "dependencies": {
+    "@octokit/auth-app": "^7.2.2",
+    "@octokit/graphql": "^8.2.2",
     "@octokit/webhooks": "^14.2.0",
     "bullmq": "^5.66.5",
     "express": "^5.2.1",

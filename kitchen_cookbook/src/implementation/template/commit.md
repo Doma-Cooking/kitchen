@@ -1,0 +1,1 @@
+#{issue-number}: {brief description of changes, do NOT include Claude Code attribution}
