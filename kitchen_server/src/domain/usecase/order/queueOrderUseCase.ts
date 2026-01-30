@@ -1,5 +1,3 @@
-import { CookRepository } from '../../repository/cookRepository.js';
-import { StationRepository } from 'kitchen_station';
 import { OrderRepository } from '../../repository/orderRepository.js';
 import { randomUUID } from 'crypto';
 
@@ -15,17 +13,9 @@ export interface QueueOrderUseCase {
 
 export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
     orderRepository: OrderRepository;
-    stationRepository: StationRepository;
-    cookRepository: CookRepository;
 
-    constructor(
-        orderRepository: OrderRepository,
-        stationRepository: StationRepository,
-        cookRepository: CookRepository
-    ) {
+    constructor(orderRepository: OrderRepository) {
         this.orderRepository = orderRepository;
-        this.stationRepository = stationRepository;
-        this.cookRepository = cookRepository;
     }
 
     async execute(

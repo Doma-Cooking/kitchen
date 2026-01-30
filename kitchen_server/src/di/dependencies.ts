@@ -1,18 +1,7 @@
 import { CookSource } from '../data/source/cook/cookSource.js';
-import { PostgresDb } from 'kitchen_database';
 import { QueueSource } from '../data/source/queue/queueSource.js';
 import { CookRepository, CookRepositoryImpl } from '../domain/repository/cookRepository.js';
 import { OrderRepository, OrderRepositoryImpl } from '../domain/repository/orderRepository.js';
-import {
-    StationSource,
-    PostgresStationSource,
-    StationRepository,
-    StationRepositoryImpl,
-    DeleteStationUseCase,
-    DeleteStationUseCaseImpl,
-    WatchStationsUseCase,
-    WatchStationsUseCaseImpl,
-} from 'kitchen_station';
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
@@ -33,20 +22,15 @@ export class Dependencies {
     redis: Redis;
     queue: Queue<OrderModel, void>;
     queueEvents: QueueEvents;
-    postgresDb: PostgresDb;
 
-    stationSource: StationSource;
     queueSource: QueueSource;
     cookSource: CookSource;
 
-    stationRepository: StationRepository;
     orderRepository: OrderRepository;
     cookRepository: CookRepository;
 
     queueOrderUseCase: QueueOrderUseCase;
     deleteOrderUseCase: DeleteOrderUseCase;
-    cleanupStationUseCase: DeleteStationUseCase;
-    watchStationsUseCase: WatchStationsUseCase;
     watchOrdersUseCase: WatchOrdersUseCase;
     createCookUseCase: CreateCookUseCase;
 
@@ -56,17 +40,12 @@ export class Dependencies {
         redis?: Redis,
         queue?: Queue<OrderModel, void>,
         queueEvents?: QueueEvents,
-        postgresDb?: PostgresDb,
-        stationSource?: PostgresStationSource,
         queueSource?: BullQueueSource,
         cookSource?: CookSource,
-        stationRepository?: StationRepository,
         orderRepository?: OrderRepository,
         cookRepository?: CookRepository,
         queueOrderUseCase?: QueueOrderUseCase,
         deleteOrderUseCase?: DeleteOrderUseCase,
-        cleanupStationUseCase?: DeleteStationUseCase,
-        watchStationsUseCase?: WatchStationsUseCase,
         watchOrdersUseCase?: WatchOrdersUseCase,
         createCookUseCase?: CreateCookUseCase
     ) {
@@ -77,20 +56,15 @@ export class Dependencies {
         this.redis = redis ?? new Redis(redisConnection);
         this.queue = queue ?? new Queue<OrderModel, void>(this.config.queueName, { connection: redisConnection });
         this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
-        this.postgresDb = postgresDb ?? new PostgresDb(`postgres://${this.config.dbUser}:${this.config.dbPassword}@${this.config.dbHost}:${this.config.dbPort.toString()}/${this.config.dbName}`);
 
-        this.stationSource = stationSource ?? new PostgresStationSource(this.postgresDb);
         this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis);
         this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook);
 
-        this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
         this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);
         this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.queueSource);
 
-        this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository, this.stationRepository, this.cookRepository);
+        this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
         this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
-        this.cleanupStationUseCase = cleanupStationUseCase ?? new DeleteStationUseCaseImpl(this.stationRepository);
-        this.watchStationsUseCase = watchStationsUseCase ?? new WatchStationsUseCaseImpl(this.stationRepository);
         this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
         this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
     }
@@ -99,8 +73,7 @@ export class Dependencies {
         this.redis.disconnect();
 
         await Promise.all([
-            this.postgresDb.close(),
-            this.queue.close(),
+            this.queue.close()
         ]);
     }
 }

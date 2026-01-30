@@ -46,7 +46,9 @@
     "typescript-eslint": "^8.21.0"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.25",
     "@octokit/auth-app": "^7.0.0",
+    "kitchen_station": "file:../kitchen_station",
     "zod": "^4.3.6"
   }
 }

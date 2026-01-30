@@ -5,7 +5,7 @@ const router = Router();
 
 router.delete('/:id', async (req, res) => {
     const id = req.params.id;
-    await dependencies.cleanupStationUseCase.execute(id);
+    await dependencies.station.deleteStationUseCase.execute(id);
     res.send(`Deleted station with ID: ${id}`);
 });
 
