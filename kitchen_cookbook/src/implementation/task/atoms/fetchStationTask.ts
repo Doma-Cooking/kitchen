@@ -7,7 +7,7 @@ export interface FetchStationTaskInput {
 
 export interface FetchStationTaskOutput {
     stationId: string;
-    station: StationEntity;
+    station?: StationEntity;
 }
 
 export const fetchStationTask: Task<FetchStationTaskInput, FetchStationTaskOutput> = {
@@ -16,15 +16,8 @@ export const fetchStationTask: Task<FetchStationTaskInput, FetchStationTaskOutpu
             throw new Error("No station ID provided, station fetch failed");
         }
 
-        const station = await stationDependencies.getStationByIdUseCase.execute(input.stationId);
-
-        if (station) {
-            sendMessage(`Fetched existing station ${input.stationId}`);
-            return { stationId: input.stationId, station: station };
-        }
-
-        const created = await stationDependencies.createStationUseCase.execute(input.stationId);
-        sendMessage(`Created new station ${input.stationId}`);
-        return { stationId: input.stationId, station: created };
+        const station = await stationDependencies.getStationByIdUseCase.execute(input.stationId) ?? undefined;
+        sendMessage(`Fetched station ${input.stationId}`);
+        return { stationId: input.stationId, station: station };
     }
 }

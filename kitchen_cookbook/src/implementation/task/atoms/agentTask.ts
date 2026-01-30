@@ -8,7 +8,9 @@ export interface AgentTaskInput {
     station?: StationEntity;
 }
 
-export type AgentTaskOutput = object;
+export interface AgentTaskOutput {
+    station?: StationEntity;
+}
 
 export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
     async execute(input: AgentTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<AgentTaskOutput> {
@@ -19,6 +21,12 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
             abortController.abort(signal.reason);
         });
 
+        const resume = input.station
+            ? new TextDecoder().decode(input.station.contextBytes)
+            : undefined;
+
+        let sessionId: string | undefined;
+
         for await (const message of query({
             prompt: input.prompt,
             options: {
@@ -26,18 +34,27 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
                 permissionMode: "bypassPermissions",
                 allowDangerouslySkipPermissions: true,
                 abortController,
+                resume,
             },
         })) {
+            sessionId = extractSessionId(message) ?? sessionId;
             handleMessage(message, sendMessage);
         }
 
-        return {};
+        return !sessionId ? {} : { station: { contextBytes: new TextEncoder().encode(sessionId) } };
     }
 };
 
 interface ContentBlock {
     type: string;
     text?: string;
+}
+
+function extractSessionId(message: SDKMessage): string | undefined {
+    if ("session_id" in message && typeof message.session_id === "string") {
+        return message.session_id;
+    }
+    return undefined;
 }
 
 function handleMessage(message: SDKMessage, sendMessage: (message: string) => void): void {
@@ -53,7 +70,7 @@ function handleMessage(message: SDKMessage, sendMessage: (message: string) => vo
         }
         case "result": {
             if (message.subtype === "success") {
-                sendMessage(`Agent completed successfully (durationMs: $${message.duration_ms.toString()})`);
+                sendMessage(`Agent completed successfully (durationMs: ${message.duration_ms.toString()})`);
             } else {
                 throw new Error(`Agent failed (${message.subtype}): ${message.errors.join(", ")}`);
             }

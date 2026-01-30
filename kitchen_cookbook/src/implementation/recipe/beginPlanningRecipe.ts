@@ -1,16 +1,21 @@
 import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { setupWorktreeTask, SetupWorktreeTaskInput, SetupWorktreeTaskOutput } from "../task/molecules/setupWorktreeTask.js";
+import { stationAgentTask, StationAgentTaskInput, StationAgentTaskOutput } from "../task/molecules/stationAgentTask.js";
 import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/worktreeRemoveTask.js";
+import { stationId } from "./util/stationId.js";
+
+const recipeId = "beginPlanningRecipe";
+const planningPrompt = "Plan the implementation for this issue.";
 
 export interface BeginPlanningRecipeInput {
     issueId: string;
-};
+}
 
 export type BeginPlanningRecipeOutput = object;
 
 export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPlanningRecipeOutput>(
-    "beginPlanningRecipe",
+    recipeId,
     [
         new ExecutableStep<SetupWorktreeTaskInput, SetupWorktreeTaskOutput>(
             "setupWorktreeStep",
@@ -19,7 +24,20 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
                 const recipeInput = outputs.get(recipeInputKey) as BeginPlanningRecipeInput;
                 return { branch: `${recipeInput.issueId}-plan` };
             }
-        )
+        ),
+        new ExecutableStep<StationAgentTaskInput, StationAgentTaskOutput>(
+            "stationAgentStep",
+            stationAgentTask,
+            (outputs) => {
+                const recipeInput = outputs.get(recipeInputKey) as BeginPlanningRecipeInput;
+                const setupOutput = outputs.get("setupWorktreeStep") as SetupWorktreeTaskOutput;
+                return {
+                    prompt: planningPrompt,
+                    workingDirectory: setupOutput.worktreePath,
+                    stationId: stationId(recipeId, recipeInput.issueId),
+                };
+            }
+        ),
     ],
     () => { return {}; },
     new ExecutableStep<WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput>(
