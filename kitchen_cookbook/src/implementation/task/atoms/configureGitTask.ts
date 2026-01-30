@@ -21,8 +21,8 @@ export const configureGitTask: Task<ConfigureGitTaskInput, ConfigureGitTaskOutpu
 
         sendMessage(`Configuring git identity as ${name}`);
 
-        await execTask.execute({ command: "git", args: ["config", "user.name", name], workingDirectory: input.repoPath }, sendMessage, signal);
-        await execTask.execute({ command: "git", args: ["config", "user.email", email], workingDirectory: input.repoPath }, sendMessage, signal);
+        await execTask.execute({ command: "git", args: ["config", "--global", "user.name", name], workingDirectory: input.repoPath }, sendMessage, signal);
+        await execTask.execute({ command: "git", args: ["config", "--global", "user.email", email], workingDirectory: input.repoPath }, sendMessage, signal);
 
         return {};
     }

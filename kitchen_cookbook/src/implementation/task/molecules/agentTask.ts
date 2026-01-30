@@ -32,6 +32,15 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
         await agentAuthTask.execute({}, sendMessage, signal);
         const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId }, sendMessage, signal);
 
+        const appId = process.env.GITHUB_APP_ID;
+        const appSlug = process.env.GITHUB_APP_SLUG;
+        const gitEnv = appId && appSlug ? {
+            GIT_AUTHOR_NAME: `${appSlug}[bot]`,
+            GIT_AUTHOR_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
+            GIT_COMMITTER_NAME: `${appSlug}[bot]`,
+            GIT_COMMITTER_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
+        } : {};
+
         for await (const message of query({
             prompt,
             options: {
@@ -40,6 +49,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
                 allowDangerouslySkipPermissions: true,
                 abortController,
                 resume,
+                env: { ...process.env, ...gitEnv },
                 stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
             },
         })) {

@@ -1,0 +1,3 @@
+FROM node:22-slim AS base
+RUN groupadd --gid 1001 kitchen && \
+    useradd --uid 1001 --gid kitchen --shell /bin/bash --create-home kitchen

@@ -1,5 +1,5 @@
-# Base image
-FROM node:22-slim AS base
+# Base image (requires: docker build -t kitchen-base:latest -f Dockerfile.base .)
+FROM kitchen-base:latest AS base
 WORKDIR /dashboard
 
 # Install all dependencies
@@ -19,12 +19,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 # Production image
-FROM node:22-slim AS production
+FROM kitchen-base:latest AS production
 WORKDIR /dashboard
-
-# Create non-root user
-RUN groupadd --gid 1001 kitchen && \
-    useradd --uid 1001 --gid kitchen --shell /bin/bash --create-home kitchen
 
 # Copy production dependencies and built files
 COPY --from=prod-deps /dashboard/node_modules ./node_modules
