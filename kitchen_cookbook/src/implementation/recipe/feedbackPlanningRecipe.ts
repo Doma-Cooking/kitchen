@@ -4,24 +4,25 @@ import { worktreeAgentTask, WorktreeAgentTaskInput, WorktreeAgentTaskOutput } fr
 import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/git/worktreeRemoveTask.js";
 import { stationId } from "./util.js";
 
-const recipeId = "beginPlanningRecipe";
+const recipeId = "feedbackPlanningRecipe";
 
-export interface BeginPlanningRecipeInput {
+export interface FeedbackPlanningRecipeInput {
     issueId: string;
     issueTitle?: string;
     repo?: string;
+    feedback: string;
 }
 
-export type BeginPlanningRecipeOutput = object;
+export type FeedbackPlanningRecipeOutput = object;
 
-export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPlanningRecipeOutput>(
+export const feedbackPlanningRecipe = new Recipe<FeedbackPlanningRecipeInput, FeedbackPlanningRecipeOutput>(
     recipeId,
     [
         new ExecutableStep<WorktreeAgentTaskInput, WorktreeAgentTaskOutput>(
             "worktreeAgentStep",
             worktreeAgentTask,
             (outputs) => {
-                const recipeInput = outputs.get(recipeInputKey) as BeginPlanningRecipeInput;
+                const recipeInput = outputs.get(recipeInputKey) as FeedbackPlanningRecipeInput;
                 return {
                     branch: `${recipeInput.issueId}-plan`,
                     promptId: recipeId,
@@ -30,6 +31,7 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',
                         repo: recipeInput.repo ?? '',
+                        feedback: recipeInput.feedback,
                     },
                 };
             }

@@ -1,5 +1,7 @@
 import { createHash } from "crypto";
 
-export function stationId(recipeId: string, issueId: string): string {
-    return createHash("sha256").update(`${recipeId}:${issueId}`).digest("hex");
+export type WorkflowStage = "planning" | "implementation"
+
+export function stationId(stage: WorkflowStage, issueId: string): string {
+    return createHash("sha256").update(`${stage}:${issueId}`).digest("hex");
 }
