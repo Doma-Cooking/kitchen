@@ -6,6 +6,7 @@ import { OrderRepository, OrderRepositoryImpl } from '../domain/repository/order
 import { GithubRepository, GithubRepositoryImpl } from '../domain/repository/githubRepository.js';
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
 import { ResolveProjectItemUseCase, ResolveProjectItemUseCaseImpl } from '../domain/usecase/github/resolveProjectItemUseCase.js';
+import { ResolvePlanningIssueUseCase, ResolvePlanningIssueUseCaseImpl } from '../domain/usecase/github/resolvePlanningIssueUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
 import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
@@ -40,6 +41,7 @@ export class Dependencies {
     watchOrdersUseCase: WatchOrdersUseCase;
     createCookUseCase: CreateCookUseCase;
     resolveProjectItemUseCase: ResolveProjectItemUseCase;
+    resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
 
     constructor(
         config?: Configuration,
@@ -57,7 +59,8 @@ export class Dependencies {
         deleteOrderUseCase?: DeleteOrderUseCase,
         watchOrdersUseCase?: WatchOrdersUseCase,
         createCookUseCase?: CreateCookUseCase,
-        resolveProjectItemUseCase?: ResolveProjectItemUseCase
+        resolveProjectItemUseCase?: ResolveProjectItemUseCase,
+        resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase
     ) {
         this.config = config ?? new EnvConfiguration();
         this.cookbook = cookbook ?? domaCookbook;
@@ -86,6 +89,11 @@ export class Dependencies {
         this.resolveProjectItemUseCase = resolveProjectItemUseCase ?? new ResolveProjectItemUseCaseImpl(
             this.githubRepository,
             this.config.labelEnabled
+        );
+        this.resolvePlanningIssueUseCase = resolvePlanningIssueUseCase ?? new ResolvePlanningIssueUseCaseImpl(
+            this.githubRepository,
+            this.config.labelEnabled,
+            this.config.columnPlanning
         );
     }
 

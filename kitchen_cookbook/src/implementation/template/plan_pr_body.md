@@ -1,3 +1,5 @@
+Closes #{issue number}
+
 ## Plan for #{issue number}
 
 **Plan type:** {plan type: Quick Win, One Pager, or Tech Plan}
