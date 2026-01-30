@@ -11,6 +11,8 @@ export interface FeedbackPlanningRecipeInput {
     issueTitle?: string;
     repo?: string;
     feedback: string;
+    replyTo?: string;
+    prNumber?: string;
 }
 
 export type FeedbackPlanningRecipeOutput = object;
@@ -32,6 +34,8 @@ export const feedbackPlanningRecipe = new Recipe<FeedbackPlanningRecipeInput, Fe
                         issue_title: recipeInput.issueTitle ?? '',
                         repo: recipeInput.repo ?? '',
                         feedback: recipeInput.feedback,
+                        reply_to: recipeInput.replyTo ?? '',
+                        pr_number: recipeInput.prNumber ?? '',
                     },
                 };
             }

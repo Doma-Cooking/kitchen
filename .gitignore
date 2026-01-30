@@ -2,3 +2,4 @@
 
 # Generated prompt registry
 kitchen_cookbook/src/implementation/prompt/prompts.generated.ts
+kitchen_cookbook/src/implementation/template/templates.generated.ts

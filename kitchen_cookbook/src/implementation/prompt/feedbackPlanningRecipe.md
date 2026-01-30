@@ -25,7 +25,7 @@ Use this when:
 - You have follow-up questions before you can incorporate the feedback.
 - The feedback is unclear and you need clarification.
 
-1. **Post a comment** on the PR using `gh pr comment` (see Comment Format below).
+1. **Post a comment** using the method described in "How to Post Your Response" below.
 
 ### Outcome B: Push an update to the PR only
 
@@ -33,7 +33,7 @@ Use this when:
 - The feedback is clear and actionable, and you can incorporate it directly.
 - No further discussion is needed.
 
-1. **Update the plan file** at `plans/{issue slug}.md` to incorporate the feedback.
+1. **Update the plan file** at `plans/{{context.issue_number}}.md` to incorporate the feedback.
 2. **Commit** with message format: `{{templates.commit}}`
 3. **Push** the updated branch.
 
@@ -44,14 +44,28 @@ Use this when:
 - You've made changes but want to explain your reasoning or flag trade-offs.
 - The feedback covered multiple points — some clear, some needing discussion.
 
-1. **Update the plan file** at `plans/{issue slug}.md` to incorporate what you can.
+1. **Update the plan file** at `plans/{{context.issue_number}}.md` to incorporate what you can.
 2. **Commit** with message format: `{{templates.commit}}`
 3. **Push** the updated branch.
-4. **Post a comment** on the PR using `gh pr comment` (see Comment Format below).
+4. **Post a comment** using the method described in "How to Post Your Response" below.
 
-## Comment Format
+## How to Post Your Response
 
-When posting a comment, use `gh pr comment` with this template:
+When posting a comment, check whether you need to reply in a specific thread:
+
+- **If `{{context.reply_to}}` is not empty**: You are responding to an inline review comment. Reply in the same thread using:
+  ```
+  gh api repos/{{context.repo}}/pulls/{{context.pr_number}}/comments \
+    -F in_reply_to={{context.reply_to}} \
+    -f body="YOUR RESPONSE"
+  ```
+
+- **Otherwise**: Post a top-level PR comment using:
+  ```
+  gh pr comment --body "YOUR RESPONSE"
+  ```
+
+When composing your response body, use this template:
 
 {{templates.feedback_comment}}
 

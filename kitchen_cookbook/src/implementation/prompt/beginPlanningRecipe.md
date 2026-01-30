@@ -26,7 +26,7 @@ Every planning run produces exactly one of these three outcomes:
 
 Use this when requirements are too ambiguous to produce any meaningful plan.
 
-1. **Write a placeholder plan file** at `plans/{issue slug}.md` containing only: `PLACEHOLDER`
+1. **Write a placeholder plan file** at `plans/{{context.issue_number}}.md` containing only: `PLACEHOLDER`
 2. **Commit, push, and create PR** (see PR Steps below).
 3. **Post questions as a PR comment** using `gh pr comment` with the format below.
 
@@ -34,7 +34,7 @@ Use this when requirements are too ambiguous to produce any meaningful plan.
 
 Use this when you can produce a plan but some details need clarification before implementation.
 
-1. **Write the plan file** at `plans/{issue slug}.md` using the appropriate template.
+1. **Write the plan file** at `plans/{{context.issue_number}}.md` using the appropriate template.
 2. **Commit, push, and create PR** (see PR Steps below).
 3. **Post questions as a PR comment** using `gh pr comment` with the format below.
 
@@ -42,7 +42,7 @@ Use this when you can produce a plan but some details need clarification before 
 
 Use this when requirements are clear and no blocking unknowns remain.
 
-1. **Write the plan file** at `plans/{issue slug}.md` using the appropriate template.
+1. **Write the plan file** at `plans/{{context.issue_number}}.md` using the appropriate template.
 2. **Commit, push, and create PR** (see PR Steps below).
 
 ## When to Ask Questions
@@ -62,7 +62,7 @@ Post questions as a comment on the PR using `gh pr comment` with this format:
 These steps apply to all three outcomes:
 
 1. **Choose the template** based on scope assessment (Quick Win, One Pager, or Tech Plan) — or write `PLACEHOLDER` for Outcome A.
-2. **Write the plan file** at `plans/{issue slug}.md` (derive the slug from the issue title).
+2. **Write the plan file** at `plans/{{context.issue_number}}.md`.
 3. **Commit** with message format: `{{templates.commit}}`
 4. **Push** the current branch.
 5. **Create a PR** with:

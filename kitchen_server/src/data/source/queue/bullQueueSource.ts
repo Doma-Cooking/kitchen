@@ -1,4 +1,4 @@
-import { Queue, QueueEvents, Worker } from 'bullmq';
+import { DelayedError, Queue, QueueEvents, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { OrderModel } from '../../model/orderModel.js';
 import { QueueSource } from './queueSource.js';
@@ -31,8 +31,23 @@ export class BullQueueSource implements QueueSource {
             id,
             new Worker(
                 this.queue.name,
-                async (job, _, signal) => {
-                    await execute(job.data, signal);
+                async (job, token, signal) => {
+                    const stationId = job.data.stationId;
+                    if (stationId) {
+                        const lockKey = `station:lock:${stationId}`;
+                        const acquired = await this.connection.set(lockKey, job.id ?? '', 'EX', 86400, 'NX');
+                        if (!acquired) {
+                            await job.moveToDelayed(Date.now() + 10000, token);
+                            throw new DelayedError();
+                        }
+                        try {
+                            await execute(job.data, signal);
+                        } finally {
+                            await this.connection.del(lockKey);
+                        }
+                    } else {
+                        await execute(job.data, signal);
+                    }
                 },
                 { connection: this.connection }
             )

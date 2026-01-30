@@ -43,35 +43,21 @@ function createWebhookRoutes(): Router {
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
 
-        if (payload.issue.pull_request) {
-            const item = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number);
-            if (!item) return;
+        if (!payload.issue.pull_request) return;
 
-            const fullRepo = item.repo;
-            const issueId = String(item.number);
+        const item = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number);
+        if (!item) return;
 
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackPlanningRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.comment.body },
-                `planning-${fullRepo}-${issueId}`
-            );
-        } else {
-            const item = await dependencies.resolvePlanningIssueUseCase.fromIssue(owner, repo, payload.issue.number);
-            if (!item) return;
+        const fullRepo = item.repo;
+        const issueId = String(item.number);
 
-            const fullRepo = item.repo;
-            const issueId = String(item.number);
-
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackPlanningRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.comment.body },
-                `planning-${fullRepo}-${issueId}`
-            );
-        }
+        await dependencies.queueOrderUseCase.execute(
+            'domaFeedbackPlanningRecipe',
+            `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+            `Planning Feedback: ${fullRepo}#${issueId}`,
+            { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
+            `planning-${fullRepo}-${issueId}`
+        );
     });
 
     // PR review (changes requested)
@@ -91,7 +77,7 @@ function createWebhookRoutes(): Router {
             'domaFeedbackPlanningRecipe',
             `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
             `Planning Feedback: ${fullRepo}#${issueId}`,
-            { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.review.body ?? 'Changes requested' },
+            { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.review.body ?? 'Changes requested', prNumber: String(payload.pull_request.number) },
             `planning-${fullRepo}-${issueId}`
         );
     });
@@ -114,7 +100,7 @@ function createWebhookRoutes(): Router {
             'domaFeedbackPlanningRecipe',
             `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
             `Planning Feedback: ${fullRepo}#${issueId}`,
-            { issueId, issueTitle: item.title, repo: fullRepo, feedback },
+            { issueId, issueTitle: item.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
             `planning-${fullRepo}-${issueId}`
         );
     });
