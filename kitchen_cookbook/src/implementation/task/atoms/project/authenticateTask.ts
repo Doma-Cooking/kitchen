@@ -1,5 +1,5 @@
 import { createAppAuth } from "@octokit/auth-app";
-import { Task } from "../../../interface/task.js";
+import { Task } from "../../../../interface/task.js";
 
 export type AuthenticateTaskInput = object;
 

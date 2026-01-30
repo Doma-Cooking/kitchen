@@ -1,9 +1,9 @@
 import { Task } from "../../../interface/task.js";
-import { authenticateTask } from "../atoms/authenticateTask.js";
-import { cloneTask } from "../atoms/cloneTask.js";
-import { checkoutTask } from "../atoms/checkoutTask.js";
-import { configureGitTask } from "../atoms/configureGitTask.js";
-import { pullTask } from "../atoms/pullTask.js";
+import { authenticateTask } from "../atoms/project/authenticateTask.js";
+import { cloneTask } from "../atoms/git/cloneTask.js";
+import { checkoutTask } from "../atoms/git/checkoutTask.js";
+import { configureGitTask } from "../atoms/git/configureGitTask.js";
+import { pullTask } from "../atoms/git/pullTask.js";
 
 export type SetupRepoTaskInput = object;
 

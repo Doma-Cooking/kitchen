@@ -1,5 +1,5 @@
 import { stationDependencies, type StationEntity } from "kitchen_station";
-import { Task } from "../../../interface/task.js";
+import { Task } from "../../../../interface/task.js";
 
 export interface SaveStationTaskInput {
     stationId: string;

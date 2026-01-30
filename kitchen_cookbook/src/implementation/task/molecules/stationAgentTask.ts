@@ -1,6 +1,6 @@
 import { Task } from "../../../interface/task.js";
-import { fetchStationTask } from "../atoms/fetchStationTask.js";
-import { saveStationTask } from "../atoms/saveStationTask.js";
+import { fetchStationTask } from "../atoms/agent/fetchStationTask.js";
+import { saveStationTask } from "../atoms/agent/saveStationTask.js";
 import { agentTask } from "./agentTask.js";
 
 export interface StationAgentTaskInput {

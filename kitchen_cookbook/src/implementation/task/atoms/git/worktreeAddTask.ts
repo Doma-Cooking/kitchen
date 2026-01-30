@@ -1,7 +1,7 @@
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
-import { Task } from "../../../interface/task.js";
-import { execTask } from "./execTask.js";
+import { Task } from "../../../../interface/task.js";
+import { execTask } from "../util/execTask.js";
 import { worktreeRemoveTask } from "./worktreeRemoveTask.js";
 
 export interface WorktreeAddTaskInput {

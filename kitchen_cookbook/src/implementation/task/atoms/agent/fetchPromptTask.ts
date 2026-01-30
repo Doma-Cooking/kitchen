@@ -1,5 +1,5 @@
-import { prompts } from "../../prompt/prompts.generated.js";
-import { Task } from "../../../interface/task.js";
+import { prompts } from "../../../prompt/prompts.generated.js";
+import { Task } from "../../../../interface/task.js";
 
 export interface FetchPromptTaskInput {
     promptId: string;
@@ -11,6 +11,8 @@ export interface FetchPromptTaskOutput {
 
 export const fetchPromptTask: Task<FetchPromptTaskInput, FetchPromptTaskOutput> = {
     async execute(input: FetchPromptTaskInput, sendMessage: (message: string) => void): Promise<FetchPromptTaskOutput> {
+        await Promise.resolve();
+
         const prompt = prompts[input.promptId];
         if (!prompt) {
             throw new Error(`Prompt not found: ${input.promptId}`);

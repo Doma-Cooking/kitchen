@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
-import { Task } from "../../../interface/task.js";
-import { execTask } from "./execTask.js";
+import { Task } from "../../../../interface/task.js";
+import { execTask } from "../util/execTask.js";
 
 export interface CloneTaskInput {
     token?: string;

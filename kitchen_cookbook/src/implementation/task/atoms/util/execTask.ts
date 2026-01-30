@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { Task } from "../../../interface/task.js";
+import { Task } from "../../../../interface/task.js";
 
 export interface ExecTaskInput {
     command: string;

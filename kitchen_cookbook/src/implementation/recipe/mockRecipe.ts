@@ -1,6 +1,6 @@
 import { Recipe } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
-import { mockTask, MockTaskInput, MockTaskOutput } from "../task/atoms/mockTask.js";
+import { mockTask, MockTaskInput, MockTaskOutput } from "../task/atoms/util/mockTask.js";
 
 export interface MockRecipeInput {
     stepTimeMs: number;

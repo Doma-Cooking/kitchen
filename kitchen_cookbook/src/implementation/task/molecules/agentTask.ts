@@ -1,8 +1,8 @@
 import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { Task } from "../../../interface/task.js";
 import { StationEntity } from "kitchen_station";
-import { agentAuthTask } from "../atoms/agentAuthTask.js";
-import { fetchPromptTask } from "../atoms/fetchPromptTask.js";
+import { agentConfigTask } from "../atoms/agent/agentConfigTask.js";
+import { fetchPromptTask } from "../atoms/agent/fetchPromptTask.js";
 
 export interface AgentTaskInput {
     promptId: string;
@@ -29,7 +29,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
 
         let sessionId: string | undefined;
 
-        await agentAuthTask.execute({}, sendMessage, signal);
+        await agentConfigTask.execute({}, sendMessage, signal);
         const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId }, sendMessage, signal);
 
         const appId = process.env.GITHUB_APP_ID;

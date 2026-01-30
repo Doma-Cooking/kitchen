@@ -1,4 +1,4 @@
-import { Task } from "../../../interface/task.js";
+import { Task } from "../../../../interface/task.js";
 
 export interface MockTaskInput {
     taskTimeMs: number;

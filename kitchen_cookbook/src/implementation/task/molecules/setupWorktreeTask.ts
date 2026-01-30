@@ -1,6 +1,6 @@
 import { Task } from "../../../interface/task.js";
 import { setupRepoTask } from "./setupRepoTask.js";
-import { worktreeAddTask } from "../atoms/worktreeAddTask.js";
+import { worktreeAddTask } from "../atoms/git/worktreeAddTask.js";
 
 export interface SetupWorktreeTaskInput {
     branch: string;

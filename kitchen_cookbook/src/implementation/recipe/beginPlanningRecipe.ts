@@ -2,7 +2,7 @@ import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { setupWorktreeTask, SetupWorktreeTaskInput, SetupWorktreeTaskOutput } from "../task/molecules/setupWorktreeTask.js";
 import { stationAgentTask, StationAgentTaskInput, StationAgentTaskOutput } from "../task/molecules/stationAgentTask.js";
-import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/worktreeRemoveTask.js";
+import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/git/worktreeRemoveTask.js";
 import { stationId } from "./util.js";
 
 const recipeId = "beginPlanningRecipe";
