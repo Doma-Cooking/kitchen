@@ -8,6 +8,7 @@ export interface AgentTaskInput {
     promptId: string;
     workingDirectory: string;
     station?: StationEntity;
+    token?: string;
 }
 
 export interface AgentTaskOutput {
@@ -40,6 +41,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
             GIT_COMMITTER_NAME: `${appSlug}[bot]`,
             GIT_COMMITTER_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
         } : {};
+        const ghEnv = input.token ? { GH_TOKEN: input.token } : {};
 
         for await (const message of query({
             prompt,
@@ -49,7 +51,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
                 allowDangerouslySkipPermissions: true,
                 abortController,
                 resume,
-                env: { ...process.env, ...gitEnv },
+                env: { ...process.env, ...gitEnv, ...ghEnv },
                 stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
             },
         })) {

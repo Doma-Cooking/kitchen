@@ -7,6 +7,7 @@ export interface StationAgentTaskInput {
     promptId: string;
     workingDirectory: string;
     stationId?: string;
+    token?: string;
 }
 
 export type StationAgentTaskOutput = object;
@@ -18,7 +19,7 @@ export const stationAgentTask: Task<StationAgentTaskInput, StationAgentTaskOutpu
             : undefined;
 
         const agentOutput = await agentTask.execute(
-            { promptId: input.promptId, workingDirectory: input.workingDirectory, station },
+            { promptId: input.promptId, workingDirectory: input.workingDirectory, station, token: input.token },
             sendMessage,
             signal,
         );

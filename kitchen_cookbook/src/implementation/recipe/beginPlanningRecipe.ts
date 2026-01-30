@@ -34,6 +34,7 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
                     promptId: recipeId,
                     workingDirectory: setupOutput.worktreePath,
                     stationId: stationId(recipeId, recipeInput.issueId),
+                    token: setupOutput.token,
                 };
             }
         ),
