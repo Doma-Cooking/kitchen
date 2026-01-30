@@ -1,6 +1,7 @@
 # Base image
 FROM node:22-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @anthropic-ai/claude-code
 WORKDIR /app
 
 # Install all dependencies
@@ -21,6 +22,7 @@ COPY kitchen_station/src ./kitchen_station/src
 RUN cd kitchen_station && npm ci && npm run build
 
 COPY kitchen_cookbook/tsconfig.json ./kitchen_cookbook/
+COPY kitchen_cookbook/scripts ./kitchen_cookbook/scripts
 COPY kitchen_cookbook/src ./kitchen_cookbook/src
 RUN cd kitchen_cookbook && npm ci && npm run build
 
@@ -49,17 +51,15 @@ COPY kitchen_station/src ./kitchen_station/src
 RUN cd kitchen_station && npm ci --omit=dev && npm run build
 
 COPY kitchen_cookbook/tsconfig.json ./kitchen_cookbook/
+COPY kitchen_cookbook/scripts ./kitchen_cookbook/scripts
 COPY kitchen_cookbook/src ./kitchen_cookbook/src
-RUN cd kitchen_cookbook && npm ci --omit=dev && npm run build
+RUN cd kitchen_cookbook && npm ci && npm run build && npm prune --omit=dev
 
 RUN cd kitchen_server && npm ci --omit=dev
 
 # Production image
-FROM node:22-slim AS production
+FROM base AS production
 WORKDIR /server
-
-# Install git for repository cloning
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 
@@ -92,6 +92,12 @@ CMD ["node", "dist/server.js"]
 # Development image
 FROM deps AS development
 WORKDIR /app/kitchen_server
+
+RUN groupadd --gid 1001 kitchen && \
+    useradd --uid 1001 --gid kitchen --shell /bin/bash --create-home kitchen
+RUN chown -R kitchen:kitchen /app
+
+USER kitchen
 
 ENV NODE_ENV=development
 ENV PORT=3000

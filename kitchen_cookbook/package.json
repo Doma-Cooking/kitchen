@@ -25,7 +25,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsx scripts/generate-prompts.ts && tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src tests",

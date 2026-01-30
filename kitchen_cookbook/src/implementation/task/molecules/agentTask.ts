@@ -1,9 +1,11 @@
 import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { Task } from "../../../interface/task.js";
 import { StationEntity } from "kitchen_station";
+import { agentAuthTask } from "../atoms/agentAuthTask.js";
+import { fetchPromptTask } from "../atoms/fetchPromptTask.js";
 
 export interface AgentTaskInput {
-    prompt: string;
+    promptId: string;
     workingDirectory: string;
     station?: StationEntity;
 }
@@ -27,14 +29,18 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
 
         let sessionId: string | undefined;
 
+        await agentAuthTask.execute({}, sendMessage, signal);
+        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId }, sendMessage, signal);
+
         for await (const message of query({
-            prompt: input.prompt,
+            prompt,
             options: {
                 cwd: input.workingDirectory,
                 permissionMode: "bypassPermissions",
                 allowDangerouslySkipPermissions: true,
                 abortController,
                 resume,
+                stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
             },
         })) {
             sessionId = extractSessionId(message) ?? sessionId;

@@ -2,6 +2,7 @@ import { Task } from "../../../interface/task.js";
 import { authenticateTask } from "../atoms/authenticateTask.js";
 import { cloneTask } from "../atoms/cloneTask.js";
 import { checkoutTask } from "../atoms/checkoutTask.js";
+import { configureGitTask } from "../atoms/configureGitTask.js";
 import { pullTask } from "../atoms/pullTask.js";
 
 export type SetupRepoTaskInput = object;
@@ -16,6 +17,7 @@ export const setupRepoTask: Task<SetupRepoTaskInput, SetupRepoTaskOutput> = {
     async execute(_input: SetupRepoTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<SetupRepoTaskOutput> {
         const authOutput = await authenticateTask.execute({}, sendMessage, signal);
         const cloneOutput = await cloneTask.execute({ token: authOutput.token }, sendMessage, signal);
+        await configureGitTask.execute({ repoPath: cloneOutput.repoPath }, sendMessage, signal);
         await checkoutTask.execute({ repoPath: cloneOutput.repoPath }, sendMessage, signal);
         await pullTask.execute({ repoPath: cloneOutput.repoPath }, sendMessage, signal);
 

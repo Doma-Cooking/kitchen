@@ -3,10 +3,9 @@ import { ExecutableStep } from "../../interface/step.js";
 import { setupWorktreeTask, SetupWorktreeTaskInput, SetupWorktreeTaskOutput } from "../task/molecules/setupWorktreeTask.js";
 import { stationAgentTask, StationAgentTaskInput, StationAgentTaskOutput } from "../task/molecules/stationAgentTask.js";
 import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/worktreeRemoveTask.js";
-import { stationId } from "./util/stationId.js";
+import { stationId } from "./util.js";
 
 const recipeId = "beginPlanningRecipe";
-const planningPrompt = "Plan the implementation for this issue.";
 
 export interface BeginPlanningRecipeInput {
     issueId: string;
@@ -32,7 +31,7 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
                 const recipeInput = outputs.get(recipeInputKey) as BeginPlanningRecipeInput;
                 const setupOutput = outputs.get("setupWorktreeStep") as SetupWorktreeTaskOutput;
                 return {
-                    prompt: planningPrompt,
+                    promptId: recipeId,
                     workingDirectory: setupOutput.worktreePath,
                     stationId: stationId(recipeId, recipeInput.issueId),
                 };

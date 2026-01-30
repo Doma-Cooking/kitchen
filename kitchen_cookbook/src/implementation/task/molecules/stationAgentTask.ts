@@ -1,10 +1,10 @@
 import { Task } from "../../../interface/task.js";
 import { fetchStationTask } from "../atoms/fetchStationTask.js";
 import { saveStationTask } from "../atoms/saveStationTask.js";
-import { agentTask } from "../atoms/agentTask.js";
+import { agentTask } from "./agentTask.js";
 
 export interface StationAgentTaskInput {
-    prompt: string;
+    promptId: string;
     workingDirectory: string;
     stationId?: string;
 }
@@ -18,7 +18,7 @@ export const stationAgentTask: Task<StationAgentTaskInput, StationAgentTaskOutpu
             : undefined;
 
         const agentOutput = await agentTask.execute(
-            { prompt: input.prompt, workingDirectory: input.workingDirectory, station },
+            { promptId: input.promptId, workingDirectory: input.workingDirectory, station },
             sendMessage,
             signal,
         );
