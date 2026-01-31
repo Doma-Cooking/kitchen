@@ -1,10 +1,33 @@
 # Base image (requires: docker build -t kitchen-base:latest -f Dockerfile.base .)
 FROM kitchen-base:latest AS base
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl && \
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-    apt-get update && apt-get install -y --no-install-recommends gh && \
-    rm -rf /var/lib/apt/lists/*
+
+# Configurable Flutter settings
+ARG FLUTTER_CHANNEL=stable
+ARG FLUTTER_HOME=/opt/flutter
+ENV FLUTTER_HOME=${FLUTTER_HOME}
+ENV PATH="${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin:${PATH}"
+
+# Install system dependencies (git, gh CLI, Flutter requirements)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git ca-certificates curl \
+        unzip xz-utils zip \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+       | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Flutter SDK (latest from channel, CLI tools only)
+RUN git clone -b ${FLUTTER_CHANNEL} --depth 1 https://github.com/flutter/flutter.git ${FLUTTER_HOME} \
+    && git config --system --add safe.directory ${FLUTTER_HOME} \
+    && flutter --disable-analytics \
+    && dart --disable-analytics \
+    && flutter config --no-analytics \
+    && flutter precache --no-android --no-ios --no-web --no-macos --no-linux --no-windows --no-fuchsia \
+    && chown -R kitchen:kitchen ${FLUTTER_HOME}
+
+# Install Claude Code CLI
 RUN npm install -g @anthropic-ai/claude-code
 WORKDIR /server
 

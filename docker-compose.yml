@@ -33,6 +33,9 @@ services:
       context: .
       dockerfile: kitchen_server/Dockerfile
       target: production
+      args:
+        FLUTTER_CHANNEL: ${FLUTTER_CHANNEL:-stable}
+        FLUTTER_HOME: ${FLUTTER_HOME:-/opt/flutter}
     ports:
       - "3000:3000"
     environment:
