@@ -26,6 +26,14 @@ export const cloneTask: Task<CloneTaskInput, CloneTaskOutput> = {
         try {
             await access(repoPath);
             sendMessage(`Repository already exists at ${repoPath}`);
+
+            if (input.token) {
+                const url = new URL(repoUrl);
+                url.username = "x-access-token";
+                url.password = input.token;
+                await execTask.execute({ command: "git", args: ["remote", "set-url", "origin", url.toString()], workingDirectory: repoPath }, sendMessage, signal);
+            }
+
             return { repoPath };
         } catch {
             // Directory does not exist, proceed with clone

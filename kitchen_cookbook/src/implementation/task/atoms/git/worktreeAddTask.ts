@@ -12,6 +12,7 @@ export interface WorktreeAddTaskInput {
 
 export interface WorktreeAddTaskOutput {
     worktreePath: string;
+    created: boolean;
 }
 
 export const worktreeAddTask: Task<WorktreeAddTaskInput, WorktreeAddTaskOutput> = {
@@ -30,16 +31,16 @@ export const worktreeAddTask: Task<WorktreeAddTaskInput, WorktreeAddTaskOutput> 
         }
 
         // Try to add worktree with existing branch first
-        try {
+    try {
             await execTask.execute({ command: "git", args: ["worktree", "add", worktreePath, input.branch], workingDirectory: input.repoPath }, sendMessage, signal);
             sendMessage(`Successfully added worktree at ${worktreePath} with existing branch ${input.branch}`);
-            return { worktreePath: worktreePath };
+            return { worktreePath: worktreePath, created: false };
         } catch {
             // Branch doesn't exist, create a new one
         }
 
         await execTask.execute({ command: "git", args: ["worktree", "add", "-b", input.branch, worktreePath], workingDirectory: input.repoPath }, sendMessage, signal);
         sendMessage(`Successfully added worktree at ${worktreePath} with new branch ${input.branch}`);
-        return { worktreePath: worktreePath };
+        return { worktreePath: worktreePath, created: true };
     }
 };

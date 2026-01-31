@@ -7,6 +7,7 @@ import { GithubRepository, GithubRepositoryImpl } from '../domain/repository/git
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
 import { ResolveProjectItemUseCase, ResolveProjectItemUseCaseImpl } from '../domain/usecase/github/resolveProjectItemUseCase.js';
 import { ResolvePlanningIssueUseCase, ResolvePlanningIssueUseCaseImpl } from '../domain/usecase/github/resolvePlanningIssueUseCase.js';
+import { ResolveImplementingIssueUseCase, ResolveImplementingIssueUseCaseImpl } from '../domain/usecase/github/resolveImplementingIssueUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
 import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
@@ -42,6 +43,7 @@ export class Dependencies {
     createCookUseCase: CreateCookUseCase;
     resolveProjectItemUseCase: ResolveProjectItemUseCase;
     resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
+    resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
 
     constructor(
         config?: Configuration,
@@ -60,7 +62,8 @@ export class Dependencies {
         watchOrdersUseCase?: WatchOrdersUseCase,
         createCookUseCase?: CreateCookUseCase,
         resolveProjectItemUseCase?: ResolveProjectItemUseCase,
-        resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase
+        resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase,
+        resolveImplementingIssueUseCase?: ResolveImplementingIssueUseCase
     ) {
         this.config = config ?? new EnvConfiguration();
         this.cookbook = cookbook ?? domaCookbook;
@@ -94,6 +97,11 @@ export class Dependencies {
             this.githubRepository,
             this.config.labelEnabled,
             this.config.columnPlanning
+        );
+        this.resolveImplementingIssueUseCase = resolveImplementingIssueUseCase ?? new ResolveImplementingIssueUseCaseImpl(
+            this.githubRepository,
+            this.config.labelEnabled,
+            this.config.columnImplementing
         );
     }
 

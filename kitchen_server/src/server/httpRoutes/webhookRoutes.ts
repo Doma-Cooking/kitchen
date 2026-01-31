@@ -34,6 +34,16 @@ function createWebhookRoutes(): Router {
                 `planning-${item.repo}-${String(item.number)}`
             );
         }
+
+        if (item.column === dependencies.config.columnImplementing) {
+            await dependencies.queueOrderUseCase.execute(
+                'domaBeginImplementationRecipe',
+                `implementation-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
+                `Initial Implementation: ${item.repo}#${String(item.number)}`,
+                { issueId: String(item.number), issueTitle: item.title, repo: item.repo },
+                `implementation-${item.repo}-${String(item.number)}`
+            );
+        }
     });
 
     // Issue comments (user feedback)
@@ -45,41 +55,71 @@ function createWebhookRoutes(): Router {
 
         if (!payload.issue.pull_request) return;
 
-        const item = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number);
-        if (!item) return;
+        const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number);
+        if (planningItem) {
+            const fullRepo = planningItem.repo;
+            const issueId = String(planningItem.number);
 
-        const fullRepo = item.repo;
-        const issueId = String(item.number);
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackPlanningRecipe',
+                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Planning Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
+                `planning-${fullRepo}-${issueId}`
+            );
+            return;
+        }
 
-        await dependencies.queueOrderUseCase.execute(
-            'domaFeedbackPlanningRecipe',
-            `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-            `Planning Feedback: ${fullRepo}#${issueId}`,
-            { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
-            `planning-${fullRepo}-${issueId}`
-        );
+        const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.issue.number);
+        if (implementingItem) {
+            const fullRepo = implementingItem.repo;
+            const issueId = String(implementingItem.number);
+
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackImplementationRecipe',
+                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Implementation Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
+                `implementation-${fullRepo}-${issueId}`
+            );
+        }
     });
 
-    // PR review (changes requested)
+    // PR review
     webhooks.on('pull_request_review.submitted', async ({ payload }) => {
-        if (payload.review.state !== 'changes_requested') return;
+        if (!payload.review.body || payload.review.state === 'approved') return;
 
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
 
-        const item = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
-        if (!item) return;
+        const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
+        if (planningItem) {
+            const fullRepo = planningItem.repo;
+            const issueId = String(planningItem.number);
 
-        const fullRepo = item.repo;
-        const issueId = String(item.number);
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackPlanningRecipe',
+                `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
+                `Planning Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback: payload.review.body, prNumber: String(payload.pull_request.number) },
+                `planning-${fullRepo}-${issueId}`
+            );
+            return;
+        }
 
-        await dependencies.queueOrderUseCase.execute(
-            'domaFeedbackPlanningRecipe',
-            `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
-            `Planning Feedback: ${fullRepo}#${issueId}`,
-            { issueId, issueTitle: item.title, repo: fullRepo, feedback: payload.review.body ?? 'Changes requested', prNumber: String(payload.pull_request.number) },
-            `planning-${fullRepo}-${issueId}`
-        );
+        const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
+        if (implementingItem) {
+            const fullRepo = implementingItem.repo;
+            const issueId = String(implementingItem.number);
+
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackImplementationRecipe',
+                `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
+                `Implementation Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback: payload.review.body, prNumber: String(payload.pull_request.number) },
+                `implementation-${fullRepo}-${issueId}`
+            );
+        }
     });
 
     // Inline PR comments
@@ -89,20 +129,36 @@ function createWebhookRoutes(): Router {
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
 
-        const item = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
-        if (!item) return;
+        const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
+        if (planningItem) {
+            const fullRepo = planningItem.repo;
+            const issueId = String(planningItem.number);
+            const feedback = `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`;
 
-        const fullRepo = item.repo;
-        const issueId = String(item.number);
-        const feedback = `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`;
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackPlanningRecipe',
+                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Planning Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
+                `planning-${fullRepo}-${issueId}`
+            );
+            return;
+        }
 
-        await dependencies.queueOrderUseCase.execute(
-            'domaFeedbackPlanningRecipe',
-            `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-            `Planning Feedback: ${fullRepo}#${issueId}`,
-            { issueId, issueTitle: item.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
-            `planning-${fullRepo}-${issueId}`
-        );
+        const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
+        if (implementingItem) {
+            const fullRepo = implementingItem.repo;
+            const issueId = String(implementingItem.number);
+            const feedback = `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`;
+
+            await dependencies.queueOrderUseCase.execute(
+                'domaFeedbackImplementationRecipe',
+                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Implementation Feedback: ${fullRepo}#${issueId}`,
+                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
+                `implementation-${fullRepo}-${issueId}`
+            );
+        }
     });
 
     webhooks.onError((error) => {

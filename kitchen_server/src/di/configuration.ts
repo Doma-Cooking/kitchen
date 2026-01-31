@@ -30,6 +30,6 @@ export class EnvConfiguration implements Configuration {
     readonly githubPrivateKey = process.env.GITHUB_PRIVATE_KEY ?? '';
     readonly githubInstallationId = process.env.GITHUB_INSTALLATION_ID ?? '';
     readonly columnPlanning = process.env.KITCHEN_COLUMN_PLANNING ?? 'Planning';
-    readonly columnImplementing = process.env.KITCHEN_COLUMN_IMPLEMENTING ?? 'Implementing';
+    readonly columnImplementing = process.env.KITCHEN_COLUMN_IMPLEMENTING ?? 'In Progress';
     readonly labelEnabled = process.env.KITCHEN_LABEL_ENABLED ?? 'agent:enabled';
 }

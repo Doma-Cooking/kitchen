@@ -66,6 +66,7 @@ These steps apply to all three outcomes:
 
 ## Implementation Guidelines
 
+- **Stay on the current branch** — do NOT create, checkout, or switch to a different branch. Your working branch has already been set up for you.
 - Follow existing code patterns and conventions in the repository.
 - Write tests as described in the plan's testing strategy.
 - Make atomic commits — each logical change in its own commit when practical.

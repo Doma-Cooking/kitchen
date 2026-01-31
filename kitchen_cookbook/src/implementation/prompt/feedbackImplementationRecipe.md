@@ -71,6 +71,7 @@ When composing your response body, use this template:
 
 ## Important Notes
 
+- **Stay on the current branch** — do NOT create, checkout, or switch to a different branch. Your working branch has already been set up for you.
 - Address ALL points raised in the feedback — don't skip any.
 - If the feedback contradicts the approved plan, explain the trade-offs rather than silently changing.
 - Ensure changes don't break existing tests — run the test suite after making updates.
