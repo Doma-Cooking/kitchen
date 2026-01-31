@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Webhooks, createNodeMiddleware } from '@octokit/webhooks';
 import { dependencies } from '../../server.js';
+import { ReviewCommentBuffer } from './reviewCommentBuffer.js';
 
 function createWebhookRoutes(): Router {
     const router = Router();
@@ -8,6 +9,8 @@ function createWebhookRoutes(): Router {
     const webhooks = new Webhooks({
         secret: dependencies.config.githubWebhookSecret
     });
+
+    const reviewBuffer = new ReviewCommentBuffer(dependencies.queueOrderUseCase);
 
     // Project board column moves
     webhooks.on('projects_v2_item.edited', async ({ payload }) => {
@@ -87,6 +90,7 @@ function createWebhookRoutes(): Router {
 
     // PR review
     webhooks.on('pull_request_review.submitted', async ({ payload }) => {
+        if (payload.sender.type === 'Bot') return;
         if (!payload.review.body || payload.review.state === 'approved') return;
 
         const owner = payload.repository.owner.login;
@@ -94,30 +98,26 @@ function createWebhookRoutes(): Router {
 
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (planningItem) {
-            const fullRepo = planningItem.repo;
-            const issueId = String(planningItem.number);
-
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackPlanningRecipe',
-                `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
-                `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback: payload.review.body, prNumber: String(payload.pull_request.number) },
-                `planning-${fullRepo}-${issueId}`
+            reviewBuffer.addReviewBody(
+                'planning',
+                planningItem.repo,
+                String(planningItem.number),
+                planningItem.title,
+                String(payload.pull_request.number),
+                { body: payload.review.body, reviewId: payload.review.id }
             );
             return;
         }
 
         const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (implementingItem) {
-            const fullRepo = implementingItem.repo;
-            const issueId = String(implementingItem.number);
-
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackImplementationRecipe',
-                `feedback-${fullRepo}-${issueId}-review-${String(payload.review.id)}-${Date.now().toString()}`,
-                `Implementation Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback: payload.review.body, prNumber: String(payload.pull_request.number) },
-                `implementation-${fullRepo}-${issueId}`
+            reviewBuffer.addReviewBody(
+                'implementation',
+                implementingItem.repo,
+                String(implementingItem.number),
+                implementingItem.title,
+                String(payload.pull_request.number),
+                { body: payload.review.body, reviewId: payload.review.id }
             );
         }
     });
@@ -129,34 +129,36 @@ function createWebhookRoutes(): Router {
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
 
+        const comment = {
+            filePath: payload.comment.path,
+            line: payload.comment.line ?? 0,
+            body: payload.comment.body,
+            commentId: payload.comment.id,
+            replyToId: payload.comment.in_reply_to_id ?? payload.comment.id
+        };
+
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (planningItem) {
-            const fullRepo = planningItem.repo;
-            const issueId = String(planningItem.number);
-            const feedback = `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`;
-
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackPlanningRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
-                `planning-${fullRepo}-${issueId}`
+            reviewBuffer.addComment(
+                'planning',
+                planningItem.repo,
+                String(planningItem.number),
+                planningItem.title,
+                String(payload.pull_request.number),
+                comment
             );
             return;
         }
 
         const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (implementingItem) {
-            const fullRepo = implementingItem.repo;
-            const issueId = String(implementingItem.number);
-            const feedback = `${payload.comment.path}:${String(payload.comment.line)}\n${payload.comment.body}`;
-
-            await dependencies.queueOrderUseCase.execute(
-                'domaFeedbackImplementationRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Implementation Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback, replyTo: String(payload.comment.in_reply_to_id ?? payload.comment.id), prNumber: String(payload.pull_request.number) },
-                `implementation-${fullRepo}-${issueId}`
+            reviewBuffer.addComment(
+                'implementation',
+                implementingItem.repo,
+                String(implementingItem.number),
+                implementingItem.title,
+                String(payload.pull_request.number),
+                comment
             );
         }
     });

@@ -51,19 +51,27 @@ Use this when:
 
 ## How to Post Your Response
 
-When posting a comment, check whether you need to reply in a specific thread:
+Check the feedback above to determine the correct response method:
 
-- **If `{{context.reply_to}}` is not empty**: You are responding to an inline review comment. Reply in the same thread using:
+- **If the feedback contains `### Review Comment` sections**: Each section includes a `**Comment ID:**` value. Reply to each inline comment in its own thread:
   ```
   gh api repos/{{context.repo}}/pulls/{{context.pr_number}}/comments \
-    -F in_reply_to={{context.reply_to}} \
-    -f body="YOUR RESPONSE"
+    -F in_reply_to=COMMENT_ID \
+    -f body="YOUR RESPONSE TO THIS COMMENT"
   ```
+  Post a separate reply for each `### Review Comment` section, using the Comment ID from that section.
 
-- **Otherwise**: Post a top-level PR comment using:
+- **If the feedback contains a `### Review Body` section**: Post a top-level PR comment addressing the overall review:
   ```
   gh pr comment --body "YOUR RESPONSE"
   ```
+
+- **If the feedback is a general comment** (no `### Review Comment` or `### Review Body` sections): Post a top-level PR comment:
+  ```
+  gh pr comment --body "YOUR RESPONSE"
+  ```
+
+When a review contains both inline comments and a review body, respond to each inline comment in its own thread AND post a top-level comment for the review body.
 
 When composing your response body, use this template:
 
