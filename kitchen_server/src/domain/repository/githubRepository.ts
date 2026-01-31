@@ -29,6 +29,7 @@ export class GithubRepositoryImpl implements GithubRepository {
             repo: content.repo,
             labels: content.labels,
             column: status,
+            parentNumber: content.parentNumber,
         };
     }
 

@@ -10,6 +10,7 @@ interface IssueNode {
     title: string;
     labels: { nodes: { name: string }[] };
     repository: { nameWithOwner: string };
+    parent?: { number: number } | null;
 }
 
 interface ProjectV2ItemNode {
@@ -76,6 +77,7 @@ export class GraphqlGithubSource implements GithubSource {
                         title
                         labels(first: 50) { nodes { name } }
                         repository { nameWithOwner }
+                        parent { number }
                     }
                 }
             }`,
@@ -89,6 +91,7 @@ export class GraphqlGithubSource implements GithubSource {
             title: node.title,
             repo: node.repository.nameWithOwner,
             labels: node.labels.nodes.map((l: { name: string }) => l.name),
+            parentNumber: node.parent?.number,
         };
     }
 

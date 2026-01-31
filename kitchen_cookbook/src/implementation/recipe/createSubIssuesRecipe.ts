@@ -4,34 +4,34 @@ import { worktreeAgentTask, WorktreeAgentTaskInput, WorktreeAgentTaskOutput } fr
 import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/git/worktreeRemoveTask.js";
 import { stationId } from "./util.js";
 
-const recipeId = "beginImplementationRecipe";
+const recipeId = "createSubIssuesRecipe";
 
-export interface BeginImplementationRecipeInput {
+export interface CreateSubIssuesRecipeInput {
     issueId: string;
     issueTitle?: string;
     repo?: string;
-    parentIssueId?: string;
+    labelEnabled?: string;
 }
 
-export type BeginImplementationRecipeOutput = object;
+export type CreateSubIssuesRecipeOutput = object;
 
-export const beginImplementationRecipe = new Recipe<BeginImplementationRecipeInput, BeginImplementationRecipeOutput>(
+export const createSubIssuesRecipe = new Recipe<CreateSubIssuesRecipeInput, CreateSubIssuesRecipeOutput>(
     recipeId,
     [
         new ExecutableStep<WorktreeAgentTaskInput, WorktreeAgentTaskOutput>(
             "worktreeAgentStep",
             worktreeAgentTask,
             (outputs) => {
-                const recipeInput = outputs.get(recipeInputKey) as BeginImplementationRecipeInput;
+                const recipeInput = outputs.get(recipeInputKey) as CreateSubIssuesRecipeInput;
                 return {
-                    branch: `${recipeInput.issueId}-impl`,
+                    branch: `${recipeInput.issueId}-sub-issues`,
                     promptId: recipeId,
-                    stationId: stationId('implementation', recipeInput.issueId),
+                    stationId: stationId('planning', recipeInput.issueId),
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',
                         repo: recipeInput.repo ?? '',
-                        parent_issue_number: recipeInput.parentIssueId ?? '',
+                        label_enabled: recipeInput.labelEnabled ?? '',
                     },
                 };
             }

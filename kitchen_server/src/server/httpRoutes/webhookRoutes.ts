@@ -38,12 +38,27 @@ function createWebhookRoutes(): Router {
             );
         }
 
+        if (item.column === dependencies.config.columnReady) {
+            await dependencies.queueOrderUseCase.execute(
+                'domaCreateSubIssuesRecipe',
+                `sub-issues-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
+                `Create Sub-Issues: ${item.repo}#${String(item.number)}`,
+                { issueId: String(item.number), issueTitle: item.title, repo: item.repo, labelEnabled: dependencies.config.labelEnabled },
+                `planning-${item.repo}-${String(item.number)}`
+            );
+        }
+
         if (item.column === dependencies.config.columnImplementing) {
             await dependencies.queueOrderUseCase.execute(
                 'domaBeginImplementationRecipe',
                 `implementation-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
                 `Initial Implementation: ${item.repo}#${String(item.number)}`,
-                { issueId: String(item.number), issueTitle: item.title, repo: item.repo },
+                {
+                    issueId: String(item.number),
+                    issueTitle: item.title,
+                    repo: item.repo,
+                    parentIssueId: item.parentNumber ? String(item.parentNumber) : undefined,
+                },
                 `implementation-${item.repo}-${String(item.number)}`
             );
         }

@@ -13,6 +13,7 @@ export interface Configuration {
     githubInstallationId: string;
     columnPlanning: string;
     columnImplementing: string;
+    columnReady: string;
     labelEnabled: string;
 }
 
@@ -31,5 +32,6 @@ export class EnvConfiguration implements Configuration {
     readonly githubInstallationId = process.env.GITHUB_INSTALLATION_ID ?? '';
     readonly columnPlanning = process.env.KITCHEN_COLUMN_PLANNING ?? 'Planning';
     readonly columnImplementing = process.env.KITCHEN_COLUMN_IMPLEMENTING ?? 'In Progress';
+    readonly columnReady = process.env.KITCHEN_COLUMN_READY ?? 'Ready';
     readonly labelEnabled = process.env.KITCHEN_LABEL_ENABLED ?? 'agent:enabled';
 }

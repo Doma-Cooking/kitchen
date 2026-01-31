@@ -3,4 +3,5 @@ export interface ProjectItemContentModel {
     title: string;
     repo: string;
     labels: string[];
+    parentNumber?: number;
 }

@@ -3,6 +3,7 @@ import { beginPlanningRecipe } from "../recipe/beginPlanningRecipe.js";
 import { feedbackPlanningRecipe } from "../recipe/feedbackPlanningRecipe.js";
 import { beginImplementationRecipe } from "../recipe/beginImplementationRecipe.js";
 import { feedbackImplementationRecipe } from "../recipe/feedbackImplementationRecipe.js";
+import { createSubIssuesRecipe } from "../recipe/createSubIssuesRecipe.js";
 
 export const domaCookbook: Cookbook = {
     id: "domaCookbook",
@@ -12,6 +13,7 @@ export const domaCookbook: Cookbook = {
         ["domaBeginPlanningRecipe", beginPlanningRecipe],
         ["domaFeedbackPlanningRecipe", feedbackPlanningRecipe],
         ["domaBeginImplementationRecipe", beginImplementationRecipe],
-        ["domaFeedbackImplementationRecipe", feedbackImplementationRecipe]
+        ["domaFeedbackImplementationRecipe", feedbackImplementationRecipe],
+        ["domaCreateSubIssuesRecipe", createSubIssuesRecipe]
     ])
 };

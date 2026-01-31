@@ -4,4 +4,5 @@ export interface ProjectItemEntity {
     repo: string;
     labels: string[];
     column: string;
+    parentNumber?: number;
 }

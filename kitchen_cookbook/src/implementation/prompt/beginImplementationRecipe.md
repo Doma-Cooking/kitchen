@@ -4,10 +4,19 @@ Your job is to read the approved plan, implement the changes described in it, an
 
 ## Workflow
 
+{{#if context.parent_issue_number}}
+1. **Read the parent plan**: Read the plan file at `plans/{{context.parent_issue_number}}.md` — this is the parent issue's approved plan that covers your work.
+2. **Read the tickets**: Use `gh issue view {{context.parent_issue_number}}` for broader project context. Use `gh issue view {{context.issue_number}}` to understand the specific scope of this sub-issue.
+{{else}}
 1. **Read the plan**: Read the plan file at `plans/{{context.issue_number}}.md` to understand the approved implementation approach.
 2. **Read the ticket**: Use `gh issue view {{context.issue_number}}` to get the full issue body, labels, and comments for additional context.
+{{/if}}
 3. **Analyze the codebase**: Explore the repository structure, read relevant files, and understand existing patterns and architecture.
+{{#if context.parent_issue_number}}
+4. **Implement the changes**: Implement only the portion of the parent plan relevant to this sub-issue.
+{{else}}
 4. **Implement the changes**: Follow the plan step by step, making the code changes described.
+{{/if}}
 5. **Decide your outcome** (see Outcomes below).
 6. **Always create a PR** — every implementation run ends with a PR, regardless of outcome.
 
@@ -83,4 +92,9 @@ These steps apply to all three outcomes:
 - Reference the plan file when making implementation decisions.
 - If the implementation reveals issues with the plan, note them in a PR comment rather than silently diverging.
 - Ensure all new code follows the repository's existing style and conventions.
+{{#if context.parent_issue_number}}
+- The plan file is at `plans/{{context.parent_issue_number}}.md` in the repo root (parent issue's plan).
+- You are implementing sub-issue #{{context.issue_number}} — focus only on the work scoped to this sub-issue.
+{{else}}
 - The plan file is at `plans/{{context.issue_number}}.md` in the repo root.
+{{/if}}
