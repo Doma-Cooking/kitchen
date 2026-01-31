@@ -5,3 +5,8 @@ export interface ProjectItemContentModel {
     labels: string[];
     parentNumber?: number;
 }
+
+export interface ProjectInfoModel {
+    number: number;
+    owner: string;
+}

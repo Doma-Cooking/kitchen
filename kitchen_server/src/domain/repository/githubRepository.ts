@@ -1,9 +1,11 @@
 import { GithubSource } from '../../data/source/github/githubSource.js';
 import { IssueProjectItemModel } from '../../data/model/issueProjectItemModel.js';
+import { ProjectInfoModel } from '../../data/model/projectItemModel.js';
 import { ProjectItemEntity } from '../entity/projectItemEntity.js';
 
 export interface GithubRepository {
     resolveProjectItem(contentNodeId: string, itemNodeId: string): Promise<ProjectItemEntity | null>;
+    resolveProjectInfo(projectNodeId: string): Promise<ProjectInfoModel | null>;
     resolveIssueProjectItem(owner: string, repo: string, issueNumber: number): Promise<IssueProjectItemModel | null>;
     resolvePrLinkedIssues(owner: string, repo: string, prNumber: number): Promise<IssueProjectItemModel[]>;
 }
@@ -31,6 +33,10 @@ export class GithubRepositoryImpl implements GithubRepository {
             column: status,
             parentNumber: content.parentNumber,
         };
+    }
+
+    async resolveProjectInfo(projectNodeId: string): Promise<ProjectInfoModel | null> {
+        return this.source.resolveProjectInfo(projectNodeId);
     }
 
     async resolveIssueProjectItem(owner: string, repo: string, issueNumber: number): Promise<IssueProjectItemModel | null> {

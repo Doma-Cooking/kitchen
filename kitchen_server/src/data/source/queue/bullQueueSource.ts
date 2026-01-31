@@ -1,5 +1,5 @@
 import { DelayedError, Queue, QueueEvents, Worker } from 'bullmq';
-import { Redis } from 'ioredis';
+import { Redis, RedisOptions } from 'ioredis';
 import { OrderModel } from '../../model/orderModel.js';
 import { QueueSource } from './queueSource.js';
 import { CookMessageModel } from '../../model/cookMessageModel.js';
@@ -9,16 +9,19 @@ export class BullQueueSource implements QueueSource {
     private queue: Queue<OrderModel, void>;
     private queueEvents: QueueEvents;
     private connection: Redis
+    private workerConnection: RedisOptions;
     private workers: Map<string, Worker<OrderModel, void>>;
 
     constructor(
         queue: Queue<OrderModel, void>,
         queueEvents: QueueEvents,
-        connection: Redis
+        connection: Redis,
+        workerConnection: RedisOptions
     ) {
         this.queue = queue;
         this.queueEvents = queueEvents;
         this.connection = connection;
+        this.workerConnection = workerConnection;
         this.workers = new Map();
     }
 
@@ -49,7 +52,7 @@ export class BullQueueSource implements QueueSource {
                         await execute(job.data, signal);
                     }
                 },
-                { connection: this.connection }
+                { connection: this.workerConnection, lockDuration: 300000 }
             )
         );
     }

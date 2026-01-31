@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { dependencies } from '../../server.js';
+import { stationDependencies } from 'kitchen_station';
 
 const router = Router();
 
 router.delete('/:id', async (req, res) => {
     const id = req.params.id;
-    await dependencies.station.deleteStationUseCase.execute(id);
+    await stationDependencies.deleteStationUseCase.execute(id);
     res.send(`Deleted station with ID: ${id}`);
 });
 

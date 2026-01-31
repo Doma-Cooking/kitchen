@@ -1,10 +1,9 @@
 import { WebSocket } from 'ws';
-import { dependencies } from '../../server.js';
-import { StationEntity } from 'kitchen_station';
+import { stationDependencies, StationEntity } from 'kitchen_station';
 import { createMessage } from '../wsServer.js';
 
 export function watchStations(ws: WebSocket): void {
-    const subscription = dependencies.station.watchStationsUseCase.execute().subscribe({
+    const subscription = stationDependencies.watchStationsUseCase.execute().subscribe({
         next: (stations: StationEntity[]) => {
             ws.send(createMessage('data', stations));
         },

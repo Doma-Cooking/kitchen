@@ -11,6 +11,9 @@ export interface CreateSubIssuesRecipeInput {
     issueTitle?: string;
     repo?: string;
     labelEnabled?: string;
+    projectOwner?: string;
+    projectNumber?: string;
+    columnReady?: string;
 }
 
 export type CreateSubIssuesRecipeOutput = object;
@@ -24,7 +27,7 @@ export const createSubIssuesRecipe = new Recipe<CreateSubIssuesRecipeInput, Crea
             (outputs) => {
                 const recipeInput = outputs.get(recipeInputKey) as CreateSubIssuesRecipeInput;
                 return {
-                    branch: `${recipeInput.issueId}-sub-issues`,
+                    branch: `${recipeInput.issueId}-plan`,
                     promptId: recipeId,
                     stationId: stationId('planning', recipeInput.issueId),
                     context: {
@@ -32,6 +35,9 @@ export const createSubIssuesRecipe = new Recipe<CreateSubIssuesRecipeInput, Crea
                         issue_title: recipeInput.issueTitle ?? '',
                         repo: recipeInput.repo ?? '',
                         label_enabled: recipeInput.labelEnabled ?? '',
+                        project_owner: recipeInput.projectOwner ?? '',
+                        project_number: recipeInput.projectNumber ?? '',
+                        column_ready: recipeInput.columnReady ?? '',
                     },
                 };
             }

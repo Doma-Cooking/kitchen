@@ -11,7 +11,13 @@ Your job is to read the approved plan, parse the sub-issues section, and create 
 
 ## Creating Sub-Issues
 
-For each sub-issue found in the plan:
+### Setup (once, before creating any sub-issues)
+
+Resolve the project board metadata so you can place each sub-issue in the correct column:
+
+1. Run `gh project field-list {{context.project_number}} --owner {{context.project_owner}} --format json` to find the **Status** field ID and the **{{context.column_ready}}** option ID.
+
+### For each sub-issue
 
 1. **Determine the type label**: Based on the sub-issue content, choose one of: `bug`, `feature`, or `refactor`.
 2. **Create the issue** using `gh issue create`:
@@ -29,6 +35,14 @@ For each sub-issue found in the plan:
 4. **Link as sub-issue** of the parent:
    ```
    gh issue edit {{context.issue_number}} --add-sub-issue {{context.repo}}#{new issue number}
+   ```
+5. **Add to the project board** and set column to **{{context.column_ready}}**:
+   ```
+   gh project item-add {{context.project_number}} --owner {{context.project_owner}} --url https://github.com/{{context.repo}}/issues/{new issue number} --format json
+   ```
+   From the output, capture the item ID, then set the Status field:
+   ```
+   gh project item-edit --project-id {project ID from field-list} --id {item ID from item-add} --field-id {Status field ID} --single-select-option-id {Ready option ID}
    ```
 
 ## Sub-Issue Body Format

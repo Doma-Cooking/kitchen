@@ -1,7 +1,7 @@
 import { createAppAuth } from '@octokit/auth-app';
 import { graphql } from '@octokit/graphql';
 import { GithubSource } from './githubSource.js';
-import { ProjectItemContentModel } from '../../model/projectItemModel.js';
+import { ProjectItemContentModel, ProjectInfoModel } from '../../model/projectItemModel.js';
 import { IssueProjectItemModel } from '../../model/issueProjectItemModel.js';
 
 interface IssueNode {
@@ -117,6 +117,31 @@ export class GraphqlGithubSource implements GithubSource {
         if (node.fieldValueByName?.__typename !== 'ProjectV2ItemFieldSingleSelectValue') return null;
 
         return node.fieldValueByName.name;
+    }
+
+    async resolveProjectInfo(projectNodeId: string): Promise<ProjectInfoModel | null> {
+        const { node } = await this.graphqlWithAuth<{ node: { __typename: string; number: number; owner: { login: string } } | null }>(
+            `query($id: ID!) {
+                node(id: $id) {
+                    ... on ProjectV2 {
+                        __typename
+                        number
+                        owner {
+                            ... on Organization { login }
+                            ... on User { login }
+                        }
+                    }
+                }
+            }`,
+            { id: projectNodeId }
+        );
+
+        if (node?.__typename !== 'ProjectV2') return null;
+
+        return {
+            number: node.number,
+            owner: node.owner.login,
+        };
     }
 
     async resolveIssueProjectItem(owner: string, repo: string, issueNumber: number): Promise<IssueProjectItemModel | null> {

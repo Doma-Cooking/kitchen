@@ -39,11 +39,24 @@ function createWebhookRoutes(): Router {
         }
 
         if (item.column === dependencies.config.columnReady) {
+            const projectNodeId = payload.projects_v2_item.project_node_id;
+            const projectInfo = projectNodeId
+                ? await dependencies.githubRepository.resolveProjectInfo(projectNodeId)
+                : null;
+
             await dependencies.queueOrderUseCase.execute(
                 'domaCreateSubIssuesRecipe',
                 `sub-issues-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
                 `Create Sub-Issues: ${item.repo}#${String(item.number)}`,
-                { issueId: String(item.number), issueTitle: item.title, repo: item.repo, labelEnabled: dependencies.config.labelEnabled },
+                {
+                    issueId: String(item.number),
+                    issueTitle: item.title,
+                    repo: item.repo,
+                    labelEnabled: dependencies.config.labelEnabled,
+                    projectOwner: projectInfo?.owner,
+                    projectNumber: projectInfo ? String(projectInfo.number) : undefined,
+                    columnReady: dependencies.config.columnReady,
+                },
                 `planning-${item.repo}-${String(item.number)}`
             );
         }

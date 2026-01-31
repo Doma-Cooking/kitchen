@@ -73,7 +73,7 @@ export class Dependencies {
         this.queue = queue ?? new Queue<OrderModel, void>(this.config.queueName, { connection: redisConnection });
         this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
 
-        this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis);
+        this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis, redisConnection);
         this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook);
         this.githubSource = githubSource ?? new GraphqlGithubSource(
             this.config.githubAppId,
