@@ -1,6 +1,8 @@
 import { Cookbook } from "../../interface/cookbook.js";
 import { beginPlanningRecipe } from "../recipe/beginPlanningRecipe.js";
 import { feedbackPlanningRecipe } from "../recipe/feedbackPlanningRecipe.js";
+import { beginImplementationRecipe } from "../recipe/beginImplementationRecipe.js";
+import { feedbackImplementationRecipe } from "../recipe/feedbackImplementationRecipe.js";
 
 export const domaCookbook: Cookbook = {
     id: "domaCookbook",
@@ -8,6 +10,8 @@ export const domaCookbook: Cookbook = {
     description: "A cookbook containing recipes for Doma Cooking operations.",
     recipes: new Map([
         ["domaBeginPlanningRecipe", beginPlanningRecipe],
-        ["domaFeedbackPlanningRecipe", feedbackPlanningRecipe]
+        ["domaFeedbackPlanningRecipe", feedbackPlanningRecipe],
+        ["domaBeginImplementationRecipe", beginImplementationRecipe],
+        ["domaFeedbackImplementationRecipe", feedbackImplementationRecipe]
     ])
 };
