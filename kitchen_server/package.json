@@ -53,6 +53,7 @@
     "@octokit/auth-app": "^7.2.2",
     "@octokit/graphql": "^8.2.2",
     "@octokit/webhooks": "^14.2.0",
+    "@slack/web-api": "^7.13.0",
     "bullmq": "^5.66.5",
     "express": "^5.2.1",
     "kitchen_cookbook": "file:../kitchen_cookbook",

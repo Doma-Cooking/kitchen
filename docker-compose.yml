@@ -58,6 +58,8 @@ services:
       - CLONE_PATH=${CLONE_PATH}
       - MAIN_BRANCH=${MAIN_BRANCH}
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
