@@ -2,6 +2,13 @@ import { Router } from 'express';
 import { Webhooks, createNodeMiddleware } from '@octokit/webhooks';
 import { dependencies } from '../../server.js';
 import { ReviewCommentBuffer } from './reviewCommentBuffer.js';
+import { stationDependencies, type IssueRefEntity } from 'kitchen_station';
+
+function parseOwnerRepo(fullRepo: string): { owner: string; repoName: string } {
+    const [owner, repoName] = fullRepo.split('/');
+    if (!owner || !repoName) throw new Error(`Invalid repo format: ${fullRepo}`);
+    return { owner, repoName };
+}
 
 function createWebhookRoutes(): Router {
     const router = Router();
@@ -10,7 +17,7 @@ function createWebhookRoutes(): Router {
         secret: dependencies.config.githubWebhookSecret
     });
 
-    const reviewBuffer = new ReviewCommentBuffer(dependencies.queueOrderUseCase);
+    const reviewBuffer = new ReviewCommentBuffer(dependencies.queueOrderUseCase, stationDependencies.resolveStationUseCase);
 
     // Project board column moves
     webhooks.on('projects_v2_item.edited', async ({ payload }) => {
@@ -28,13 +35,17 @@ function createWebhookRoutes(): Router {
         );
         if (!item) return;
 
+        const { owner, repoName } = parseOwnerRepo(item.repo);
+        const ref: IssueRefEntity = { type: 'issue', owner, repo: repoName, number: item.number };
+        const stationId = await stationDependencies.resolveStationUseCase.execute({ ref });
+
         if (item.column === dependencies.config.columnPlanning) {
             await dependencies.queueOrderUseCase.execute(
                 'domaBeginPlanningRecipe',
                 `planning-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
                 `Initial Planning: ${item.repo}#${String(item.number)}`,
-                { issueId: String(item.number), issueTitle: item.title, repo: item.repo },
-                `planning-${item.repo}-${String(item.number)}`
+                { issueId: String(item.number), issueTitle: item.title, repo: item.repo, stationId },
+                stationId
             );
         }
 
@@ -56,8 +67,9 @@ function createWebhookRoutes(): Router {
                     projectOwner: projectInfo?.owner,
                     projectNumber: projectInfo ? String(projectInfo.number) : undefined,
                     columnReady: dependencies.config.columnReady,
+                    stationId,
                 },
-                `planning-${item.repo}-${String(item.number)}`
+                stationId
             );
         }
 
@@ -71,8 +83,9 @@ function createWebhookRoutes(): Router {
                     issueTitle: item.title,
                     repo: item.repo,
                     parentIssueId: item.parentNumber ? String(item.parentNumber) : undefined,
+                    stationId,
                 },
-                `implementation-${item.repo}-${String(item.number)}`
+                stationId
             );
         }
     });
@@ -88,30 +101,34 @@ function createWebhookRoutes(): Router {
 
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number);
         if (planningItem) {
-            const fullRepo = planningItem.repo;
+            const { owner: itemOwner, repoName } = parseOwnerRepo(planningItem.repo);
+            const ref: IssueRefEntity = { type: 'issue', owner: itemOwner, repo: repoName, number: planningItem.number };
+            const stationId = await stationDependencies.resolveStationUseCase.execute({ ref });
             const issueId = String(planningItem.number);
 
             await dependencies.queueOrderUseCase.execute(
                 'domaFeedbackPlanningRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
-                `planning-${fullRepo}-${issueId}`
+                `feedback-${planningItem.repo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Planning Feedback: ${planningItem.repo}#${issueId}`,
+                { issueId, issueTitle: planningItem.title, repo: planningItem.repo, feedback: payload.comment.body, prNumber: String(payload.issue.number), stationId },
+                stationId
             );
             return;
         }
 
         const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.issue.number);
         if (implementingItem) {
-            const fullRepo = implementingItem.repo;
+            const { owner: itemOwner, repoName } = parseOwnerRepo(implementingItem.repo);
+            const ref: IssueRefEntity = { type: 'issue', owner: itemOwner, repo: repoName, number: implementingItem.number };
+            const stationId = await stationDependencies.resolveStationUseCase.execute({ ref });
             const issueId = String(implementingItem.number);
 
             await dependencies.queueOrderUseCase.execute(
                 'domaFeedbackImplementationRecipe',
-                `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
-                `Implementation Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
-                `implementation-${fullRepo}-${issueId}`
+                `feedback-${implementingItem.repo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
+                `Implementation Feedback: ${implementingItem.repo}#${issueId}`,
+                { issueId, issueTitle: implementingItem.title, repo: implementingItem.repo, feedback: payload.comment.body, prNumber: String(payload.issue.number), stationId },
+                stationId
             );
         }
     });
@@ -126,8 +143,7 @@ function createWebhookRoutes(): Router {
 
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (planningItem) {
-            reviewBuffer.addReviewBody(
-                'planning',
+            await reviewBuffer.addReviewBody(
                 planningItem.repo,
                 String(planningItem.number),
                 planningItem.title,
@@ -139,8 +155,7 @@ function createWebhookRoutes(): Router {
 
         const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (implementingItem) {
-            reviewBuffer.addReviewBody(
-                'implementation',
+            await reviewBuffer.addReviewBody(
                 implementingItem.repo,
                 String(implementingItem.number),
                 implementingItem.title,
@@ -167,8 +182,7 @@ function createWebhookRoutes(): Router {
 
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (planningItem) {
-            reviewBuffer.addComment(
-                'planning',
+            await reviewBuffer.addComment(
                 planningItem.repo,
                 String(planningItem.number),
                 planningItem.title,
@@ -180,8 +194,7 @@ function createWebhookRoutes(): Router {
 
         const implementingItem = await dependencies.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (implementingItem) {
-            reviewBuffer.addComment(
-                'implementation',
+            await reviewBuffer.addComment(
                 implementingItem.repo,
                 String(implementingItem.number),
                 implementingItem.title,

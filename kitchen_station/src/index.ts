@@ -7,6 +7,9 @@ export { MemoryStationSource } from './data/source/memoryStationSource.js';
 export type { StationEntity } from './domain/entity/stationEntity.js';
 export { toStationEntity, toStationModel } from './domain/entity/stationEntity.js';
 
+export type { IssueRefEntity, SlackRefEntity, StationRefEntity } from './domain/entity/stationRefEntity.js';
+export { serializeRef, parseRef } from './domain/entity/stationRefEntity.js';
+
 export type { StationRepository } from './domain/repository/stationRepository.js';
 export { StationRepositoryImpl } from './domain/repository/stationRepository.js';
 
@@ -20,6 +23,11 @@ export type { DeleteStationUseCase } from './domain/usecase/deleteStationUseCase
 export { DeleteStationUseCaseImpl } from './domain/usecase/deleteStationUseCase.js';
 export type { WatchStationsUseCase } from './domain/usecase/watchStationsUseCase.js';
 export { WatchStationsUseCaseImpl } from './domain/usecase/watchStationsUseCase.js';
+
+export type { ResolveStationUseCase, ResolveStationInput } from './domain/usecase/resolveStationUseCase.js';
+export { ResolveStationUseCaseImpl } from './domain/usecase/resolveStationUseCase.js';
+export type { ClassifyTriggerUseCase, ClassifyTriggerInput, ClassifyTriggerOutput } from './domain/usecase/classifyTriggerUseCase.js';
+export { ClassifyTriggerUseCaseImpl } from './domain/usecase/classifyTriggerUseCase.js';
 
 import { StationDependencies as _StationDependencies } from './di/dependencies.js';
 export { StationDependencies } from './di/dependencies.js';

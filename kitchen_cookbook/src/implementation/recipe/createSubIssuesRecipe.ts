@@ -1,8 +1,6 @@
 import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { repoAgentTask, RepoAgentTaskInput, RepoAgentTaskOutput } from "../task/organisms/repoAgentTask.js";
-import { stationId } from "./util.js";
-
 const recipeId = "createSubIssuesRecipe";
 
 export interface CreateSubIssuesRecipeInput {
@@ -13,6 +11,7 @@ export interface CreateSubIssuesRecipeInput {
     projectOwner?: string;
     projectNumber?: string;
     columnReady?: string;
+    stationId: string;
 }
 
 export type CreateSubIssuesRecipeOutput = object;
@@ -27,7 +26,7 @@ export const createSubIssuesRecipe = new Recipe<CreateSubIssuesRecipeInput, Crea
                 const recipeInput = outputs.get(recipeInputKey) as CreateSubIssuesRecipeInput;
                 return {
                     promptId: recipeId,
-                    stationId: stationId('planning', recipeInput.issueId),
+                    stationId: recipeInput.stationId,
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',

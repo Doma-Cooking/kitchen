@@ -6,6 +6,8 @@ import { CreateStationUseCase, CreateStationUseCaseImpl } from '../domain/usecas
 import { UpdateStationUseCase, UpdateStationUseCaseImpl } from '../domain/usecase/updateStationUseCase.js';
 import { DeleteStationUseCase, DeleteStationUseCaseImpl } from '../domain/usecase/deleteStationUseCase.js';
 import { WatchStationsUseCase, WatchStationsUseCaseImpl } from '../domain/usecase/watchStationsUseCase.js';
+import { ResolveStationUseCase, ResolveStationUseCaseImpl } from '../domain/usecase/resolveStationUseCase.js';
+import { ClassifyTriggerUseCase, ClassifyTriggerUseCaseImpl } from '../domain/usecase/classifyTriggerUseCase.js';
 import { databaseDependencies } from 'kitchen_database';
 
 export class StationDependencies {
@@ -18,6 +20,8 @@ export class StationDependencies {
     updateStationUseCase: UpdateStationUseCase;
     deleteStationUseCase: DeleteStationUseCase;
     watchStationsUseCase: WatchStationsUseCase;
+    resolveStationUseCase: ResolveStationUseCase;
+    classifyTriggerUseCase: ClassifyTriggerUseCase;
 
     constructor(
         stationSource?: StationSource,
@@ -27,6 +31,8 @@ export class StationDependencies {
         updateStationUseCase?: UpdateStationUseCase,
         deleteStationUseCase?: DeleteStationUseCase,
         watchStationsUseCase?: WatchStationsUseCase,
+        resolveStationUseCase?: ResolveStationUseCase,
+        classifyTriggerUseCase?: ClassifyTriggerUseCase,
     ) {
         this.stationSource = stationSource ?? new PostgresStationSource(databaseDependencies.postgresDb);
 
@@ -37,5 +43,7 @@ export class StationDependencies {
         this.updateStationUseCase = updateStationUseCase ?? new UpdateStationUseCaseImpl(this.stationRepository);
         this.deleteStationUseCase = deleteStationUseCase ?? new DeleteStationUseCaseImpl(this.stationRepository);
         this.watchStationsUseCase = watchStationsUseCase ?? new WatchStationsUseCaseImpl(this.stationRepository);
+        this.resolveStationUseCase = resolveStationUseCase ?? new ResolveStationUseCaseImpl(this.stationRepository);
+        this.classifyTriggerUseCase = classifyTriggerUseCase ?? new ClassifyTriggerUseCaseImpl(this.stationRepository, this.resolveStationUseCase);
     }
 }

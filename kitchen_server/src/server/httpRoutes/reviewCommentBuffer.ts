@@ -1,4 +1,5 @@
 import { QueueOrderUseCase } from '../../domain/usecase/order/queueOrderUseCase.js';
+import { type ResolveStationUseCase, type IssueRefEntity } from 'kitchen_station';
 
 export interface BufferedComment {
     filePath: string;
@@ -14,7 +15,6 @@ export interface BufferedReviewBody {
 }
 
 interface BufferEntry {
-    phase: 'planning' | 'implementation';
     recipeId: string;
     issueId: string;
     issueTitle: string;
@@ -51,63 +51,65 @@ export function formatBatchedFeedback(
     return parts.join('\n\n---\n\n');
 }
 
+function parseOwnerRepo(fullRepo: string): { owner: string; repoName: string } {
+    const [owner, repoName] = fullRepo.split('/');
+    if (!owner || !repoName) throw new Error(`Invalid repo format: ${fullRepo}`);
+    return { owner, repoName };
+}
+
 export class ReviewCommentBuffer {
     private buffer = new Map<string, BufferEntry>();
     private debounceMs: number;
     private queueOrderUseCase: QueueOrderUseCase;
+    private resolveStationUseCase: ResolveStationUseCase;
 
-    constructor(queueOrderUseCase: QueueOrderUseCase, debounceMs = 5000) {
+    constructor(queueOrderUseCase: QueueOrderUseCase, resolveStationUseCase: ResolveStationUseCase, debounceMs = 5000) {
         this.queueOrderUseCase = queueOrderUseCase;
+        this.resolveStationUseCase = resolveStationUseCase;
         this.debounceMs = debounceMs;
     }
 
-    addComment(
-        phase: 'planning' | 'implementation',
+    async addComment(
         repo: string,
         issueId: string,
         issueTitle: string,
         prNumber: string,
         comment: BufferedComment
-    ): void {
-        const key = `${phase}-${repo}-${issueId}`;
-        const entry = this.getOrCreateEntry(key, phase, repo, issueId, issueTitle, prNumber);
+    ): Promise<void> {
+        const key = `${repo}-${issueId}`;
+        const entry = await this.getOrCreateEntry(key, repo, issueId, issueTitle, prNumber);
         entry.comments.push(comment);
         this.resetTimer(key, entry);
     }
 
-    addReviewBody(
-        phase: 'planning' | 'implementation',
+    async addReviewBody(
         repo: string,
         issueId: string,
         issueTitle: string,
         prNumber: string,
         reviewBody: BufferedReviewBody
-    ): void {
-        const key = `${phase}-${repo}-${issueId}`;
-        const entry = this.getOrCreateEntry(key, phase, repo, issueId, issueTitle, prNumber);
+    ): Promise<void> {
+        const key = `${repo}-${issueId}`;
+        const entry = await this.getOrCreateEntry(key, repo, issueId, issueTitle, prNumber);
         entry.reviewBody = reviewBody;
         this.resetTimer(key, entry);
     }
 
-    private getOrCreateEntry(
+    private async getOrCreateEntry(
         key: string,
-        phase: 'planning' | 'implementation',
         repo: string,
         issueId: string,
         issueTitle: string,
         prNumber: string
-    ): BufferEntry {
+    ): Promise<BufferEntry> {
         let entry = this.buffer.get(key);
         if (!entry) {
-            const recipeId = phase === 'planning'
-                ? 'domaFeedbackPlanningRecipe'
-                : 'domaFeedbackImplementationRecipe';
-            const stationId = phase === 'planning'
-                ? `planning-${repo}-${issueId}`
-                : `implementation-${repo}-${issueId}`;
+            const { owner, repoName } = parseOwnerRepo(repo);
+            const ref: IssueRefEntity = { type: 'issue', owner, repo: repoName, number: parseInt(issueId, 10) };
+            const stationId = await this.resolveStationUseCase.execute({ ref });
+
             entry = {
-                phase,
-                recipeId,
+                recipeId: 'domaFeedbackPlanningRecipe',
                 issueId,
                 issueTitle,
                 repo,
@@ -133,18 +135,18 @@ export class ReviewCommentBuffer {
         this.buffer.delete(key);
 
         const feedback = formatBatchedFeedback(entry.comments, entry.reviewBody);
-        const label = entry.phase === 'planning' ? 'Planning' : 'Implementation';
 
         await this.queueOrderUseCase.execute(
             entry.recipeId,
             `feedback-${entry.repo}-${entry.issueId}-batch-${Date.now().toString()}`,
-            `${label} Feedback: ${entry.repo}#${entry.issueId}`,
+            `Feedback: ${entry.repo}#${entry.issueId}`,
             {
                 issueId: entry.issueId,
                 issueTitle: entry.issueTitle,
                 repo: entry.repo,
                 feedback,
-                prNumber: entry.prNumber
+                prNumber: entry.prNumber,
+                stationId: entry.stationId,
             },
             entry.stationId
         );

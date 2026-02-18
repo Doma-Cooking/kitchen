@@ -2,8 +2,6 @@ import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { worktreeAgentTask, WorktreeAgentTaskInput, WorktreeAgentTaskOutput } from "../task/organisms/worktreeAgentTask.js";
 import { worktreeRemoveTask, WorktreeRemoveTaskInput, WorktreeRemoveTaskOutput } from "../task/atoms/git/worktreeRemoveTask.js";
-import { stationId } from "./util.js";
-
 const recipeId = "feedbackPlanningRecipe";
 
 export interface FeedbackPlanningRecipeInput {
@@ -13,6 +11,7 @@ export interface FeedbackPlanningRecipeInput {
     feedback: string;
     replyTo?: string;
     prNumber?: string;
+    stationId: string;
 }
 
 export type FeedbackPlanningRecipeOutput = object;
@@ -28,7 +27,7 @@ export const feedbackPlanningRecipe = new Recipe<FeedbackPlanningRecipeInput, Fe
                 return {
                     branch: `${recipeInput.issueId}-plan`,
                     promptId: recipeId,
-                    stationId: stationId('planning', recipeInput.issueId),
+                    stationId: recipeInput.stationId,
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',

@@ -1,6 +1,7 @@
 import { map, Observable } from 'rxjs';
 import { StationSource } from '../../data/source/stationSource.js';
 import { StationEntity, toStationEntity, toStationModel } from '../entity/stationEntity.js';
+import { StationRefEntity, serializeRef } from '../entity/stationRefEntity.js';
 
 export interface StationRepository {
     createStation(stationId: string): Promise<StationEntity>;
@@ -8,6 +9,11 @@ export interface StationRepository {
     updateStation(stationId: string, station: StationEntity): Promise<void>;
     deleteStation(stationId: string): Promise<void>;
     watchAll(): Observable<StationEntity[]>;
+
+    findStationByRef(ref: StationRefEntity): Promise<string | null>;
+    createStationWithRef(ref: StationRefEntity): Promise<string>;
+    addRef(stationId: string, ref: StationRefEntity): Promise<void>;
+    getAllRefs(): Promise<{ ref: string; stationId: string }[]>;
 }
 
 export class StationRepositoryImpl implements StationRepository {
@@ -39,5 +45,21 @@ export class StationRepositoryImpl implements StationRepository {
         return this.source.watchAll().pipe(
             map(models => models.map(toStationEntity))
         );
+    }
+
+    async findStationByRef(ref: StationRefEntity): Promise<string | null> {
+        return this.source.findStationByRef(serializeRef(ref));
+    }
+
+    async createStationWithRef(ref: StationRefEntity): Promise<string> {
+        return this.source.createStationWithRef(serializeRef(ref));
+    }
+
+    async addRef(stationId: string, ref: StationRefEntity): Promise<void> {
+        await this.source.addRef(stationId, serializeRef(ref));
+    }
+
+    async getAllRefs(): Promise<{ ref: string; stationId: string }[]> {
+        return this.source.getAllRefs();
     }
 }
