@@ -1,5 +1,8 @@
 .env
+node_modules/
+dist/
+coverage/
 
-# Generated prompt registry
-kitchen_cookbook/src/implementation/prompt/prompts.generated.ts
-kitchen_cookbook/src/implementation/template/templates.generated.ts
+# Generated prompt/template registries
+src/cookbook/implementation/prompt/prompts.generated.ts
+src/cookbook/implementation/template/templates.generated.ts
