@@ -5,7 +5,7 @@ import createHttpServer from './server/httpServer.js';
 
 export const dependencies = new Dependencies();
 
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
+const PORT = dependencies.config.port;
 const HOST = '0.0.0.0';
 
 const server = createServer(createHttpServer());

@@ -1,6 +1,7 @@
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import type { Configuration } from "../../../../../di/configuration.js";
 import { Task } from "../../../../interface/task.js";
 
 export type AgentConfigTaskInput = object;
@@ -11,8 +12,8 @@ const claudeConfigPath = join(homedir(), ".claude.json");
 const claudeSettingsPath = join(homedir(), ".claude", "settings.json");
 
 export const agentConfigTask: Task<AgentConfigTaskInput, AgentConfigTaskOutput> = {
-    async execute(_input: AgentConfigTaskInput, sendMessage: (message: string) => void): Promise<AgentConfigTaskOutput> {
-        const hasOAuthToken = !!process.env.CLAUDE_CODE_OAUTH_TOKEN;
+    async execute(_input: AgentConfigTaskInput, config: Configuration, sendMessage: (message: string) => void): Promise<AgentConfigTaskOutput> {
+        const hasOAuthToken = !!config.claudeCodeOAuthToken;
 
         if (!hasOAuthToken) {
             throw new Error("No Claude authentication configured. Set CLAUDE_CODE_OAUTH_TOKEN.");

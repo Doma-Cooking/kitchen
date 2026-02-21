@@ -56,11 +56,10 @@ FROM base AS production
 WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY package.json ./
+COPY package.json .kitchen.yaml* ./
 RUN chown -R kitchen:kitchen /app
 USER kitchen
 ENV NODE_ENV=production
-ENV PORT=3000
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
@@ -73,6 +72,5 @@ COPY tsconfig.json ./
 COPY scripts ./scripts
 COPY src ./src
 ENV NODE_ENV=development
-ENV PORT=3000
 EXPOSE 3000
 CMD ["npm", "run", "dev"]

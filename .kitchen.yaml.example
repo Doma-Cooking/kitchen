@@ -1,0 +1,37 @@
+# Non-sensitive configuration for Kitchen server.
+# Copy this file to .kitchen.yaml and adjust values.
+
+port: 3000
+
+redis:
+  host: localhost
+  port: 6379
+
+db:
+  host: localhost
+  port: 5432
+  user: kitchen
+  name: kitchen
+
+queue:
+  name: kitchenQueue
+
+github:
+  appSlug: your-app-slug
+  columns:
+    planning: Planning
+    implementing: In Progress
+    ready: Ready
+  label: "agent:enabled"
+
+repo:
+  url: https://github.com/your-org/your-repo.git
+  clonePath: /tmp/repo
+  mainBranch: main
+
+slack:
+  channelId: your-channel-id
+
+flutter:
+  channel: stable
+  home: /opt/flutter

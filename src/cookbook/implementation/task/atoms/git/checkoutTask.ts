@@ -1,3 +1,4 @@
+import type { Configuration } from "../../../../../di/configuration.js";
 import { Task } from "../../../../interface/task.js";
 import { execTask } from "../util/execTask.js";
 
@@ -11,15 +12,15 @@ export interface CheckoutTaskOutput {
 }
 
 export const checkoutTask: Task<CheckoutTaskInput, CheckoutTaskOutput> = {
-    async execute(input: CheckoutTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<CheckoutTaskOutput> {
-        const branch = input.branch ?? process.env.MAIN_BRANCH;
+    async execute(input: CheckoutTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<CheckoutTaskOutput> {
+        const branch = input.branch ?? config.mainBranch;
         if (!branch) {
-            throw new Error("No branch provided and MAIN_BRANCH environment variable is not set");
+            throw new Error("No branch provided and MAIN_BRANCH is not configured");
         }
 
         sendMessage(`Checking out branch ${branch}`);
 
-        await execTask.execute({ command: "git", args: ["checkout", branch], workingDirectory: input.repoPath }, sendMessage, signal);
+        await execTask.execute({ command: "git", args: ["checkout", branch], workingDirectory: input.repoPath }, config, sendMessage, signal);
 
         sendMessage(`Successfully checked out branch ${branch}`);
         return { branch };

@@ -1,3 +1,4 @@
+import type { Configuration } from "../../../../di/configuration.js";
 import { Task } from "../../../interface/task.js";
 import { setupRepoTask } from "./setupRepoTask.js";
 import { worktreeAddTask } from "../atoms/git/worktreeAddTask.js";
@@ -16,14 +17,14 @@ export interface SetupWorktreeTaskOutput {
 }
 
 export const setupWorktreeTask: Task<SetupWorktreeTaskInput, SetupWorktreeTaskOutput> = {
-    async execute(input: SetupWorktreeTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<SetupWorktreeTaskOutput> {
-        const setupOutput = await setupRepoTask.execute({}, sendMessage, signal);
-        const worktreeOutput = await worktreeAddTask.execute({ repoPath: setupOutput.repoPath, branch: input.branch }, sendMessage, signal);
+    async execute(input: SetupWorktreeTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<SetupWorktreeTaskOutput> {
+        const setupOutput = await setupRepoTask.execute({}, config, sendMessage, signal);
+        const worktreeOutput = await worktreeAddTask.execute({ repoPath: setupOutput.repoPath, branch: input.branch }, config, sendMessage, signal);
 
         if (worktreeOutput.created) {
-            await pushTask.execute({ repoPath: worktreeOutput.worktreePath, branch: input.branch, setUpstream: true }, sendMessage, signal);
+            await pushTask.execute({ repoPath: worktreeOutput.worktreePath, branch: input.branch, setUpstream: true }, config, sendMessage, signal);
         } else {
-            await pullTask.execute({ repoPath: worktreeOutput.worktreePath }, sendMessage, signal);
+            await pullTask.execute({ repoPath: worktreeOutput.worktreePath }, config, sendMessage, signal);
         }
 
         return {

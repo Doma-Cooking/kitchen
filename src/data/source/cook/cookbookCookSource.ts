@@ -1,4 +1,5 @@
 import { Observable } from "rxjs";
+import type { Configuration } from "../../../di/configuration.js";
 import type { Cookbook } from "../../../cookbook/interface/cookbook.js";
 import { CookMessageModel } from "../../model/cookMessageModel.js";
 import { OrderModel } from "../../model/orderModel.js";
@@ -6,9 +7,11 @@ import { CookSource } from "./cookSource.js";
 
 export class CookbookCookSource implements CookSource {
     private cookbook: Cookbook;
+    private config: Configuration;
 
-    constructor(cookbook: Cookbook) {
+    constructor(cookbook: Cookbook, config: Configuration) {
         this.cookbook = cookbook;
+        this.config = config;
     }
 
     executeOrder(order: OrderModel, signal?: AbortSignal): Observable<CookMessageModel> {
@@ -24,6 +27,7 @@ export class CookbookCookSource implements CookSource {
                 });
                 recipe.execute(
                     order.input ?? {},
+                    this.config,
                     (message: string) => {
                         observer.next({
                             message,

@@ -40,28 +40,17 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=kitchen
-      - DB_PASSWORD=kitchen
-      - DB_NAME=kitchen
-      - KITCHEN_QUEUE_NAME=kitchenQueue
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
       - GITHUB_APP_ID=${GITHUB_APP_ID}
-      - GITHUB_APP_SLUG=${GITHUB_APP_SLUG}
       - GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
       - GITHUB_INSTALLATION_ID=${GITHUB_INSTALLATION_ID}
-      - REPO_URL=${REPO_URL}
-      - CLONE_PATH=${CLONE_PATH}
-      - MAIN_BRANCH=${MAIN_BRANCH}
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - DB_PASSWORD=${DB_PASSWORD:-kitchen}
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
-      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID:-}
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./.kitchen.docker.yaml:/app/.kitchen.yaml:ro
     depends_on:
       postgres:
         condition: service_healthy

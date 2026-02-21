@@ -1,3 +1,4 @@
+import type { Configuration } from "../../../../../di/configuration.js";
 import { Task } from "../../../../interface/task.js";
 
 export interface MockTaskInput {
@@ -10,7 +11,7 @@ export interface MockTaskOutput {
 }
 
 export const mockTask: Task<MockTaskInput, MockTaskOutput> = {
-    async execute(input: MockTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<MockTaskOutput> {
+    async execute(input: MockTaskInput, _config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<MockTaskOutput> {
         sendMessage(`Mock task started, will take ${input.taskTimeMs.toString()} ms`);
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(resolve, input.taskTimeMs);

@@ -1,4 +1,5 @@
 import { dependencies } from "../../../../../server.js";
+import type { Configuration } from "../../../../../di/configuration.js";
 import type { StationEntity } from "../../../../../domain/entity/stationEntity.js";
 import { Task } from "../../../../interface/task.js";
 
@@ -12,7 +13,7 @@ export interface FetchStationTaskOutput {
 }
 
 export const fetchStationTask: Task<FetchStationTaskInput, FetchStationTaskOutput> = {
-    async execute(input: FetchStationTaskInput, sendMessage: (message: string) => void): Promise<FetchStationTaskOutput> {
+    async execute(input: FetchStationTaskInput, _config: Configuration, sendMessage: (message: string) => void): Promise<FetchStationTaskOutput> {
         if (!input.stationId) {
             throw new Error("No station ID provided, station fetch failed");
         }

@@ -1,4 +1,5 @@
 import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { Configuration } from "../../../../di/configuration.js";
 import { Task } from "../../../interface/task.js";
 import type { StationEntity } from "../../../../domain/entity/stationEntity.js";
 import { agentConfigTask } from "../atoms/agent/agentConfigTask.js";
@@ -17,7 +18,7 @@ export interface AgentTaskOutput {
 }
 
 export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
-    async execute(input: AgentTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<AgentTaskOutput> {
+    async execute(input: AgentTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<AgentTaskOutput> {
         sendMessage(`Starting agent in ${input.workingDirectory}`);
 
         const abortController = new AbortController();
@@ -31,11 +32,11 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
 
         let sessionId: string | undefined;
 
-        await agentConfigTask.execute({}, sendMessage, signal);
-        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId, context: input.context }, sendMessage, signal);
+        await agentConfigTask.execute({}, config, sendMessage, signal);
+        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId, context: input.context }, config, sendMessage, signal);
 
-        const appId = process.env.GITHUB_APP_ID;
-        const appSlug = process.env.GITHUB_APP_SLUG;
+        const appId = config.githubAppId;
+        const appSlug = config.githubAppSlug;
         const gitEnv = appId && appSlug ? {
             GIT_AUTHOR_NAME: `${appSlug}[bot]`,
             GIT_AUTHOR_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,

@@ -1,3 +1,4 @@
+import type { Configuration } from "../../di/configuration.js";
 import { Task } from "./task.js";
 
 export type Step =
@@ -21,10 +22,11 @@ export class ExecutableStep<I extends object, O extends object> {
 
     async execute(
         previousOutputs: Map<string, object>,
+        config: Configuration,
         sendMessage: (message: string) => void,
         signal?: AbortSignal
     ): Promise<O> {
         const input = this.mapInput(previousOutputs);
-        return this.task.execute(input, sendMessage, signal);
+        return this.task.execute(input, config, sendMessage, signal);
     }
 }

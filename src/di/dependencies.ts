@@ -23,7 +23,7 @@ import { PostgresStationSource } from '../data/source/station/postgresStationSou
 import { PostgresDb } from '../data/source/database/postgresDb.js';
 import { OrderModel } from '../data/model/orderModel.js';
 import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/order/watchOrdersUseCase.js';
-import { Configuration, EnvConfiguration } from './configuration.js';
+import { Configuration, KitchenConfiguration } from './configuration.js';
 import { DeleteOrderUseCase, DeleteOrderUseCaseImpl } from '../domain/usecase/order/deleteOrderUseCase.js';
 import { CreateCookUseCase, CreateCookUseCaseImpl } from '../domain/usecase/cook/createCookUseCase.js';
 import type { Cookbook } from '../cookbook/interface/cookbook.js';
@@ -90,7 +90,7 @@ export class Dependencies {
         deleteStationUseCase?: DeleteStationUseCase,
         watchStationsUseCase?: WatchStationsUseCase
     ) {
-        this.config = config ?? new EnvConfiguration();
+        this.config = config ?? new KitchenConfiguration();
         this.cookbook = cookbook ?? domaCookbook;
 
         this.postgresDb = postgresDb ?? new PostgresDb(`postgres://${this.config.dbUser}:${this.config.dbPassword}@${this.config.dbHost}:${this.config.dbPort.toString()}/${this.config.dbName}`);
@@ -101,7 +101,7 @@ export class Dependencies {
         this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
 
         this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis, redisConnection);
-        this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook);
+        this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook, this.config);
         this.githubSource = githubSource ?? new GraphqlGithubSource(
             this.config.githubAppId,
             this.config.githubPrivateKey,

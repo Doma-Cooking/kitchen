@@ -1,3 +1,4 @@
+import type { Configuration } from "../../../../di/configuration.js";
 import { Task } from "../../../interface/task.js";
 import { notifyTask } from "../atoms/notify/notifyTask.js";
 import { setupWorktreeTask } from "../molecules/setupWorktreeTask.js";
@@ -16,16 +17,17 @@ export interface WorktreeAgentTaskOutput {
 }
 
 export const worktreeAgentTask: Task<WorktreeAgentTaskInput, WorktreeAgentTaskOutput> = {
-    async execute(input: WorktreeAgentTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<WorktreeAgentTaskOutput> {
+    async execute(input: WorktreeAgentTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<WorktreeAgentTaskOutput> {
         const repo = input.context?.repo ?? '';
         const issue = input.context?.issue_number ?? '';
         const title = input.context?.issue_title ?? '';
         const label = `${input.promptId} for ${repo}#${issue} (${title})`;
 
-        await notifyTask.execute({ message: `Starting ${label}` }, sendMessage);
+        await notifyTask.execute({ message: `Starting ${label}` }, config, sendMessage);
 
         const setupOutput = await setupWorktreeTask.execute(
             { branch: input.branch },
+            config,
             sendMessage,
             signal,
         );
@@ -38,11 +40,12 @@ export const worktreeAgentTask: Task<WorktreeAgentTaskInput, WorktreeAgentTaskOu
                 token: setupOutput.token,
                 context: input.context,
             },
+            config,
             sendMessage,
             signal,
         );
 
-        await notifyTask.execute({ message: `Finished ${label}` }, sendMessage);
+        await notifyTask.execute({ message: `Finished ${label}` }, config, sendMessage);
 
         return {
             repoPath: setupOutput.repoPath,

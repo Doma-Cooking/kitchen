@@ -1,5 +1,6 @@
 import { prompts } from "../../../prompt/prompts.generated.js";
 import { templates } from "../../../template/templates.generated.js";
+import type { Configuration } from "../../../../../di/configuration.js";
 import { Task } from "../../../../interface/task.js";
 
 export interface FetchPromptTaskInput {
@@ -12,7 +13,7 @@ export interface FetchPromptTaskOutput {
 }
 
 export const fetchPromptTask: Task<FetchPromptTaskInput, FetchPromptTaskOutput> = {
-    async execute(input: FetchPromptTaskInput, sendMessage: (message: string) => void): Promise<FetchPromptTaskOutput> {
+    async execute(input: FetchPromptTaskInput, _config: Configuration, sendMessage: (message: string) => void): Promise<FetchPromptTaskOutput> {
         await Promise.resolve();
 
         const raw = prompts[input.promptId];

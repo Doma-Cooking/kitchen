@@ -1,3 +1,4 @@
+import type { Configuration } from "../../di/configuration.js";
 import { Step } from "./step.js";
 
 export const recipeInputKey = "recipeInitialInput";
@@ -20,21 +21,21 @@ export class Recipe<I extends object, O extends object> {
         this.mapOutput = mapOutput;
     }
 
-    async execute(input: I, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<O> {
+    async execute(input: I, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<O> {
         const inputs = new Map<string, object>();
         inputs.set(recipeInputKey, input);
 
         let currentOutputs: Map<string, object> = inputs;
         let error: Error | undefined;
         try {
-            currentOutputs = await this.executeStep(this.instructions, input, inputs, sendMessage, signal);
+            currentOutputs = await this.executeStep(this.instructions, input, inputs, config, sendMessage, signal);
         } catch (err) {
             error = err instanceof Error ? err : new Error("Unknown error during recipe execution");
             sendMessage(`Error during recipe execution: ${error.message}`);
         } finally {
             if (this.cleanupInstructions) {
                 try {
-                    await this.executeStep(this.cleanupInstructions, input, currentOutputs, sendMessage);
+                    await this.executeStep(this.cleanupInstructions, input, currentOutputs, config, sendMessage);
                 } catch (error) {
                     const message = error instanceof Error ? error.message : "unknown error";
                     sendMessage(`Cleanup failed: ${message}`);
@@ -53,6 +54,7 @@ export class Recipe<I extends object, O extends object> {
         step: Step,
         input: I,
         outputs: Map<string, object>,
+        config: Configuration,
         sendMessage: (message: string) => void,
         signal?: AbortSignal
     ): Promise<Map<string, object>> {
@@ -61,10 +63,10 @@ export class Recipe<I extends object, O extends object> {
 
         if (Array.isArray(step)) {
             for (const subStep of step) {
-                currentOutputs = await this.executeStep(subStep, input, currentOutputs, sendMessage, signal);
+                currentOutputs = await this.executeStep(subStep, input, currentOutputs, config, sendMessage, signal);
             }
         } else {
-            const output = await step.execute(currentOutputs, sendMessage, signal);
+            const output = await step.execute(currentOutputs, config, sendMessage, signal);
             currentOutputs.set(step.id, output);
         }
 

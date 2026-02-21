@@ -1,3 +1,4 @@
+import type { Configuration } from "../../../../../di/configuration.js";
 import { Task } from "../../../../interface/task.js";
 import { execTask } from "../util/execTask.js";
 
@@ -10,10 +11,10 @@ export interface PullTaskOutput {
 }
 
 export const pullTask: Task<PullTaskInput, PullTaskOutput> = {
-    async execute(input: PullTaskInput, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<PullTaskOutput> {
+    async execute(input: PullTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<PullTaskOutput> {
         sendMessage("Pulling latest changes");
 
-        await execTask.execute({ command: "git", args: ["pull"], workingDirectory: input.repoPath }, sendMessage, signal);
+        await execTask.execute({ command: "git", args: ["pull"], workingDirectory: input.repoPath }, config, sendMessage, signal);
 
         sendMessage("Successfully pulled latest changes");
         return { success: true };

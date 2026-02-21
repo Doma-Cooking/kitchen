@@ -1,0 +1,37 @@
+# Non-sensitive configuration for Kitchen server.
+# Copy this file to .kitchen.yaml and adjust values.
+
+port: 3000
+
+redis:
+  host: localhost
+  port: 6379
+
+db:
+  host: localhost
+  port: 5432
+  user: kitchen
+  name: kitchen
+
+queue:
+  name: kitchenQueue
+
+github:
+  appSlug: kitchen-cook
+  columns:
+    planning: Planning
+    implementing: In Progress
+    ready: Ready
+  label: "agent:enabled"
+
+repo:
+  url: https://github.com/Doma-Cooking/doma-main
+  clonePath: /tmp/repo
+  mainBranch: dev
+
+slack:
+  channelId: C0AD27ZRNE4
+
+flutter:
+  channel: stable
+  home: /opt/flutter

@@ -1,4 +1,5 @@
 import { dependencies } from "../../../../../server.js";
+import type { Configuration } from "../../../../../di/configuration.js";
 import type { StationEntity } from "../../../../../domain/entity/stationEntity.js";
 import { Task } from "../../../../interface/task.js";
 
@@ -10,7 +11,7 @@ export interface SaveStationTaskInput {
 export type SaveStationTaskOutput = object;
 
 export const saveStationTask: Task<SaveStationTaskInput, SaveStationTaskOutput> = {
-    async execute(input: SaveStationTaskInput, sendMessage: (message: string) => void): Promise<SaveStationTaskOutput> {
+    async execute(input: SaveStationTaskInput, _config: Configuration, sendMessage: (message: string) => void): Promise<SaveStationTaskOutput> {
         if (!input.stationId) {
             throw new Error("No station ID provided, station save failed");
         }
