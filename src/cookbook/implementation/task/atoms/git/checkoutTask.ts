@@ -5,6 +5,7 @@ import { execTask } from "../util/execTask.js";
 export interface CheckoutTaskInput {
     repoPath: string;
     branch?: string;
+    defaultBranch?: string;
 }
 
 export interface CheckoutTaskOutput {
@@ -13,9 +14,9 @@ export interface CheckoutTaskOutput {
 
 export const checkoutTask: Task<CheckoutTaskInput, CheckoutTaskOutput> = {
     async execute(input: CheckoutTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<CheckoutTaskOutput> {
-        const branch = input.branch ?? config.mainBranch;
+        const branch = input.branch ?? input.defaultBranch;
         if (!branch) {
-            throw new Error("No branch provided and MAIN_BRANCH is not configured");
+            throw new Error("No branch or defaultBranch provided");
         }
 
         sendMessage(`Checking out branch ${branch}`);

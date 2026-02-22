@@ -2,6 +2,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 
+export interface RepoConfig {
+  owner: string;
+  name: string;
+  fullName: string;
+  url: string;
+  clonePath: string;
+  mainBranch: string;
+}
+
 export interface Configuration {
   // Server
   port: number;
@@ -33,10 +42,8 @@ export interface Configuration {
   columnReady: string;
   labelEnabled: string;
 
-  // Repository
-  repoUrl: string;
-  clonePath: string;
-  mainBranch: string;
+  // Repositories
+  repos: RepoConfig[];
 
   // Claude
   claudeCodeOAuthToken: string;
@@ -63,6 +70,8 @@ class EnvConfiguration {
   get githubInstallationId() { return process.env.GITHUB_INSTALLATION_ID ?? ''; }
   get claudeCodeOAuthToken() { return process.env.CLAUDE_CODE_OAUTH_TOKEN ?? ''; }
   get slackBotToken() { return process.env.SLACK_BOT_TOKEN ?? ''; }
+  get redisHost() { return process.env.REDIS_HOST; }
+  get dbHost() { return process.env.DB_HOST; }
   get dbPassword() { return process.env.DB_PASSWORD ?? 'kitchen'; }
   get adminUser() { return process.env.ADMIN_USER ?? 'admin'; }
   get adminPassword() { return process.env.ADMIN_PASSWORD ?? 'admin'; }
@@ -80,7 +89,7 @@ interface YamlSchema {
     columns?: { planning?: string; implementing?: string; ready?: string };
     label?: string;
   };
-  repo?: { url?: string; clonePath?: string; mainBranch?: string };
+  repos?: { owner?: string; name?: string; url?: string; clonePath?: string; mainBranch?: string }[];
   slack?: { channelId?: string };
   flutter?: { channel?: string; home?: string };
 }
@@ -114,9 +123,16 @@ class YamlConfiguration {
   get columnImplementing() { return this.yaml.github?.columns?.implementing ?? 'In Progress'; }
   get columnReady() { return this.yaml.github?.columns?.ready ?? 'Ready'; }
   get labelEnabled() { return this.yaml.github?.label ?? 'agent:enabled'; }
-  get repoUrl() { return this.yaml.repo?.url ?? ''; }
-  get clonePath() { return this.yaml.repo?.clonePath ?? ''; }
-  get mainBranch() { return this.yaml.repo?.mainBranch ?? 'main'; }
+  get repos(): RepoConfig[] {
+    return (this.yaml.repos ?? []).map(r => ({
+      owner: r.owner ?? '',
+      name: r.name ?? '',
+      fullName: `${r.owner ?? ''}/${r.name ?? ''}`,
+      url: r.url ?? '',
+      clonePath: r.clonePath ?? '',
+      mainBranch: r.mainBranch ?? 'main',
+    }));
+  }
   get slackChannelId() { return this.yaml.slack?.channelId ?? ''; }
   get flutterChannel() { return this.yaml.flutter?.channel ?? 'stable'; }
   get flutterHome() { return this.yaml.flutter?.home ?? '/opt/flutter'; }
@@ -130,9 +146,9 @@ export class KitchenConfiguration implements Configuration {
 
   // Non-sensitive (from .kitchen.yaml)
   get port() { return this.yaml.port; }
-  get redisHost() { return this.yaml.redisHost; }
+  get redisHost() { return this.env.redisHost ?? this.yaml.redisHost; }
   get redisPort() { return this.yaml.redisPort; }
-  get dbHost() { return this.yaml.dbHost; }
+  get dbHost() { return this.env.dbHost ?? this.yaml.dbHost; }
   get dbPort() { return this.yaml.dbPort; }
   get dbUser() { return this.yaml.dbUser; }
   get dbName() { return this.yaml.dbName; }
@@ -142,9 +158,7 @@ export class KitchenConfiguration implements Configuration {
   get columnImplementing() { return this.yaml.columnImplementing; }
   get columnReady() { return this.yaml.columnReady; }
   get labelEnabled() { return this.yaml.labelEnabled; }
-  get repoUrl() { return this.yaml.repoUrl; }
-  get clonePath() { return this.yaml.clonePath; }
-  get mainBranch() { return this.yaml.mainBranch; }
+  get repos() { return this.yaml.repos; }
   get slackChannelId() { return this.yaml.slackChannelId; }
   get flutterChannel() { return this.yaml.flutterChannel; }
   get flutterHome() { return this.yaml.flutterHome; }

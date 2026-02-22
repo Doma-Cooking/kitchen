@@ -7,6 +7,9 @@ import { pushTask } from "../atoms/git/pushTask.js";
 
 export interface SetupWorktreeTaskInput {
     branch: string;
+    repoUrl: string;
+    clonePath: string;
+    defaultBranch: string;
 }
 
 export interface SetupWorktreeTaskOutput {
@@ -18,7 +21,7 @@ export interface SetupWorktreeTaskOutput {
 
 export const setupWorktreeTask: Task<SetupWorktreeTaskInput, SetupWorktreeTaskOutput> = {
     async execute(input: SetupWorktreeTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<SetupWorktreeTaskOutput> {
-        const setupOutput = await setupRepoTask.execute({}, config, sendMessage, signal);
+        const setupOutput = await setupRepoTask.execute({ repoUrl: input.repoUrl, clonePath: input.clonePath, defaultBranch: input.defaultBranch }, config, sendMessage, signal);
         const worktreeOutput = await worktreeAddTask.execute({ repoPath: setupOutput.repoPath, branch: input.branch }, config, sendMessage, signal);
 
         if (worktreeOutput.created) {

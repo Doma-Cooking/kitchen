@@ -1,10 +1,11 @@
-import type { Configuration } from "../../../../di/configuration.js";
+import type { Configuration, RepoConfig } from "../../../../di/configuration.js";
 import { Task } from "../../../interface/task.js";
 import { notifyTask } from "../atoms/notify/notifyTask.js";
 import { setupRepoTask } from "../molecules/setupRepoTask.js";
 import { stationAgentTask } from "../molecules/stationAgentTask.js";
 
 export interface RepoAgentTaskInput {
+    repoConfig: RepoConfig;
     promptId: string;
     stationId?: string;
     context?: Record<string, string>;
@@ -23,7 +24,7 @@ export const repoAgentTask: Task<RepoAgentTaskInput, RepoAgentTaskOutput> = {
 
         await notifyTask.execute({ message: `Starting ${label}` }, config, sendMessage);
 
-        const setupOutput = await setupRepoTask.execute({}, config, sendMessage, signal);
+        const setupOutput = await setupRepoTask.execute({ repoUrl: input.repoConfig.url, clonePath: input.repoConfig.clonePath, defaultBranch: input.repoConfig.mainBranch }, config, sendMessage, signal);
 
         await stationAgentTask.execute(
             {

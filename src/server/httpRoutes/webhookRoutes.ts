@@ -28,12 +28,23 @@ function createWebhookRoutes(): Router {
         );
         if (!item) return;
 
+        const [owner = '', name = ''] = item.repo.split('/');
+        const repoConfig = dependencies.getRepoConfigUseCase.execute(owner, name);
+        if (!repoConfig) {
+            console.warn(`Skipping webhook: no repo configuration found for "${item.repo}"`);
+            return;
+        }
+
         if (item.column === dependencies.config.columnPlanning) {
             await dependencies.queueOrderUseCase.execute(
                 'domaBeginPlanningRecipe',
                 `planning-${item.repo}-${String(item.number)}-${Date.now().toString()}`,
                 `Initial Planning: ${item.repo}#${String(item.number)}`,
-                { issueId: String(item.number), issueTitle: item.title, repo: item.repo },
+                {
+                    issueId: String(item.number),
+                    issueTitle: item.title,
+                    repoConfig,
+                },
                 `planning-${item.repo}-${String(item.number)}`
             );
         }
@@ -51,7 +62,7 @@ function createWebhookRoutes(): Router {
                 {
                     issueId: String(item.number),
                     issueTitle: item.title,
-                    repo: item.repo,
+                    repoConfig,
                     labelEnabled: dependencies.config.labelEnabled,
                     projectOwner: projectInfo?.owner,
                     projectNumber: projectInfo ? String(projectInfo.number) : undefined,
@@ -69,7 +80,7 @@ function createWebhookRoutes(): Router {
                 {
                     issueId: String(item.number),
                     issueTitle: item.title,
-                    repo: item.repo,
+                    repoConfig,
                     parentIssueId: item.parentNumber ? String(item.parentNumber) : undefined,
                 },
                 `implementation-${item.repo}-${String(item.number)}`
@@ -83,6 +94,13 @@ function createWebhookRoutes(): Router {
 
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
+        const fullRepo = `${owner}/${repo}`;
+
+        const repoConfig = dependencies.getRepoConfigUseCase.execute(owner, repo);
+        if (!repoConfig) {
+            console.warn(`Skipping issue comment: no repo configuration found for "${fullRepo}"`);
+            return;
+        }
 
         if (!payload.issue.pull_request) return;
 
@@ -95,7 +113,13 @@ function createWebhookRoutes(): Router {
                 'domaFeedbackPlanningRecipe',
                 `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
                 `Planning Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: planningItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
+                {
+                    issueId,
+                    issueTitle: planningItem.title,
+                    repoConfig,
+                    feedback: payload.comment.body,
+                    prNumber: String(payload.issue.number),
+                },
                 `planning-${fullRepo}-${issueId}`
             );
             return;
@@ -110,7 +134,13 @@ function createWebhookRoutes(): Router {
                 'domaFeedbackImplementationRecipe',
                 `feedback-${fullRepo}-${issueId}-comment-${String(payload.comment.id)}-${Date.now().toString()}`,
                 `Implementation Feedback: ${fullRepo}#${issueId}`,
-                { issueId, issueTitle: implementingItem.title, repo: fullRepo, feedback: payload.comment.body, prNumber: String(payload.issue.number) },
+                {
+                    issueId,
+                    issueTitle: implementingItem.title,
+                    repoConfig,
+                    feedback: payload.comment.body,
+                    prNumber: String(payload.issue.number),
+                },
                 `implementation-${fullRepo}-${issueId}`
             );
         }
@@ -123,6 +153,12 @@ function createWebhookRoutes(): Router {
 
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
+        const fullRepo = `${owner}/${repo}`;
+
+        if (!dependencies.getRepoConfigUseCase.execute(owner, repo)) {
+            console.warn(`Skipping PR review: no repo configuration found for "${fullRepo}"`);
+            return;
+        }
 
         const planningItem = await dependencies.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.pull_request.number);
         if (planningItem) {
@@ -156,6 +192,12 @@ function createWebhookRoutes(): Router {
 
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
+        const fullRepo = `${owner}/${repo}`;
+
+        if (!dependencies.getRepoConfigUseCase.execute(owner, repo)) {
+            console.warn(`Skipping PR review comment: no repo configuration found for "${fullRepo}"`);
+            return;
+        }
 
         const comment = {
             filePath: payload.comment.path,

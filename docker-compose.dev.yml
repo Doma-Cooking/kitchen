@@ -11,6 +11,6 @@ services:
       - ./src:/app/src:ro
       - ./scripts:/app/scripts:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
-      - ./.kitchen.docker.yaml:/app/.kitchen.yaml:ro
+      - ./.kitchen.yaml:/app/.kitchen.yaml:ro
     environment:
       - NODE_ENV=development

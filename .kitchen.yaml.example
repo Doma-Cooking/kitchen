@@ -24,10 +24,12 @@ github:
     ready: Ready
   label: "agent:enabled"
 
-repo:
-  url: https://github.com/your-org/your-repo.git
-  clonePath: /tmp/repo
-  mainBranch: main
+repos:
+  - owner: your-org
+    name: your-repo
+    url: https://github.com/your-org/your-repo.git
+    clonePath: /tmp/repos/your-repo
+    mainBranch: main
 
 slack:
   channelId: your-channel-id

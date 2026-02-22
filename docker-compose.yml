@@ -49,8 +49,10 @@ services:
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - REDIS_HOST=redis
+      - DB_HOST=postgres
     volumes:
-      - ./.kitchen.docker.yaml:/app/.kitchen.yaml:ro
+      - ./.kitchen.yaml:/app/.kitchen.yaml:ro
     depends_on:
       postgres:
         condition: service_healthy

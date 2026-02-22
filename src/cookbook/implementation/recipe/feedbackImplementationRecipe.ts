@@ -1,3 +1,4 @@
+import type { RepoConfig } from "../../../di/configuration.js";
 import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { worktreeAgentTask, WorktreeAgentTaskInput, WorktreeAgentTaskOutput } from "../task/organisms/worktreeAgentTask.js";
@@ -9,7 +10,7 @@ const recipeId = "feedbackImplementationRecipe";
 export interface FeedbackImplementationRecipeInput {
     issueId: string;
     issueTitle?: string;
-    repo?: string;
+    repoConfig: RepoConfig;
     feedback: string;
     replyTo?: string;
     prNumber?: string;
@@ -26,13 +27,14 @@ export const feedbackImplementationRecipe = new Recipe<FeedbackImplementationRec
             (outputs) => {
                 const recipeInput = outputs.get(recipeInputKey) as FeedbackImplementationRecipeInput;
                 return {
+                    repoConfig: recipeInput.repoConfig,
                     branch: `${recipeInput.issueId}-impl`,
                     promptId: recipeId,
-                    stationId: stationId('implementation', recipeInput.issueId),
+                    stationId: stationId('implementation', recipeInput.repoConfig.fullName, recipeInput.issueId),
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',
-                        repo: recipeInput.repo ?? '',
+                        repo: recipeInput.repoConfig.fullName,
                         feedback: recipeInput.feedback,
                         reply_to: recipeInput.replyTo ?? '',
                         pr_number: recipeInput.prNumber ?? '',

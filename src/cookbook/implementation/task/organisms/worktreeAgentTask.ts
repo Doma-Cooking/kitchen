@@ -1,10 +1,11 @@
-import type { Configuration } from "../../../../di/configuration.js";
+import type { Configuration, RepoConfig } from "../../../../di/configuration.js";
 import { Task } from "../../../interface/task.js";
 import { notifyTask } from "../atoms/notify/notifyTask.js";
 import { setupWorktreeTask } from "../molecules/setupWorktreeTask.js";
 import { stationAgentTask } from "../molecules/stationAgentTask.js";
 
 export interface WorktreeAgentTaskInput {
+    repoConfig: RepoConfig;
     branch: string;
     promptId: string;
     stationId?: string;
@@ -26,7 +27,7 @@ export const worktreeAgentTask: Task<WorktreeAgentTaskInput, WorktreeAgentTaskOu
         await notifyTask.execute({ message: `Starting ${label}` }, config, sendMessage);
 
         const setupOutput = await setupWorktreeTask.execute(
-            { branch: input.branch },
+            { branch: input.branch, repoUrl: input.repoConfig.url, clonePath: input.repoConfig.clonePath, defaultBranch: input.repoConfig.mainBranch },
             config,
             sendMessage,
             signal,

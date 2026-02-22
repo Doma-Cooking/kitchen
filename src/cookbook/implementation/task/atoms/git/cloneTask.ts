@@ -4,8 +4,9 @@ import { Task } from "../../../../interface/task.js";
 import { execTask } from "../util/execTask.js";
 
 export interface CloneTaskInput {
+    repoUrl: string;
+    clonePath: string;
     token?: string;
-    path?: string;
 }
 
 export interface CloneTaskOutput {
@@ -14,14 +15,14 @@ export interface CloneTaskOutput {
 
 export const cloneTask: Task<CloneTaskInput, CloneTaskOutput> = {
     async execute(input: CloneTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<CloneTaskOutput> {
-        const repoUrl = config.repoUrl;
+        const repoUrl = input.repoUrl;
         if (!repoUrl) {
-            throw new Error("REPO_URL is not configured");
+            throw new Error("repoUrl is required");
         }
 
-        const repoPath = input.path ?? config.clonePath;
+        const repoPath = input.clonePath;
         if (!repoPath) {
-            throw new Error("No path provided and CLONE_PATH is not configured");
+            throw new Error("clonePath is required");
         }
 
         try {
