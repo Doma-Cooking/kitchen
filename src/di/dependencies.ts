@@ -24,6 +24,8 @@ import { PostgresDb } from '../data/source/database/postgresDb.js';
 import { OrderModel } from '../data/model/orderModel.js';
 import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/order/watchOrdersUseCase.js';
 import { Configuration, KitchenConfiguration } from './configuration.js';
+import { GetConfigurationUseCase, GetConfigurationUseCaseImpl } from '../domain/usecase/config/getConfigurationUseCase.js';
+import { GetRepoConfigUseCase, GetRepoConfigUseCaseImpl } from '../domain/usecase/config/getRepoConfigUseCase.js';
 import { DeleteOrderUseCase, DeleteOrderUseCaseImpl } from '../domain/usecase/order/deleteOrderUseCase.js';
 import { CreateCookUseCase, CreateCookUseCaseImpl } from '../domain/usecase/cook/createCookUseCase.js';
 import type { Cookbook } from '../cookbook/interface/cookbook.js';
@@ -49,6 +51,8 @@ export class Dependencies {
     githubRepository: GithubRepository;
     stationRepository: StationRepository;
 
+    getConfigurationUseCase: GetConfigurationUseCase;
+    getRepoConfigUseCase: GetRepoConfigUseCase;
     queueOrderUseCase: QueueOrderUseCase;
     deleteOrderUseCase: DeleteOrderUseCase;
     watchOrdersUseCase: WatchOrdersUseCase;
@@ -114,6 +118,8 @@ export class Dependencies {
         this.githubRepository = githubRepository ?? new GithubRepositoryImpl(this.githubSource);
         this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
 
+        this.getConfigurationUseCase = new GetConfigurationUseCaseImpl(this.config);
+        this.getRepoConfigUseCase = new GetRepoConfigUseCaseImpl(this.getConfigurationUseCase);
         this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
         this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
         this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);

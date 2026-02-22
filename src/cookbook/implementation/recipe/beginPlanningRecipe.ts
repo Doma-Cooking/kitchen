@@ -1,3 +1,4 @@
+import type { RepoConfig } from "../../../di/configuration.js";
 import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { worktreeAgentTask, WorktreeAgentTaskInput, WorktreeAgentTaskOutput } from "../task/organisms/worktreeAgentTask.js";
@@ -9,7 +10,7 @@ const recipeId = "beginPlanningRecipe";
 export interface BeginPlanningRecipeInput {
     issueId: string;
     issueTitle?: string;
-    repo?: string;
+    repoConfig: RepoConfig;
 }
 
 export type BeginPlanningRecipeOutput = object;
@@ -23,13 +24,14 @@ export const beginPlanningRecipe = new Recipe<BeginPlanningRecipeInput, BeginPla
             (outputs) => {
                 const recipeInput = outputs.get(recipeInputKey) as BeginPlanningRecipeInput;
                 return {
+                    repoConfig: recipeInput.repoConfig,
                     branch: `${recipeInput.issueId}-plan`,
                     promptId: recipeId,
-                    stationId: stationId('planning', recipeInput.issueId),
+                    stationId: stationId('planning', recipeInput.repoConfig.fullName, recipeInput.issueId),
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',
-                        repo: recipeInput.repo ?? '',
+                        repo: recipeInput.repoConfig.fullName,
                     },
                 };
             }

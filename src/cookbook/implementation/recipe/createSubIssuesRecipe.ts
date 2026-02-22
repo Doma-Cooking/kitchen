@@ -1,3 +1,4 @@
+import type { RepoConfig } from "../../../di/configuration.js";
 import { Recipe, recipeInputKey } from "../../interface/recipe.js";
 import { ExecutableStep } from "../../interface/step.js";
 import { repoAgentTask, RepoAgentTaskInput, RepoAgentTaskOutput } from "../task/organisms/repoAgentTask.js";
@@ -8,7 +9,7 @@ const recipeId = "createSubIssuesRecipe";
 export interface CreateSubIssuesRecipeInput {
     issueId: string;
     issueTitle?: string;
-    repo?: string;
+    repoConfig: RepoConfig;
     labelEnabled?: string;
     projectOwner?: string;
     projectNumber?: string;
@@ -26,12 +27,13 @@ export const createSubIssuesRecipe = new Recipe<CreateSubIssuesRecipeInput, Crea
             (outputs) => {
                 const recipeInput = outputs.get(recipeInputKey) as CreateSubIssuesRecipeInput;
                 return {
+                    repoConfig: recipeInput.repoConfig,
                     promptId: recipeId,
-                    stationId: stationId('planning', recipeInput.issueId),
+                    stationId: stationId('planning', recipeInput.repoConfig.fullName, recipeInput.issueId),
                     context: {
                         issue_number: recipeInput.issueId,
                         issue_title: recipeInput.issueTitle ?? '',
-                        repo: recipeInput.repo ?? '',
+                        repo: recipeInput.repoConfig.fullName,
                         label_enabled: recipeInput.labelEnabled ?? '',
                         project_owner: recipeInput.projectOwner ?? '',
                         project_number: recipeInput.projectNumber ?? '',

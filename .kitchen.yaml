@@ -24,10 +24,12 @@ github:
     ready: Ready
   label: "agent:enabled"
 
-repo:
-  url: https://github.com/Doma-Cooking/doma-main
-  clonePath: /tmp/repo
-  mainBranch: dev
+repos:
+  - owner: Doma-Cooking
+    name: doma-main
+    url: https://github.com/Doma-Cooking/doma-main
+    clonePath: /tmp/repos/doma-main
+    mainBranch: dev
 
 slack:
   channelId: C0AD27ZRNE4
