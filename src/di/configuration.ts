@@ -50,6 +50,7 @@ export interface Configuration {
 
   // Slack
   slackBotToken: string;
+  slackAppToken: string;
   slackChannelId: string;
 
   // Flutter
@@ -70,6 +71,7 @@ class EnvConfiguration {
   get githubInstallationId() { return process.env.GITHUB_INSTALLATION_ID ?? ''; }
   get claudeCodeOAuthToken() { return process.env.CLAUDE_CODE_OAUTH_TOKEN ?? ''; }
   get slackBotToken() { return process.env.SLACK_BOT_TOKEN ?? ''; }
+  get slackAppToken() { return process.env.SLACK_APP_TOKEN ?? ''; }
   get redisHost() { return process.env.REDIS_HOST; }
   get dbHost() { return process.env.DB_HOST; }
   get dbPassword() { return process.env.DB_PASSWORD ?? 'kitchen'; }
@@ -170,6 +172,7 @@ export class KitchenConfiguration implements Configuration {
   get githubInstallationId() { return this.env.githubInstallationId; }
   get claudeCodeOAuthToken() { return this.env.claudeCodeOAuthToken; }
   get slackBotToken() { return this.env.slackBotToken; }
+  get slackAppToken() { return this.env.slackAppToken; }
   get dbPassword() { return this.env.dbPassword; }
   get adminUser() { return this.env.adminUser; }
   get adminPassword() { return this.env.adminPassword; }
