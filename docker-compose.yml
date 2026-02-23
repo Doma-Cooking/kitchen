@@ -38,17 +38,10 @@ services:
         FLUTTER_HOME: ${FLUTTER_HOME:-/opt/flutter}
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
-      - GITHUB_APP_ID=${GITHUB_APP_ID}
-      - GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
-      - GITHUB_INSTALLATION_ID=${GITHUB_INSTALLATION_ID}
-      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
-      - DB_PASSWORD=${DB_PASSWORD:-kitchen}
-      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
-      - ADMIN_USER=${ADMIN_USER:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - REDIS_HOST=redis
       - DB_HOST=postgres
     volumes:

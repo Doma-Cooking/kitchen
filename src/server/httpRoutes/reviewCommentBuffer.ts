@@ -1,5 +1,3 @@
-import { QueueOrderUseCase } from '../../domain/usecase/order/queueOrderUseCase.js';
-
 export interface BufferedComment {
     filePath: string;
     line: number;
@@ -13,22 +11,26 @@ export interface BufferedReviewBody {
     reviewId: number;
 }
 
-interface BufferEntry {
-    phase: 'planning' | 'implementation';
-    recipeId: string;
-    issueId: string;
-    issueTitle: string;
+export interface ReviewBatch {
+    owner: string;
     repo: string;
-    prNumber: string;
-    stationId: string;
+    prNumber: number;
     comments: BufferedComment[];
-    reviewBody: BufferedReviewBody | null;
+    reviewBodies: BufferedReviewBody[];
+}
+
+interface BufferEntry {
+    owner: string;
+    repo: string;
+    prNumber: number;
+    comments: BufferedComment[];
+    reviewBodies: BufferedReviewBody[];
     timer: ReturnType<typeof setTimeout>;
 }
 
 export function formatBatchedFeedback(
     comments: BufferedComment[],
-    reviewBody: BufferedReviewBody | null
+    reviewBodies: BufferedReviewBody[]
 ): string {
     const parts: string[] = [];
 
@@ -41,7 +43,7 @@ export function formatBatchedFeedback(
         );
     });
 
-    if (reviewBody) {
+    for (const reviewBody of reviewBodies) {
         parts.push(
             `### Review Body\n\n` +
             reviewBody.body
@@ -54,67 +56,51 @@ export function formatBatchedFeedback(
 export class ReviewCommentBuffer {
     private buffer = new Map<string, BufferEntry>();
     private debounceMs: number;
-    private queueOrderUseCase: QueueOrderUseCase;
+    private onFlush: (batch: ReviewBatch) => Promise<void>;
 
-    constructor(queueOrderUseCase: QueueOrderUseCase, debounceMs = 5000) {
-        this.queueOrderUseCase = queueOrderUseCase;
+    constructor(onFlush: (batch: ReviewBatch) => Promise<void>, debounceMs = 5000) {
+        this.onFlush = onFlush;
         this.debounceMs = debounceMs;
     }
 
     addComment(
-        phase: 'planning' | 'implementation',
+        owner: string,
         repo: string,
-        issueId: string,
-        issueTitle: string,
-        prNumber: string,
+        prNumber: number,
         comment: BufferedComment
     ): void {
-        const key = `${phase}-${repo}-${issueId}`;
-        const entry = this.getOrCreateEntry(key, phase, repo, issueId, issueTitle, prNumber);
+        const key = `${owner}/${repo}#${String(prNumber)}`;
+        const entry = this.getOrCreateEntry(key, owner, repo, prNumber);
         entry.comments.push(comment);
         this.resetTimer(key, entry);
     }
 
     addReviewBody(
-        phase: 'planning' | 'implementation',
+        owner: string,
         repo: string,
-        issueId: string,
-        issueTitle: string,
-        prNumber: string,
+        prNumber: number,
         reviewBody: BufferedReviewBody
     ): void {
-        const key = `${phase}-${repo}-${issueId}`;
-        const entry = this.getOrCreateEntry(key, phase, repo, issueId, issueTitle, prNumber);
-        entry.reviewBody = reviewBody;
+        const key = `${owner}/${repo}#${String(prNumber)}`;
+        const entry = this.getOrCreateEntry(key, owner, repo, prNumber);
+        entry.reviewBodies.push(reviewBody);
         this.resetTimer(key, entry);
     }
 
     private getOrCreateEntry(
         key: string,
-        phase: 'planning' | 'implementation',
+        owner: string,
         repo: string,
-        issueId: string,
-        issueTitle: string,
-        prNumber: string
+        prNumber: number
     ): BufferEntry {
         let entry = this.buffer.get(key);
         if (!entry) {
-            const recipeId = phase === 'planning'
-                ? 'domaFeedbackPlanningRecipe'
-                : 'domaFeedbackImplementationRecipe';
-            const stationId = phase === 'planning'
-                ? `planning-${repo}-${issueId}`
-                : `implementation-${repo}-${issueId}`;
             entry = {
-                phase,
-                recipeId,
-                issueId,
-                issueTitle,
+                owner,
                 repo,
                 prNumber,
-                stationId,
                 comments: [],
-                reviewBody: null,
+                reviewBodies: [],
                 timer: setTimeout(() => { void this.flush(key); }, this.debounceMs)
             };
             this.buffer.set(key, entry);
@@ -132,21 +118,12 @@ export class ReviewCommentBuffer {
         if (!entry) return;
         this.buffer.delete(key);
 
-        const feedback = formatBatchedFeedback(entry.comments, entry.reviewBody);
-        const label = entry.phase === 'planning' ? 'Planning' : 'Implementation';
-
-        await this.queueOrderUseCase.execute(
-            entry.recipeId,
-            `feedback-${entry.repo}-${entry.issueId}-batch-${Date.now().toString()}`,
-            `${label} Feedback: ${entry.repo}#${entry.issueId}`,
-            {
-                issueId: entry.issueId,
-                issueTitle: entry.issueTitle,
-                repo: entry.repo,
-                feedback,
-                prNumber: entry.prNumber
-            },
-            entry.stationId
-        );
+        await this.onFlush({
+            owner: entry.owner,
+            repo: entry.repo,
+            prNumber: entry.prNumber,
+            comments: entry.comments,
+            reviewBodies: entry.reviewBodies,
+        });
     }
 }

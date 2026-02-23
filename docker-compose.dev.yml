@@ -4,9 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
-      args:
-        FLUTTER_CHANNEL: ${FLUTTER_CHANNEL:-stable}
-        FLUTTER_HOME: ${FLUTTER_HOME:-/opt/flutter}
     volumes:
       - ./src:/app/src:ro
       - ./scripts:/app/scripts:ro
