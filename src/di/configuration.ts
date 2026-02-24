@@ -53,9 +53,8 @@ export interface Configuration {
   slackAppToken: string;
   slackChannelId: string;
 
-  // Flutter
-  flutterChannel: string;
-  flutterHome: string;
+  // Models
+  resolveModel: string;
 
   // Admin
   adminUser: string;
@@ -93,7 +92,7 @@ interface YamlSchema {
   };
   repos?: { owner?: string; name?: string; url?: string; clonePath?: string; mainBranch?: string }[];
   slack?: { channelId?: string };
-  flutter?: { channel?: string; home?: string };
+  models?: { resolve?: string };
 }
 
 function loadYamlConfig(): YamlSchema {
@@ -136,8 +135,7 @@ class YamlConfiguration {
     }));
   }
   get slackChannelId() { return this.yaml.slack?.channelId ?? ''; }
-  get flutterChannel() { return this.yaml.flutter?.channel ?? 'stable'; }
-  get flutterHome() { return this.yaml.flutter?.home ?? '/opt/flutter'; }
+  get resolveModel() { return this.yaml.models?.resolve ?? 'claude-haiku-4-5-20251001'; }
 }
 
 // --- Combined configuration ---
@@ -162,9 +160,7 @@ export class KitchenConfiguration implements Configuration {
   get labelEnabled() { return this.yaml.labelEnabled; }
   get repos() { return this.yaml.repos; }
   get slackChannelId() { return this.yaml.slackChannelId; }
-  get flutterChannel() { return this.yaml.flutterChannel; }
-  get flutterHome() { return this.yaml.flutterHome; }
-
+  get resolveModel() { return this.yaml.resolveModel; }
   // Secrets (from .env)
   get githubWebhookSecret() { return this.env.githubWebhookSecret; }
   get githubAppId() { return this.env.githubAppId; }

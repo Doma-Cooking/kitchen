@@ -1,16 +1,6 @@
 import type { BufferedComment, BufferedReviewBody } from '../httpRoutes/reviewCommentBuffer.js';
-
-export interface ProjectItemEditedPayload {
-    eventType: 'projects_v2_item';
-    action: string;
-    changes?: { field_value?: { field_name?: string } };
-    projects_v2_item: {
-        content_type: string;
-        content_node_id: string;
-        node_id: string | undefined;
-        project_node_id?: string;
-    };
-}
+import type { RepoConfig } from '../../di/configuration.js';
+import type { ProjectItemEntity } from '../../domain/entity/projectItemEntity.js';
 
 export interface IssueCommentCreatedPayload {
     eventType: 'issue_comment';
@@ -39,14 +29,25 @@ export interface SlackMessagePayload {
 }
 
 export type EventPayload =
-    | ProjectItemEditedPayload
     | IssueCommentCreatedPayload
     | ReviewBatchPayload
     | SlackMessagePayload;
+
+export interface EventContext {
+    repoConfig?: RepoConfig;
+    planningItem?: ProjectItemEntity | null;
+    implementingItem?: ProjectItemEntity | null;
+    feedback?: string;
+    prNumber?: number;
+    slackThread?: { user?: string; text?: string; ts?: string }[];
+    slackChannelInfo?: { id?: string; name?: string; purpose?: string; topic?: string };
+    slackRecentMessages?: { user?: string; text?: string; ts?: string; thread_ts?: string }[];
+}
 
 export interface Event {
     source: 'github' | 'slack';
     sourceId: string;
     payload: EventPayload;
     timestamp: Date;
+    context?: EventContext;
 }

@@ -34,6 +34,5 @@ repos:
 slack:
   channelId: C0AD27ZRNE4
 
-flutter:
-  channel: stable
-  home: /opt/flutter
+models:
+  resolve: claude-haiku-4-5-20251001

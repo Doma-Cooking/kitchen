@@ -1,14 +1,9 @@
 import { OrderRepository } from '../../repository/orderRepository.js';
+import { OrderEntity } from '../../entity/orderEntity.js';
 import { randomUUID } from 'crypto';
 
 export interface QueueOrderUseCase {
-    execute(
-        recipeId: string,
-        orderId?: string,
-        name?: string,
-        input?: object,
-        stationId?: string
-    ): Promise<void>;
+    execute(order: OrderEntity): Promise<void>;
 }
 
 export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
@@ -18,28 +13,20 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
         this.orderRepository = orderRepository;
     }
 
-    async execute(
-        recipeId: string,
-        orderId?: string,
-        name?: string,
-        input?: object,
-        stationId?: string
-    ): Promise<void> {
-        if (!input && !recipeId) {
+    async execute(order: OrderEntity): Promise<void> {
+        if (!order.input && !order.recipeId) {
             throw new Error("An order must have either an input or a recipe ID");
         }
 
-        const id = orderId ?? randomUUID();
-        const orderName = name ?? `order-${id}`;
+        const id = order.id || randomUUID();
+        const name = order.name || `order-${id}`;
 
-        await this.orderRepository.queueOrder(
-            {
-                id: id,
-                name: orderName,
-                input: input,
-                recipeId: recipeId,
-                stationId: stationId
-            }
-        );
+        await this.orderRepository.queueOrder({
+            id,
+            name,
+            input: order.input,
+            recipeId: order.recipeId,
+            stationId: order.stationId,
+        });
     }
 }
