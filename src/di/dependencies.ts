@@ -7,9 +7,9 @@ import { OrderRepository, OrderRepositoryImpl } from '../domain/repository/order
 import { GithubRepository, GithubRepositoryImpl } from '../domain/repository/githubRepository.js';
 import { StationRepository, StationRepositoryImpl } from '../domain/repository/stationRepository.js';
 import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/order/queueOrderUseCase.js';
-import { ResolveProjectItemUseCase, ResolveProjectItemUseCaseImpl } from '../domain/usecase/github/resolveProjectItemUseCase.js';
-import { ResolvePlanningIssueUseCase, ResolvePlanningIssueUseCaseImpl } from '../domain/usecase/github/resolvePlanningIssueUseCase.js';
-import { ResolveImplementingIssueUseCase, ResolveImplementingIssueUseCaseImpl } from '../domain/usecase/github/resolveImplementingIssueUseCase.js';
+import { ResolveProjectItemUseCase, ResolveProjectItemUseCaseImpl } from '../domain/usecase/order/resolve/resolveProjectItemUseCase.js';
+import { ResolvePlanningIssueUseCase, ResolvePlanningIssueUseCaseImpl } from '../domain/usecase/order/resolve/resolvePlanningIssueUseCase.js';
+import { ResolveImplementingIssueUseCase, ResolveImplementingIssueUseCaseImpl } from '../domain/usecase/order/resolve/resolveImplementingIssueUseCase.js';
 import { GetStationByIdUseCase, GetStationByIdUseCaseImpl } from '../domain/usecase/station/getStationByIdUseCase.js';
 import { CreateStationUseCase, CreateStationUseCaseImpl } from '../domain/usecase/station/createStationUseCase.js';
 import { UpdateStationUseCase, UpdateStationUseCaseImpl } from '../domain/usecase/station/updateStationUseCase.js';
@@ -33,124 +33,124 @@ import { CookbookCookSource } from '../data/source/cook/cookbookCookSource.js';
 import { domaCookbook } from '../cookbook/implementation/cookbook/domaCookbook.js';
 
 export class Dependencies {
-    config: Configuration;
-    cookbook: Cookbook;
+  config: Configuration;
+  cookbook: Cookbook;
 
-    postgresDb: PostgresDb;
-    redis: Redis;
-    queue: Queue<OrderModel, void>;
-    queueEvents: QueueEvents;
+  postgresDb: PostgresDb;
+  redis: Redis;
+  queue: Queue<OrderModel, void>;
+  queueEvents: QueueEvents;
 
-    queueSource: QueueSource;
-    cookSource: CookSource;
-    githubSource: GithubSource;
-    stationSource: StationSource;
+  queueSource: QueueSource;
+  cookSource: CookSource;
+  githubSource: GithubSource;
+  stationSource: StationSource;
 
-    orderRepository: OrderRepository;
-    cookRepository: CookRepository;
-    githubRepository: GithubRepository;
-    stationRepository: StationRepository;
+  orderRepository: OrderRepository;
+  cookRepository: CookRepository;
+  githubRepository: GithubRepository;
+  stationRepository: StationRepository;
 
-    getConfigurationUseCase: GetConfigurationUseCase;
-    getRepoConfigUseCase: GetRepoConfigUseCase;
-    queueOrderUseCase: QueueOrderUseCase;
-    deleteOrderUseCase: DeleteOrderUseCase;
-    watchOrdersUseCase: WatchOrdersUseCase;
-    createCookUseCase: CreateCookUseCase;
-    resolveProjectItemUseCase: ResolveProjectItemUseCase;
-    resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
-    resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
-    getStationByIdUseCase: GetStationByIdUseCase;
-    createStationUseCase: CreateStationUseCase;
-    updateStationUseCase: UpdateStationUseCase;
-    deleteStationUseCase: DeleteStationUseCase;
-    watchStationsUseCase: WatchStationsUseCase;
+  getConfigurationUseCase: GetConfigurationUseCase;
+  getRepoConfigUseCase: GetRepoConfigUseCase;
+  queueOrderUseCase: QueueOrderUseCase;
+  deleteOrderUseCase: DeleteOrderUseCase;
+  watchOrdersUseCase: WatchOrdersUseCase;
+  createCookUseCase: CreateCookUseCase;
+  resolveProjectItemUseCase: ResolveProjectItemUseCase;
+  resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
+  resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
+  getStationByIdUseCase: GetStationByIdUseCase;
+  createStationUseCase: CreateStationUseCase;
+  updateStationUseCase: UpdateStationUseCase;
+  deleteStationUseCase: DeleteStationUseCase;
+  watchStationsUseCase: WatchStationsUseCase;
 
-    constructor(
-        config?: Configuration,
-        cookbook?: Cookbook,
-        postgresDb?: PostgresDb,
-        redis?: Redis,
-        queue?: Queue<OrderModel, void>,
-        queueEvents?: QueueEvents,
-        queueSource?: BullQueueSource,
-        cookSource?: CookSource,
-        githubSource?: GithubSource,
-        stationSource?: StationSource,
-        orderRepository?: OrderRepository,
-        cookRepository?: CookRepository,
-        githubRepository?: GithubRepository,
-        stationRepository?: StationRepository,
-        queueOrderUseCase?: QueueOrderUseCase,
-        deleteOrderUseCase?: DeleteOrderUseCase,
-        watchOrdersUseCase?: WatchOrdersUseCase,
-        createCookUseCase?: CreateCookUseCase,
-        resolveProjectItemUseCase?: ResolveProjectItemUseCase,
-        resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase,
-        resolveImplementingIssueUseCase?: ResolveImplementingIssueUseCase,
-        getStationByIdUseCase?: GetStationByIdUseCase,
-        createStationUseCase?: CreateStationUseCase,
-        updateStationUseCase?: UpdateStationUseCase,
-        deleteStationUseCase?: DeleteStationUseCase,
-        watchStationsUseCase?: WatchStationsUseCase
-    ) {
-        this.config = config ?? new KitchenConfiguration();
-        this.cookbook = cookbook ?? domaCookbook;
+  constructor(
+    config?: Configuration,
+    cookbook?: Cookbook,
+    postgresDb?: PostgresDb,
+    redis?: Redis,
+    queue?: Queue<OrderModel, void>,
+    queueEvents?: QueueEvents,
+    queueSource?: BullQueueSource,
+    cookSource?: CookSource,
+    githubSource?: GithubSource,
+    stationSource?: StationSource,
+    orderRepository?: OrderRepository,
+    cookRepository?: CookRepository,
+    githubRepository?: GithubRepository,
+    stationRepository?: StationRepository,
+    queueOrderUseCase?: QueueOrderUseCase,
+    deleteOrderUseCase?: DeleteOrderUseCase,
+    watchOrdersUseCase?: WatchOrdersUseCase,
+    createCookUseCase?: CreateCookUseCase,
+    resolveProjectItemUseCase?: ResolveProjectItemUseCase,
+    resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase,
+    resolveImplementingIssueUseCase?: ResolveImplementingIssueUseCase,
+    getStationByIdUseCase?: GetStationByIdUseCase,
+    createStationUseCase?: CreateStationUseCase,
+    updateStationUseCase?: UpdateStationUseCase,
+    deleteStationUseCase?: DeleteStationUseCase,
+    watchStationsUseCase?: WatchStationsUseCase
+  ) {
+    this.config = config ?? new KitchenConfiguration();
+    this.cookbook = cookbook ?? domaCookbook;
 
-        this.postgresDb = postgresDb ?? new PostgresDb(`postgres://${this.config.dbUser}:${this.config.dbPassword}@${this.config.dbHost}:${this.config.dbPort.toString()}/${this.config.dbName}`);
+    this.postgresDb = postgresDb ?? new PostgresDb(`postgres://${this.config.dbUser}:${this.config.dbPassword}@${this.config.dbHost}:${this.config.dbPort.toString()}/${this.config.dbName}`);
 
-        const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
-        this.redis = redis ?? new Redis(redisConnection);
-        this.queue = queue ?? new Queue<OrderModel, void>(this.config.queueName, { connection: redisConnection });
-        this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
+    const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
+    this.redis = redis ?? new Redis(redisConnection);
+    this.queue = queue ?? new Queue<OrderModel, void>(this.config.queueName, { connection: redisConnection });
+    this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
 
-        this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis, redisConnection);
-        this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook, this.config);
-        this.githubSource = githubSource ?? new GraphqlGithubSource(
-            this.config.githubAppId,
-            this.config.githubPrivateKey,
-            this.config.githubInstallationId
-        );
-        this.stationSource = stationSource ?? new PostgresStationSource(this.postgresDb);
+    this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis, redisConnection);
+    this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook, this.config);
+    this.githubSource = githubSource ?? new GraphqlGithubSource(
+      this.config.githubAppId,
+      this.config.githubPrivateKey,
+      this.config.githubInstallationId
+    );
+    this.stationSource = stationSource ?? new PostgresStationSource(this.postgresDb);
 
-        this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);
-        this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.queueSource);
-        this.githubRepository = githubRepository ?? new GithubRepositoryImpl(this.githubSource);
-        this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
+    this.orderRepository = orderRepository ?? new OrderRepositoryImpl(this.queueSource);
+    this.cookRepository = cookRepository ?? new CookRepositoryImpl(this.cookSource, this.queueSource);
+    this.githubRepository = githubRepository ?? new GithubRepositoryImpl(this.githubSource);
+    this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
 
-        this.getConfigurationUseCase = new GetConfigurationUseCaseImpl(this.config);
-        this.getRepoConfigUseCase = new GetRepoConfigUseCaseImpl(this.getConfigurationUseCase);
-        this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
-        this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
-        this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
-        this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
-        this.resolveProjectItemUseCase = resolveProjectItemUseCase ?? new ResolveProjectItemUseCaseImpl(
-            this.githubRepository,
-            this.config.labelEnabled
-        );
-        this.resolvePlanningIssueUseCase = resolvePlanningIssueUseCase ?? new ResolvePlanningIssueUseCaseImpl(
-            this.githubRepository,
-            this.config.labelEnabled,
-            this.config.columnPlanning
-        );
-        this.resolveImplementingIssueUseCase = resolveImplementingIssueUseCase ?? new ResolveImplementingIssueUseCaseImpl(
-            this.githubRepository,
-            this.config.labelEnabled,
-            this.config.columnImplementing
-        );
-        this.getStationByIdUseCase = getStationByIdUseCase ?? new GetStationByIdUseCaseImpl(this.stationRepository);
-        this.createStationUseCase = createStationUseCase ?? new CreateStationUseCaseImpl(this.stationRepository);
-        this.updateStationUseCase = updateStationUseCase ?? new UpdateStationUseCaseImpl(this.stationRepository);
-        this.deleteStationUseCase = deleteStationUseCase ?? new DeleteStationUseCaseImpl(this.stationRepository);
-        this.watchStationsUseCase = watchStationsUseCase ?? new WatchStationsUseCaseImpl(this.stationRepository);
-    }
+    this.getConfigurationUseCase = new GetConfigurationUseCaseImpl(this.config);
+    this.getRepoConfigUseCase = new GetRepoConfigUseCaseImpl(this.getConfigurationUseCase);
+    this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
+    this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
+    this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
+    this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
+    this.resolveProjectItemUseCase = resolveProjectItemUseCase ?? new ResolveProjectItemUseCaseImpl(
+      this.githubRepository,
+      this.config.labelEnabled
+    );
+    this.resolvePlanningIssueUseCase = resolvePlanningIssueUseCase ?? new ResolvePlanningIssueUseCaseImpl(
+      this.githubRepository,
+      this.config.labelEnabled,
+      this.config.columnPlanning
+    );
+    this.resolveImplementingIssueUseCase = resolveImplementingIssueUseCase ?? new ResolveImplementingIssueUseCaseImpl(
+      this.githubRepository,
+      this.config.labelEnabled,
+      this.config.columnImplementing
+    );
+    this.getStationByIdUseCase = getStationByIdUseCase ?? new GetStationByIdUseCaseImpl(this.stationRepository);
+    this.createStationUseCase = createStationUseCase ?? new CreateStationUseCaseImpl(this.stationRepository);
+    this.updateStationUseCase = updateStationUseCase ?? new UpdateStationUseCaseImpl(this.stationRepository);
+    this.deleteStationUseCase = deleteStationUseCase ?? new DeleteStationUseCaseImpl(this.stationRepository);
+    this.watchStationsUseCase = watchStationsUseCase ?? new WatchStationsUseCaseImpl(this.stationRepository);
+  }
 
-    async close(): Promise<void> {
-        this.redis.disconnect();
+  async close(): Promise<void> {
+    this.redis.disconnect();
 
-        await Promise.all([
-            this.queue.close(),
-            this.postgresDb.close(),
-        ]);
-    }
+    await Promise.all([
+      this.queue.close(),
+      this.postgresDb.close(),
+    ]);
+  }
 }
