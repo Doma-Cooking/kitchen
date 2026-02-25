@@ -79,6 +79,22 @@ server.registerTool(
 );
 
 server.registerTool(
+  'slack_add_reaction',
+  {
+    description: 'Add an emoji reaction to a Slack message',
+    inputSchema: {
+      channel: z.string().describe('Slack channel ID'),
+      timestamp: z.string().describe('Message timestamp to react to'),
+      name: z.string().describe('Emoji name without colons (e.g. "eyes", "rocket")'),
+    },
+  },
+  async ({ channel, timestamp, name }) => {
+    const result = await slack.reactions.add({ channel, name, timestamp });
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: result.ok }, null, 2) }] };
+  }
+);
+
+server.registerTool(
   'slack_post_message',
   {
     description: 'Post a message to a Slack channel (for clarifying questions)',
