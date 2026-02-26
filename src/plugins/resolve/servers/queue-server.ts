@@ -6,7 +6,7 @@ import { Queue } from 'bullmq';
 
 const redisHost = process.env.REDIS_HOST ?? 'localhost';
 const redisPort = Number(process.env.REDIS_PORT ?? '6379');
-const queueName = process.env.QUEUE_NAME ?? 'kitchenQueue';
+const queueName = process.env.QUEUE_NAME ?? 'kitchenOrderQueue';
 
 const queue = new Queue(queueName, {
   connection: { host: redisHost, port: redisPort, maxRetriesPerRequest: null },

@@ -3,7 +3,7 @@ import { OrderEntity } from "../../entity/orderEntity.js";
 import { OrderRepository } from "../../repository/orderRepository.js";
 
 export interface WatchOrdersUseCase {
-    execute(): Observable<OrderEntity[]>;
+    execute(queueName: string): Observable<OrderEntity[]>;
 }
 
 export class WatchOrdersUseCaseImpl implements WatchOrdersUseCase {
@@ -14,7 +14,7 @@ export class WatchOrdersUseCaseImpl implements WatchOrdersUseCase {
     }
 
     // TODO: Update this to watch a Job Entity, which should include as order as well as its messages and status.
-    execute(): Observable<OrderEntity[]> {
-        return this.orderRepository.watchAll();
+    execute(queueName: string): Observable<OrderEntity[]> {
+        return this.orderRepository.watchAll(queueName);
     }
 }

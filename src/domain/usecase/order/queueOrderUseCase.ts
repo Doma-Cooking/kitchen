@@ -3,7 +3,7 @@ import { OrderEntity } from '../../entity/orderEntity.js';
 import { randomUUID } from 'crypto';
 
 export interface QueueOrderUseCase {
-    execute(order: OrderEntity): Promise<void>;
+    execute(order: OrderEntity, queueName: string): Promise<void>;
 }
 
 export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
@@ -13,7 +13,7 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
         this.orderRepository = orderRepository;
     }
 
-    async execute(order: OrderEntity): Promise<void> {
+    async execute(order: OrderEntity, queueName: string): Promise<void> {
         if (!order.input && !order.recipeId) {
             throw new Error("An order must have either an input or a recipe ID");
         }
@@ -27,6 +27,6 @@ export class QueueOrderUseCaseImpl implements QueueOrderUseCase {
             input: order.input,
             recipeId: order.recipeId,
             stationId: order.stationId,
-        });
+        }, queueName);
     }
 }

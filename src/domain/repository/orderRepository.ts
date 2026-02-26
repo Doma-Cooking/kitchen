@@ -3,10 +3,10 @@ import { OrderEntity, toOrderEntity, toOrderModel } from '../entity/orderEntity.
 import { map, Observable } from 'rxjs';
 
 export interface OrderRepository {
-    queueOrder(order: OrderEntity): Promise<void>;
-    getOrders(): Promise<OrderEntity[]>;
-    deleteOrder(orderId: string): Promise<void>;
-    watchAll(): Observable<OrderEntity[]>;
+    queueOrder(order: OrderEntity, queueName: string): Promise<void>;
+    getOrders(queueName: string): Promise<OrderEntity[]>;
+    deleteOrder(orderId: string, queueName: string): Promise<void>;
+    watchAll(queueName: string): Observable<OrderEntity[]>;
 }
 
 export class OrderRepositoryImpl implements OrderRepository {
@@ -16,21 +16,21 @@ export class OrderRepositoryImpl implements OrderRepository {
         this.source = source;
     }
 
-    async queueOrder(order: OrderEntity): Promise<void> {
-        await this.source.queueOrder(toOrderModel(order));
+    async queueOrder(order: OrderEntity, queueName: string): Promise<void> {
+        await this.source.queueOrder(toOrderModel(order), queueName);
     }
 
-    async getOrders(): Promise<OrderEntity[]> {
-        const orders = await this.source.getOrders();
+    async getOrders(queueName: string): Promise<OrderEntity[]> {
+        const orders = await this.source.getOrders(queueName);
         return orders.map(toOrderEntity);
     }
 
-    async deleteOrder(orderId: string): Promise<void> {
-        await this.source.deleteOrder(orderId);
+    async deleteOrder(orderId: string, queueName: string): Promise<void> {
+        await this.source.deleteOrder(orderId, queueName);
     }
 
-    watchAll(): Observable<OrderEntity[]> {
-        return this.source.watchAll().pipe(
+    watchAll(queueName: string): Observable<OrderEntity[]> {
+        return this.source.watchAll(queueName).pipe(
             map(models => models.map(toOrderEntity))
         );
     }

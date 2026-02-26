@@ -19,13 +19,13 @@ router.post('/queue', async (req, res) => {
         input: args.input as object | undefined,
         recipeId,
         stationId: args.stationId as string | undefined,
-    });
+    }, dependencies.config.orderQueueName);
     res.send(`Order queued with input: ${JSON.stringify(args)}`);
 });
 
 router.delete('/:id', async (req, res) => {
     const id = req.params.id;
-    await dependencies.deleteOrderUseCase.execute(id);
+    await dependencies.deleteOrderUseCase.execute(id, dependencies.config.orderQueueName);
     res.send(`Deleted order with ID: ${id}`);
 });
 

@@ -3,7 +3,7 @@ import { CookSource } from '../../data/source/cook/cookSource.js';
 import { QueueSource } from '../../data/source/queue/queueSource.js';
 
 export interface CookRepository {
-    createCook(id: string): Promise<void>;
+    createCook(id: string, queueName: string): Promise<void>;
 }
 
 export class CookRepositoryImpl implements CookRepository {
@@ -18,7 +18,7 @@ export class CookRepositoryImpl implements CookRepository {
         this.queueSource = queueSource;
     }
 
-    async createCook(id: string): Promise<void> {
+    async createCook(id: string, queueName: string): Promise<void> {
         await this.queueSource.createCook(
             id,
             async (order, signal) => {
@@ -26,12 +26,13 @@ export class CookRepositoryImpl implements CookRepository {
 
                 const processed = observable.pipe(
                     concatMap(async messageModel => {
-                        await this.queueSource.addOrderMessage(order.id, messageModel);
+                        await this.queueSource.addOrderMessage(order.id, messageModel, queueName);
                     })
                 );
 
                 await lastValueFrom(processed);
-            }
+            },
+            queueName
         );
     }
 }

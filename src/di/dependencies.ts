@@ -17,7 +17,7 @@ import { DeleteStationUseCase, DeleteStationUseCaseImpl } from '../domain/usecas
 import { WatchStationsUseCase, WatchStationsUseCaseImpl } from '../domain/usecase/station/watchStationsUseCase.js';
 import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
-import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
+import { BullQueueSource, NamedQueue } from '../data/source/queue/bullQueueSource.js';
 import { GraphqlGithubSource } from '../data/source/github/graphqlGithubSource.js';
 import { PostgresStationSource } from '../data/source/station/postgresStationSource.js';
 import { PostgresDb } from '../data/source/database/postgresDb.js';
@@ -38,8 +38,7 @@ export class Dependencies {
 
   postgresDb: PostgresDb;
   redis: Redis;
-  queue: Queue<OrderModel, void>;
-  queueEvents: QueueEvents;
+  queues: Map<string, NamedQueue>;
 
   queueSource: QueueSource;
   cookSource: CookSource;
@@ -71,8 +70,7 @@ export class Dependencies {
     cookbook?: Cookbook,
     postgresDb?: PostgresDb,
     redis?: Redis,
-    queue?: Queue<OrderModel, void>,
-    queueEvents?: QueueEvents,
+    queues?: Map<string, NamedQueue>,
     queueSource?: BullQueueSource,
     cookSource?: CookSource,
     githubSource?: GithubSource,
@@ -101,10 +99,20 @@ export class Dependencies {
 
     const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
     this.redis = redis ?? new Redis(redisConnection);
-    this.queue = queue ?? new Queue<OrderModel, void>(this.config.queueName, { connection: redisConnection });
-    this.queueEvents = queueEvents ?? new QueueEvents(this.config.queueName, { connection: redisConnection })
 
-    this.queueSource = queueSource ?? new BullQueueSource(this.queue, this.queueEvents, this.redis, redisConnection);
+    if (queues) {
+      this.queues = queues;
+    } else {
+      this.queues = new Map<string, NamedQueue>();
+      for (const name of [this.config.eventQueueName, this.config.orderQueueName]) {
+        this.queues.set(name, {
+          queue: new Queue<OrderModel, void>(name, { connection: redisConnection }),
+          queueEvents: new QueueEvents(name, { connection: redisConnection }),
+        });
+      }
+    }
+
+    this.queueSource = queueSource ?? new BullQueueSource(this.queues, this.redis, redisConnection);
     this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook, this.config);
     this.githubSource = githubSource ?? new GraphqlGithubSource(
       this.config.githubAppId,
@@ -149,8 +157,13 @@ export class Dependencies {
   async close(): Promise<void> {
     this.redis.disconnect();
 
+    const queueCloses = [...this.queues.values()].flatMap(({ queue, queueEvents }) => [
+      queue.close(),
+      queueEvents.close(),
+    ]);
+
     await Promise.all([
-      this.queue.close(),
+      ...queueCloses,
       this.postgresDb.close(),
     ]);
   }

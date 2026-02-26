@@ -1,7 +1,7 @@
 import { OrderRepository } from "../../repository/orderRepository.js";
 
 export interface DeleteOrderUseCase {
-    execute(orderId: string): Promise<void>;
+    execute(orderId: string, queueName: string): Promise<void>;
 }
 
 export class DeleteOrderUseCaseImpl implements DeleteOrderUseCase {
@@ -11,7 +11,7 @@ export class DeleteOrderUseCaseImpl implements DeleteOrderUseCase {
         this.orderRepository = orderRepository;
     }
 
-    async execute(orderId: string): Promise<void> {
-        await this.orderRepository.deleteOrder(orderId);
+    async execute(orderId: string, queueName: string): Promise<void> {
+        await this.orderRepository.deleteOrder(orderId, queueName);
     }
 }

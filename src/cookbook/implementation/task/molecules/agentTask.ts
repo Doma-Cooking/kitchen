@@ -48,7 +48,7 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
         const redisEnv = {
             REDIS_HOST: config.redisHost,
             REDIS_PORT: String(config.redisPort),
-            QUEUE_NAME: config.queueName,
+            QUEUE_NAME: config.orderQueueName,
         };
 
         const plugins = input.pluginPath

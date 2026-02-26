@@ -27,7 +27,8 @@ export interface Configuration {
   dbName: string;
 
   // Queue
-  queueName: string;
+  eventQueueName: string;
+  orderQueueName: string;
 
   // GitHub
   githubWebhookSecret: string;
@@ -84,7 +85,7 @@ interface YamlSchema {
   port?: number;
   redis?: { host?: string; port?: number };
   db?: { host?: string; port?: number; user?: string; name?: string };
-  queue?: { name?: string };
+  queue?: { eventName?: string; orderName?: string };
   github?: {
     appSlug?: string;
     columns?: { planning?: string; implementing?: string; ready?: string };
@@ -118,7 +119,8 @@ class YamlConfiguration {
   get dbPort() { return this.yaml.db?.port ?? 5432; }
   get dbUser() { return this.yaml.db?.user ?? 'kitchen'; }
   get dbName() { return this.yaml.db?.name ?? 'kitchen'; }
-  get queueName() { return this.yaml.queue?.name ?? 'kitchenQueue'; }
+  get eventQueueName() { return this.yaml.queue?.eventName ?? 'kitchenEventQueue'; }
+  get orderQueueName() { return this.yaml.queue?.orderName ?? 'kitchenOrderQueue'; }
   get githubAppSlug() { return this.yaml.github?.appSlug ?? ''; }
   get columnPlanning() { return this.yaml.github?.columns?.planning ?? 'Planning'; }
   get columnImplementing() { return this.yaml.github?.columns?.implementing ?? 'In Progress'; }
@@ -152,7 +154,8 @@ export class KitchenConfiguration implements Configuration {
   get dbPort() { return this.yaml.dbPort; }
   get dbUser() { return this.yaml.dbUser; }
   get dbName() { return this.yaml.dbName; }
-  get queueName() { return this.yaml.queueName; }
+  get eventQueueName() { return this.yaml.eventQueueName; }
+  get orderQueueName() { return this.yaml.orderQueueName; }
   get githubAppSlug() { return this.yaml.githubAppSlug; }
   get columnPlanning() { return this.yaml.columnPlanning; }
   get columnImplementing() { return this.yaml.columnImplementing; }

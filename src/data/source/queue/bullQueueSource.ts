@@ -5,35 +5,47 @@ import { QueueSource } from './queueSource.js';
 import { CookMessageModel } from '../../model/cookMessageModel.js';
 import { concatMap, Observable } from 'rxjs';
 
+export interface NamedQueue {
+    queue: Queue<OrderModel, void>;
+    queueEvents: QueueEvents;
+}
+
 export class BullQueueSource implements QueueSource {
-    private queue: Queue<OrderModel, void>;
-    private queueEvents: QueueEvents;
-    private connection: Redis
+    private queues: Map<string, NamedQueue>;
+    private connection: Redis;
     private workerConnection: RedisOptions;
     private workers: Map<string, Worker<OrderModel, void>>;
 
     constructor(
-        queue: Queue<OrderModel, void>,
-        queueEvents: QueueEvents,
+        queues: Map<string, NamedQueue>,
         connection: Redis,
         workerConnection: RedisOptions
     ) {
-        this.queue = queue;
-        this.queueEvents = queueEvents;
+        this.queues = queues;
         this.connection = connection;
         this.workerConnection = workerConnection;
         this.workers = new Map();
     }
 
+    private getQueue(queueName: string): NamedQueue {
+        const entry = this.queues.get(queueName);
+        if (!entry) {
+            throw new Error(`Queue "${queueName}" not found. Available queues: ${[...this.queues.keys()].join(', ')}`);
+        }
+        return entry;
+    }
+
     async createCook(
         id: string,
-        execute: (order: OrderModel, signal?: AbortSignal) => Promise<void>
+        execute: (order: OrderModel, signal?: AbortSignal) => Promise<void>,
+        queueName: string
     ): Promise<void> {
+        const { queue } = this.getQueue(queueName);
         await Promise.resolve();
         this.workers.set(
             id,
             new Worker(
-                this.queue.name,
+                queue.name,
                 async (job, token, signal) => {
                     const stationId = job.data.stationId;
                     if (stationId) {
@@ -57,12 +69,14 @@ export class BullQueueSource implements QueueSource {
         );
     }
 
-    async queueOrder(order: OrderModel): Promise<void> {
-        await this.queue.add(order.name, order, { jobId: order.id });
+    async queueOrder(order: OrderModel, queueName: string): Promise<void> {
+        const { queue } = this.getQueue(queueName);
+        await queue.add(order.name, order, { jobId: order.id });
     }
 
-    async addOrderMessage(orderId: string, message: CookMessageModel): Promise<void> {
-        const job = await this.queue.getJob(orderId);
+    async addOrderMessage(orderId: string, message: CookMessageModel, queueName: string): Promise<void> {
+        const { queue } = this.getQueue(queueName);
+        const job = await queue.getJob(orderId);
         if (job) {
             await Promise.all([
                 job.log(JSON.stringify(message)),
@@ -71,13 +85,15 @@ export class BullQueueSource implements QueueSource {
         }
     }
 
-    async getOrders(): Promise<OrderModel[]> {
-        const jobs = await this.queue.getJobs();
+    async getOrders(queueName: string): Promise<OrderModel[]> {
+        const { queue } = this.getQueue(queueName);
+        const jobs = await queue.getJobs();
         return jobs.map((job) => job.data);
     }
 
-    async deleteOrder(orderId: string): Promise<void> {
-        const job = await this.queue.getJob(orderId);
+    async deleteOrder(orderId: string, queueName: string): Promise<void> {
+        const { queue } = this.getQueue(queueName);
+        const job = await queue.getJob(orderId);
         const state = await job?.getState();
 
         if (!job || !state || state === 'active') {
@@ -87,34 +103,35 @@ export class BullQueueSource implements QueueSource {
         }
     }
 
-    watchAll(): Observable<OrderModel[]> {
+    watchAll(queueName: string): Observable<OrderModel[]> {
+        const { queueEvents } = this.getQueue(queueName);
         return new Observable((subscriber) => {
-            this.queueEvents.on('added', (args) => {
+            queueEvents.on('added', (args) => {
                 subscriber.next(`${args.jobId}-added`);
             });
 
-            this.queueEvents.on('progress', (args) => {
+            queueEvents.on('progress', (args) => {
                 subscriber.next(`${args.jobId}-progress`);
             });
 
-            this.queueEvents.on('completed', (args) => {
+            queueEvents.on('completed', (args) => {
                 subscriber.next(`${args.jobId}-completed`);
             });
 
-            this.queueEvents.on('failed', (args) => {
+            queueEvents.on('failed', (args) => {
                 subscriber.next(`${args.jobId}-failed`);
             });
 
-            this.queueEvents.on('removed', (args) => {
+            queueEvents.on('removed', (args) => {
                 subscriber.next(`${args.jobId}-removed`);
             });
 
-            this.queueEvents.on('cleaned', () => {
+            queueEvents.on('cleaned', () => {
                 subscriber.next(`cleaned`);
             });
         }).pipe(
             concatMap(async () => {
-                return await this.getOrders();
+                return await this.getOrders(queueName);
             })
         );
     }
