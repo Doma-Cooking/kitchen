@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import { CookSource } from '../data/source/cook/cookSource.js';
 import { QueueSource } from '../data/source/queue/queueSource.js';
 import { GithubSource } from '../data/source/github/githubSource.js';
@@ -11,7 +10,6 @@ import { QueueOrderUseCase, QueueOrderUseCaseImpl } from '../domain/usecase/orde
 import { ResolvePlanningIssueUseCase, ResolvePlanningIssueUseCaseImpl } from '../domain/usecase/order/resolve/resolvePlanningIssueUseCase.js';
 import { ResolveImplementingIssueUseCase, ResolveImplementingIssueUseCaseImpl } from '../domain/usecase/order/resolve/resolveImplementingIssueUseCase.js';
 import { ResolveSlackContextUseCase, ResolveSlackContextUseCaseImpl } from '../domain/usecase/order/resolve/resolveSlackContextUseCase.js';
-import { ResolveOrderUseCase, ResolveOrderUseCaseImpl } from '../domain/usecase/order/resolveOrderUseCase.js';
 import { GetStationByIdUseCase, GetStationByIdUseCaseImpl } from '../domain/usecase/station/getStationByIdUseCase.js';
 import { CreateStationUseCase, CreateStationUseCaseImpl } from '../domain/usecase/station/createStationUseCase.js';
 import { UpdateStationUseCase, UpdateStationUseCaseImpl } from '../domain/usecase/station/updateStationUseCase.js';
@@ -62,7 +60,6 @@ export class Dependencies {
   resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
   resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
   resolveSlackContextUseCase: ResolveSlackContextUseCase;
-  resolveOrderUseCase: ResolveOrderUseCase;
   getStationByIdUseCase: GetStationByIdUseCase;
   createStationUseCase: CreateStationUseCase;
   updateStationUseCase: UpdateStationUseCase;
@@ -91,7 +88,6 @@ export class Dependencies {
     resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase,
     resolveImplementingIssueUseCase?: ResolveImplementingIssueUseCase,
     resolveSlackContextUseCase?: ResolveSlackContextUseCase,
-    resolveOrderUseCase?: ResolveOrderUseCase,
     getStationByIdUseCase?: GetStationByIdUseCase,
     createStationUseCase?: CreateStationUseCase,
     updateStationUseCase?: UpdateStationUseCase,
@@ -139,19 +135,9 @@ export class Dependencies {
       this.config.columnImplementing
     );
 
-    const pluginPath = join(process.cwd(), 'src', 'plugins', 'resolve');
-    console.log(`[Dependencies] Resolve plugin path: ${pluginPath}`);
     this.resolveSlackContextUseCase = resolveSlackContextUseCase ?? new ResolveSlackContextUseCaseImpl(
       this.config.slackBotToken
     );
-    this.resolveOrderUseCase = resolveOrderUseCase ?? new ResolveOrderUseCaseImpl({
-      pluginPath,
-      model: this.config.resolveModel,
-      redisHost: this.config.redisHost,
-      redisPort: this.config.redisPort,
-      queueName: this.config.queueName,
-      repos: this.config.repos,
-    });
 
     this.getStationByIdUseCase = getStationByIdUseCase ?? new GetStationByIdUseCaseImpl(this.stationRepository);
     this.createStationUseCase = createStationUseCase ?? new CreateStationUseCaseImpl(this.stationRepository);

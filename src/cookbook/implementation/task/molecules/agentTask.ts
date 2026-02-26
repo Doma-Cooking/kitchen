@@ -11,6 +11,7 @@ export interface AgentTaskInput {
     station?: StationEntity;
     token?: string;
     context?: Record<string, string>;
+    pluginPath?: string;
 }
 
 export interface AgentTaskOutput {
@@ -44,6 +45,15 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
             GIT_COMMITTER_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
         } : {};
         const ghEnv = input.token ? { GH_TOKEN: input.token } : {};
+        const redisEnv = {
+            REDIS_HOST: config.redisHost,
+            REDIS_PORT: String(config.redisPort),
+            QUEUE_NAME: config.queueName,
+        };
+
+        const plugins = input.pluginPath
+            ? [{ type: 'local' as const, path: input.pluginPath }]
+            : undefined;
 
         for await (const message of query({
             prompt,
@@ -54,7 +64,8 @@ export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
                 abortController,
                 resume,
                 model: "claude-opus-4-5-20251101",
-                env: { ...process.env, ...gitEnv, ...ghEnv },
+                env: { ...process.env, ...gitEnv, ...ghEnv, ...redisEnv },
+                ...(plugins ? { plugins } : {}),
                 stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
             },
         })) {

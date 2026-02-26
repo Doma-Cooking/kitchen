@@ -1,7 +1,22 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { dependencies } from '../../server.js';
 import { createGithubAdapter } from '../adapters/githubAdapter.js';
 import { startSlackAdapter } from '../adapters/slackAdapter.js';
+import type { Event } from '../adapters/event.js';
+
+function queueResolveOrder(event: Event): Promise<void> {
+  const ts = event.timestamp instanceof Date
+    ? event.timestamp.toISOString()
+    : String(event.timestamp);
+
+  return dependencies.queueOrderUseCase.execute({
+    id: randomUUID(),
+    name: `resolve-${event.source}-${event.sourceId}-${ts}`,
+    recipeId: 'domaResolveOrderRecipe',
+    input: { event, repos: dependencies.config.repos },
+  });
+}
 
 function createWebhookRoutes(): Router {
   const router = Router();
@@ -10,7 +25,7 @@ function createWebhookRoutes(): Router {
   const githubRouter = createGithubAdapter(
     dependencies.config.githubWebhookSecret,
     async (event) => {
-      await dependencies.resolveOrderUseCase.execute(event);
+      await queueResolveOrder(event);
     },
     {
       resolvePlanningIssueUseCase: dependencies.resolvePlanningIssueUseCase,
@@ -26,7 +41,7 @@ function createWebhookRoutes(): Router {
     appToken: dependencies.config.slackAppToken,
     resolveSlackContextUseCase: dependencies.resolveSlackContextUseCase,
     onEvent: async (event) => {
-      await dependencies.resolveOrderUseCase.execute(event);
+      await queueResolveOrder(event);
     },
   }).catch((err: unknown) => {
     console.error('Failed to start Slack adapter:', err);
