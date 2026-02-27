@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs';
 import { CookMessageModel } from '../../model/cookMessageModel.js';
 import { OrderModel } from '../../model/orderModel.js';
+import { Disposable } from '../../../di/disposable.js';
 
-export interface QueueSource {
+export interface QueueSource extends Disposable {
     createCook(id: string, execute: (order: OrderModel, signal?: AbortSignal) => Promise<void>, queueName: string): Promise<void>;
     queueOrder(order: OrderModel, queueName: string): Promise<void>;
     addOrderMessage(orderId: string, message: CookMessageModel, queueName: string): Promise<void>;

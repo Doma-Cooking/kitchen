@@ -12,11 +12,9 @@ const server = createServer(createHttpServer());
 setupWsServer(server);
 
 async function start() {
-  // TODO: Init cooks based on configuration.
-  await Promise.all([
-    dependencies.createCookUseCase.execute(dependencies.config.eventQueueName, "event-cook-0"),
-    dependencies.createCookUseCase.execute(dependencies.config.orderQueueName, "order-cook-0"),
-    dependencies.createCookUseCase.execute(dependencies.config.orderQueueName, "order-cook-1"),
+  await dependencies.createCooksUseCase.execute([
+    dependencies.config.eventQueue,
+    dependencies.config.orderQueue,
   ]);
 
   server.listen(PORT, HOST, () => {

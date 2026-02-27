@@ -11,6 +11,11 @@ export interface RepoConfig {
   mainBranch: string;
 }
 
+export interface QueueConfig {
+  name: string;
+  workers: number;
+}
+
 export interface Configuration {
   // Server
   port: number;
@@ -27,8 +32,8 @@ export interface Configuration {
   dbName: string;
 
   // Queue
-  eventQueueName: string;
-  orderQueueName: string;
+  eventQueue: QueueConfig;
+  orderQueue: QueueConfig;
 
   // GitHub
   githubWebhookSecret: string;
@@ -85,7 +90,10 @@ interface YamlSchema {
   port?: number;
   redis?: { host?: string; port?: number };
   db?: { host?: string; port?: number; user?: string; name?: string };
-  queue?: { eventName?: string; orderName?: string };
+  queues?: {
+    eventQueue?: { name?: string; workers?: number };
+    orderQueue?: { name?: string; workers?: number };
+  };
   github?: {
     appSlug?: string;
     columns?: { planning?: string; implementing?: string; ready?: string };
@@ -119,8 +127,18 @@ class YamlConfiguration {
   get dbPort() { return this.yaml.db?.port ?? 5432; }
   get dbUser() { return this.yaml.db?.user ?? 'kitchen'; }
   get dbName() { return this.yaml.db?.name ?? 'kitchen'; }
-  get eventQueueName() { return this.yaml.queue?.eventName ?? 'kitchenEventQueue'; }
-  get orderQueueName() { return this.yaml.queue?.orderName ?? 'kitchenOrderQueue'; }
+  get eventQueue(): QueueConfig {
+    return {
+      name: this.yaml.queues?.eventQueue?.name ?? 'kitchenEventQueue',
+      workers: this.yaml.queues?.eventQueue?.workers ?? 2,
+    };
+  }
+  get orderQueue(): QueueConfig {
+    return {
+      name: this.yaml.queues?.orderQueue?.name ?? 'kitchenOrderQueue',
+      workers: this.yaml.queues?.orderQueue?.workers ?? 4,
+    };
+  }
   get githubAppSlug() { return this.yaml.github?.appSlug ?? ''; }
   get columnPlanning() { return this.yaml.github?.columns?.planning ?? 'Planning'; }
   get columnImplementing() { return this.yaml.github?.columns?.implementing ?? 'In Progress'; }
@@ -154,8 +172,8 @@ export class KitchenConfiguration implements Configuration {
   get dbPort() { return this.yaml.dbPort; }
   get dbUser() { return this.yaml.dbUser; }
   get dbName() { return this.yaml.dbName; }
-  get eventQueueName() { return this.yaml.eventQueueName; }
-  get orderQueueName() { return this.yaml.orderQueueName; }
+  get eventQueue() { return this.yaml.eventQueue; }
+  get orderQueue() { return this.yaml.orderQueue; }
   get githubAppSlug() { return this.yaml.githubAppSlug; }
   get columnPlanning() { return this.yaml.columnPlanning; }
   get columnImplementing() { return this.yaml.columnImplementing; }

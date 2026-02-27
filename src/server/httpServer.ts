@@ -23,7 +23,7 @@ function createHttpServer(): express.Express {
 
     // Dashboard with basic auth
     const serverAdapter = setupBoard({
-        queueNames: [dependencies.config.eventQueueName, dependencies.config.orderQueueName],
+        queueNames: [dependencies.config.eventQueue.name, dependencies.config.orderQueue.name],
         redisConnection: { host: dependencies.config.redisHost, port: dependencies.config.redisPort },
     });
     httpServer.use(

@@ -15,19 +15,18 @@ import { CreateStationUseCase, CreateStationUseCaseImpl } from '../domain/usecas
 import { UpdateStationUseCase, UpdateStationUseCaseImpl } from '../domain/usecase/station/updateStationUseCase.js';
 import { DeleteStationUseCase, DeleteStationUseCaseImpl } from '../domain/usecase/station/deleteStationUseCase.js';
 import { WatchStationsUseCase, WatchStationsUseCaseImpl } from '../domain/usecase/station/watchStationsUseCase.js';
-import { Queue, QueueEvents } from 'bullmq';
 import { Redis } from 'ioredis';
-import { BullQueueSource, NamedQueue } from '../data/source/queue/bullQueueSource.js';
+import { BullQueueSource } from '../data/source/queue/bullQueueSource.js';
 import { GraphqlGithubSource } from '../data/source/github/graphqlGithubSource.js';
 import { PostgresStationSource } from '../data/source/station/postgresStationSource.js';
 import { PostgresDb } from '../data/source/database/postgresDb.js';
-import { OrderModel } from '../data/model/orderModel.js';
 import { WatchOrdersUseCase, WatchOrdersUseCaseImpl } from '../domain/usecase/order/watchOrdersUseCase.js';
 import { Configuration, KitchenConfiguration } from './configuration.js';
 import { GetConfigurationUseCase, GetConfigurationUseCaseImpl } from '../domain/usecase/config/getConfigurationUseCase.js';
 import { GetRepoConfigUseCase, GetRepoConfigUseCaseImpl } from '../domain/usecase/config/getRepoConfigUseCase.js';
 import { DeleteOrderUseCase, DeleteOrderUseCaseImpl } from '../domain/usecase/order/deleteOrderUseCase.js';
 import { CreateCookUseCase, CreateCookUseCaseImpl } from '../domain/usecase/cook/createCookUseCase.js';
+import { CreateCooksUseCase, CreateCooksUseCaseImpl } from '../domain/usecase/cook/createCooksUseCase.js';
 import type { Cookbook } from '../cookbook/interface/cookbook.js';
 import { CookbookCookSource } from '../data/source/cook/cookbookCookSource.js';
 import { domaCookbook } from '../cookbook/implementation/cookbook/domaCookbook.js';
@@ -38,7 +37,6 @@ export class Dependencies {
 
   postgresDb: PostgresDb;
   redis: Redis;
-  queues: Map<string, NamedQueue>;
 
   queueSource: QueueSource;
   cookSource: CookSource;
@@ -56,6 +54,7 @@ export class Dependencies {
   deleteOrderUseCase: DeleteOrderUseCase;
   watchOrdersUseCase: WatchOrdersUseCase;
   createCookUseCase: CreateCookUseCase;
+  createCooksUseCase: CreateCooksUseCase;
   resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
   resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
   resolveSlackContextUseCase: ResolveSlackContextUseCase;
@@ -70,8 +69,7 @@ export class Dependencies {
     cookbook?: Cookbook,
     postgresDb?: PostgresDb,
     redis?: Redis,
-    queues?: Map<string, NamedQueue>,
-    queueSource?: BullQueueSource,
+    queueSource?: QueueSource,
     cookSource?: CookSource,
     githubSource?: GithubSource,
     stationSource?: StationSource,
@@ -100,19 +98,11 @@ export class Dependencies {
     const redisConnection = { host: this.config.redisHost, port: this.config.redisPort, maxRetriesPerRequest: null };
     this.redis = redis ?? new Redis(redisConnection);
 
-    if (queues) {
-      this.queues = queues;
-    } else {
-      this.queues = new Map<string, NamedQueue>();
-      for (const name of [this.config.eventQueueName, this.config.orderQueueName]) {
-        this.queues.set(name, {
-          queue: new Queue<OrderModel, void>(name, { connection: redisConnection }),
-          queueEvents: new QueueEvents(name, { connection: redisConnection }),
-        });
-      }
-    }
-
-    this.queueSource = queueSource ?? new BullQueueSource(this.queues, this.redis, redisConnection);
+    this.queueSource = queueSource ?? new BullQueueSource(
+      [this.config.eventQueue.name, this.config.orderQueue.name],
+      this.redis,
+      redisConnection
+    );
     this.cookSource = cookSource ?? new CookbookCookSource(this.cookbook, this.config);
     this.githubSource = githubSource ?? new GraphqlGithubSource(
       this.config.githubAppId,
@@ -132,6 +122,7 @@ export class Dependencies {
     this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
     this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
     this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
+    this.createCooksUseCase = new CreateCooksUseCaseImpl(this.createCookUseCase);
     this.resolvePlanningIssueUseCase = resolvePlanningIssueUseCase ?? new ResolvePlanningIssueUseCaseImpl(
       this.githubRepository,
       this.config.labelEnabled,
@@ -157,13 +148,8 @@ export class Dependencies {
   async close(): Promise<void> {
     this.redis.disconnect();
 
-    const queueCloses = [...this.queues.values()].flatMap(({ queue, queueEvents }) => [
-      queue.close(),
-      queueEvents.close(),
-    ]);
-
     await Promise.all([
-      ...queueCloses,
+      this.queueSource.dispose(),
       this.postgresDb.close(),
     ]);
   }

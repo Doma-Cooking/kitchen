@@ -4,7 +4,7 @@ import { createMessage } from '../wsServer.js';
 import { OrderEntity } from '../../domain/entity/orderEntity.js';
 
 export function watchOrders(ws: WebSocket): void {
-    const subscription = dependencies.watchOrdersUseCase.execute(dependencies.config.orderQueueName).subscribe({
+    const subscription = dependencies.watchOrdersUseCase.execute(dependencies.config.orderQueue.name).subscribe({
         next: (orders: OrderEntity[]) => {
             ws.send(createMessage('data', orders));
         },

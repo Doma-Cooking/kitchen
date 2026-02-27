@@ -13,8 +13,13 @@ db:
   user: kitchen
   name: kitchen
 
-queue:
-  name: kitchenQueue
+queues:
+  eventQueue:
+    name: kitchenEventQueue
+    workers: 2
+  orderQueue:
+    name: kitchenOrderQueue
+    workers: 4
 
 github:
   appSlug: kitchen-cook

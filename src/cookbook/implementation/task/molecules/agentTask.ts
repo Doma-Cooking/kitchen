@@ -6,107 +6,111 @@ import { agentConfigTask } from "../atoms/agent/agentConfigTask.js";
 import { fetchPromptTask } from "../atoms/agent/fetchPromptTask.js";
 
 export interface AgentTaskInput {
-    promptId: string;
-    workingDirectory: string;
-    station?: StationEntity;
-    token?: string;
-    context?: Record<string, string>;
-    pluginPath?: string;
+  promptId: string;
+  workingDirectory: string;
+  station?: StationEntity;
+  token?: string;
+  context?: Record<string, string>;
+  pluginPath?: string;
 }
 
 export interface AgentTaskOutput {
-    station?: StationEntity;
+  station?: StationEntity;
 }
 
 export const agentTask: Task<AgentTaskInput, AgentTaskOutput> = {
-    async execute(input: AgentTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<AgentTaskOutput> {
-        sendMessage(`Starting agent in ${input.workingDirectory}`);
+  async execute(input: AgentTaskInput, config: Configuration, sendMessage: (message: string) => void, signal?: AbortSignal): Promise<AgentTaskOutput> {
+    sendMessage(`Starting agent in ${input.workingDirectory}`);
 
-        const abortController = new AbortController();
-        signal?.addEventListener("abort", () => {
-            abortController.abort(signal.reason);
-        });
+    const abortController = new AbortController();
+    signal?.addEventListener("abort", () => {
+      abortController.abort(signal.reason);
+    });
 
-        const resume = input.station
-            ? new TextDecoder().decode(input.station.contextBytes)
-            : undefined;
+    const resume = input.station
+      ? new TextDecoder().decode(input.station.contextBytes)
+      : undefined;
 
-        let sessionId: string | undefined;
+    let sessionId: string | undefined;
 
-        await agentConfigTask.execute({}, config, sendMessage, signal);
-        const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId, context: input.context }, config, sendMessage, signal);
+    await agentConfigTask.execute({}, config, sendMessage, signal);
+    const { prompt } = await fetchPromptTask.execute({ promptId: input.promptId, context: input.context }, config, sendMessage, signal);
 
-        const appId = config.githubAppId;
-        const appSlug = config.githubAppSlug;
-        const gitEnv = appId && appSlug ? {
-            GIT_AUTHOR_NAME: `${appSlug}[bot]`,
-            GIT_AUTHOR_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
-            GIT_COMMITTER_NAME: `${appSlug}[bot]`,
-            GIT_COMMITTER_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
-        } : {};
-        const ghEnv = input.token ? { GH_TOKEN: input.token } : {};
-        const redisEnv = {
-            REDIS_HOST: config.redisHost,
-            REDIS_PORT: String(config.redisPort),
-            QUEUE_NAME: config.orderQueueName,
-        };
+    const appId = config.githubAppId;
+    const appSlug = config.githubAppSlug;
+    const gitEnv = appId && appSlug ? {
+      GIT_AUTHOR_NAME: `${appSlug}[bot]`,
+      GIT_AUTHOR_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
+      GIT_COMMITTER_NAME: `${appSlug}[bot]`,
+      GIT_COMMITTER_EMAIL: `${appId}+${appSlug}[bot]@users.noreply.github.com`,
+    } : {};
+    const ghEnv = input.token ? { GH_TOKEN: input.token } : {};
+    const redisEnv = {
+      REDIS_HOST: config.redisHost,
+      REDIS_PORT: String(config.redisPort),
+      QUEUE_NAME: config.orderQueue.name,
+    };
 
-        const plugins = input.pluginPath
-            ? [{ type: 'local' as const, path: input.pluginPath }]
-            : undefined;
+    const plugins = input.pluginPath
+      ? [{ type: 'local' as const, path: input.pluginPath }]
+      : undefined;
 
-        for await (const message of query({
-            prompt,
-            options: {
-                cwd: input.workingDirectory,
-                permissionMode: "bypassPermissions",
-                allowDangerouslySkipPermissions: true,
-                abortController,
-                resume,
-                model: "claude-opus-4-5-20251101",
-                env: { ...process.env, ...gitEnv, ...ghEnv, ...redisEnv },
-                ...(plugins ? { plugins } : {}),
-                stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
-            },
-        })) {
-            sessionId = extractSessionId(message) ?? sessionId;
-            handleMessage(message, sendMessage);
-        }
-
-        return !sessionId ? {} : { station: { contextBytes: new TextEncoder().encode(sessionId) } };
+    for await (const message of query({
+      prompt,
+      options: {
+        cwd: input.workingDirectory,
+        permissionMode: "bypassPermissions",
+        allowDangerouslySkipPermissions: true,
+        abortController,
+        resume,
+        model: "claude-opus-4-5-20251101",
+        env: { ...process.env, ...gitEnv, ...ghEnv, ...redisEnv },
+        ...(plugins ? { plugins } : {}),
+        stderr: (data: string) => { sendMessage(`[stderr] ${data}`); }
+      },
+    })) {
+      sessionId = extractSessionId(message) ?? sessionId;
+      handleMessage(message, sendMessage);
     }
+
+    return !sessionId ? {} : { station: { contextBytes: new TextEncoder().encode(sessionId) } };
+  }
 };
 
 interface ContentBlock {
-    type: string;
-    text?: string;
+  type: string;
+  text?: string;
+  name?: string;
 }
 
 function extractSessionId(message: SDKMessage): string | undefined {
-    if ("session_id" in message && typeof message.session_id === "string") {
-        return message.session_id;
-    }
-    return undefined;
+  if ("session_id" in message && typeof message.session_id === "string") {
+    return message.session_id;
+  }
+  return undefined;
 }
 
 function handleMessage(message: SDKMessage, sendMessage: (message: string) => void): void {
-    switch (message.type) {
-        case "assistant": {
-            const { content } = message.message as { content: ContentBlock[] };
-            for (const block of content) {
-                if (block.type === "text" && block.text !== undefined) {
-                    sendMessage(block.text);
-                }
-            }
-            break;
+  switch (message.type) {
+    case "assistant": {
+      const { content } = message.message as { content: ContentBlock[] };
+      for (const block of content) {
+        if (block.type === "text" && block.text !== undefined) {
+          sendMessage(block.text);
         }
-        case "result": {
-            if (message.subtype === "success") {
-                sendMessage(`Agent completed successfully (durationMs: ${message.duration_ms.toString()})`);
-            } else {
-                throw new Error(`Agent failed (${message.subtype}): ${message.errors.join(", ")}`);
-            }
-            break;
+        if (block.type === "tool_use" && block.name !== undefined) {
+          sendMessage(`[tool_use] ${block.name}`);
         }
+      }
+      break;
     }
+    case "result": {
+      if (message.subtype === "success") {
+        sendMessage(`Agent completed successfully (durationMs: ${message.duration_ms.toString()})`);
+      } else {
+        throw new Error(`Agent failed (${message.subtype}): ${message.errors.join(", ")}`);
+      }
+      break;
+    }
+  }
 }

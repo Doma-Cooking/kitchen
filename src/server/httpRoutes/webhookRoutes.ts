@@ -15,7 +15,7 @@ function queueResolveOrder(event: Event): Promise<void> {
     name: `resolve-${event.source}-${event.sourceId}-${ts}`,
     recipeId: 'domaResolveOrderRecipe',
     input: { event, repos: dependencies.config.repos },
-  }, dependencies.config.eventQueueName);
+  }, dependencies.config.eventQueue.name);
 }
 
 function createWebhookRoutes(): Router {
