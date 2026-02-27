@@ -11,6 +11,11 @@ export interface RepoConfig {
   mainBranch: string;
 }
 
+export interface QueueConfig {
+  name: string;
+  workers: number;
+}
+
 export interface Configuration {
   // Server
   port: number;
@@ -27,7 +32,8 @@ export interface Configuration {
   dbName: string;
 
   // Queue
-  queueName: string;
+  eventQueue: QueueConfig;
+  orderQueue: QueueConfig;
 
   // GitHub
   githubWebhookSecret: string;
@@ -53,9 +59,8 @@ export interface Configuration {
   slackAppToken: string;
   slackChannelId: string;
 
-  // Flutter
-  flutterChannel: string;
-  flutterHome: string;
+  // Models
+  resolveModel: string;
 
   // Admin
   adminUser: string;
@@ -85,7 +90,10 @@ interface YamlSchema {
   port?: number;
   redis?: { host?: string; port?: number };
   db?: { host?: string; port?: number; user?: string; name?: string };
-  queue?: { name?: string };
+  queues?: {
+    eventQueue?: { name?: string; workers?: number };
+    orderQueue?: { name?: string; workers?: number };
+  };
   github?: {
     appSlug?: string;
     columns?: { planning?: string; implementing?: string; ready?: string };
@@ -93,7 +101,7 @@ interface YamlSchema {
   };
   repos?: { owner?: string; name?: string; url?: string; clonePath?: string; mainBranch?: string }[];
   slack?: { channelId?: string };
-  flutter?: { channel?: string; home?: string };
+  models?: { resolve?: string };
 }
 
 function loadYamlConfig(): YamlSchema {
@@ -119,7 +127,18 @@ class YamlConfiguration {
   get dbPort() { return this.yaml.db?.port ?? 5432; }
   get dbUser() { return this.yaml.db?.user ?? 'kitchen'; }
   get dbName() { return this.yaml.db?.name ?? 'kitchen'; }
-  get queueName() { return this.yaml.queue?.name ?? 'kitchenQueue'; }
+  get eventQueue(): QueueConfig {
+    return {
+      name: this.yaml.queues?.eventQueue?.name ?? 'kitchenEventQueue',
+      workers: this.yaml.queues?.eventQueue?.workers ?? 2,
+    };
+  }
+  get orderQueue(): QueueConfig {
+    return {
+      name: this.yaml.queues?.orderQueue?.name ?? 'kitchenOrderQueue',
+      workers: this.yaml.queues?.orderQueue?.workers ?? 4,
+    };
+  }
   get githubAppSlug() { return this.yaml.github?.appSlug ?? ''; }
   get columnPlanning() { return this.yaml.github?.columns?.planning ?? 'Planning'; }
   get columnImplementing() { return this.yaml.github?.columns?.implementing ?? 'In Progress'; }
@@ -136,8 +155,7 @@ class YamlConfiguration {
     }));
   }
   get slackChannelId() { return this.yaml.slack?.channelId ?? ''; }
-  get flutterChannel() { return this.yaml.flutter?.channel ?? 'stable'; }
-  get flutterHome() { return this.yaml.flutter?.home ?? '/opt/flutter'; }
+  get resolveModel() { return this.yaml.models?.resolve ?? 'claude-haiku-4-5-20251001'; }
 }
 
 // --- Combined configuration ---
@@ -154,7 +172,8 @@ export class KitchenConfiguration implements Configuration {
   get dbPort() { return this.yaml.dbPort; }
   get dbUser() { return this.yaml.dbUser; }
   get dbName() { return this.yaml.dbName; }
-  get queueName() { return this.yaml.queueName; }
+  get eventQueue() { return this.yaml.eventQueue; }
+  get orderQueue() { return this.yaml.orderQueue; }
   get githubAppSlug() { return this.yaml.githubAppSlug; }
   get columnPlanning() { return this.yaml.columnPlanning; }
   get columnImplementing() { return this.yaml.columnImplementing; }
@@ -162,9 +181,7 @@ export class KitchenConfiguration implements Configuration {
   get labelEnabled() { return this.yaml.labelEnabled; }
   get repos() { return this.yaml.repos; }
   get slackChannelId() { return this.yaml.slackChannelId; }
-  get flutterChannel() { return this.yaml.flutterChannel; }
-  get flutterHome() { return this.yaml.flutterHome; }
-
+  get resolveModel() { return this.yaml.resolveModel; }
   // Secrets (from .env)
   get githubWebhookSecret() { return this.env.githubWebhookSecret; }
   get githubAppId() { return this.env.githubAppId; }

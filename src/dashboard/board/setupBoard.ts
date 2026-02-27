@@ -4,20 +4,20 @@ import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
 
 export interface DashboardConfig {
-  queueName: string;
+  queueNames: string[];
   redisConnection: { host: string; port: number };
 }
 
 export function setupBoard(config: DashboardConfig): ExpressAdapter {
-  const queue = new Queue(config.queueName, {
-    connection: config.redisConnection,
-  });
+  const queues = config.queueNames.map(name =>
+    new BullMQAdapter(new Queue(name, { connection: config.redisConnection }))
+  );
 
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/dashboard");
 
   createBullBoard({
-    queues: [new BullMQAdapter(queue)],
+    queues,
     serverAdapter,
   });
 

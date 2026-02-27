@@ -1,0 +1,5 @@
+{
+  "name": "resolve",
+  "version": "1.0.0",
+  "description": "Order resolution agent plugin with Slack/GitHub tools"
+}

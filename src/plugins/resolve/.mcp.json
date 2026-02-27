@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "resolve-slack": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/slack_mcp.ts"
+      ],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      }
+    },
+    "resolve-github": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/github_mcp.ts"
+      ],
+      "env": {
+        "GITHUB_APP_ID": "${GITHUB_APP_ID}",
+        "GITHUB_PRIVATE_KEY": "${GITHUB_PRIVATE_KEY}",
+        "GITHUB_INSTALLATION_ID": "${GITHUB_INSTALLATION_ID}"
+      }
+    },
+    "resolve-queue": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/queue_mcp.ts"
+      ],
+      "env": {
+        "REDIS_HOST": "${REDIS_HOST}",
+        "REDIS_PORT": "${REDIS_PORT}",
+        "QUEUE_NAME": "${QUEUE_NAME}"
+      }
+    }
+  }
+}

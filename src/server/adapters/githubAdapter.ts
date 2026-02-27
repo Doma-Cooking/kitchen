@@ -1,23 +1,81 @@
 import { Router } from 'express';
 import { Webhooks, createNodeMiddleware } from '@octokit/webhooks';
-import type { Event, EventPayload } from './event.js';
+import type { Event, EventPayload, EventContext } from './event.js';
 import { ReviewCommentBuffer, type ReviewBatch } from '../httpRoutes/reviewCommentBuffer.js';
+import { formatBatchedFeedback } from '../httpRoutes/reviewCommentBuffer.js';
+import type { ResolvePlanningIssueUseCase } from '../../domain/usecase/order/resolve/resolvePlanningIssueUseCase.js';
+import type { ResolveImplementingIssueUseCase } from '../../domain/usecase/order/resolve/resolveImplementingIssueUseCase.js';
+import type { GetRepoConfigUseCase } from '../../domain/usecase/config/getRepoConfigUseCase.js';
 
 export type EventHandler = (event: Event) => Promise<void>;
 
-function emitEvent(sourceId: string, payload: EventPayload, onEvent: EventHandler): Promise<void> {
+export interface GithubAdapterDeps {
+    resolvePlanningIssueUseCase: ResolvePlanningIssueUseCase;
+    resolveImplementingIssueUseCase: ResolveImplementingIssueUseCase;
+    getRepoConfigUseCase: GetRepoConfigUseCase;
+}
+
+async function enrichGithubEvent(
+    payload: EventPayload,
+    deps: GithubAdapterDeps,
+): Promise<EventContext> {
+    const context: EventContext = {};
+
+    if (payload.eventType === 'issue_comment' && payload.issue.pull_request) {
+        const owner = payload.repository.owner.login;
+        const repo = payload.repository.name;
+
+        context.repoConfig = deps.getRepoConfigUseCase.execute(owner, repo);
+        context.prNumber = payload.issue.number;
+        context.feedback = payload.comment.body;
+
+        const [planningItem, implementingItem] = await Promise.all([
+            deps.resolvePlanningIssueUseCase.fromPr(owner, repo, payload.issue.number),
+            deps.resolveImplementingIssueUseCase.fromPr(owner, repo, payload.issue.number),
+        ]);
+
+        context.planningItem = planningItem;
+        context.implementingItem = implementingItem;
+    }
+
+    if (payload.eventType === 'pull_request_review_batch') {
+        const { owner, repo, prNumber, comments, reviewBodies } = payload;
+        context.repoConfig = deps.getRepoConfigUseCase.execute(owner, repo);
+        context.prNumber = prNumber;
+        context.feedback = formatBatchedFeedback(comments, reviewBodies);
+
+        const [planningItem, implementingItem] = await Promise.all([
+            deps.resolvePlanningIssueUseCase.fromPr(owner, repo, prNumber),
+            deps.resolveImplementingIssueUseCase.fromPr(owner, repo, prNumber),
+        ]);
+
+        context.planningItem = planningItem;
+        context.implementingItem = implementingItem;
+    }
+
+    return context;
+}
+
+function emitEvent(
+    sourceId: string,
+    payload: EventPayload,
+    onEvent: EventHandler,
+    context?: EventContext,
+): Promise<void> {
     const event: Event = {
         source: 'github',
         sourceId,
         payload,
         timestamp: new Date(),
+        context,
     };
     return onEvent(event);
 }
 
 export function createGithubAdapter(
     webhookSecret: string,
-    onEvent: EventHandler
+    onEvent: EventHandler,
+    deps: GithubAdapterDeps,
 ): Router {
     const router = Router();
     const webhooks = new Webhooks({ secret: webhookSecret });
@@ -27,36 +85,23 @@ export function createGithubAdapter(
 
         console.log(`[GitHubAdapter] Flushing review batch: ${key} (${String(batch.comments.length)} comments, ${String(batch.reviewBodies.length)} review bodies)`);
 
-        await emitEvent(`review-batch-${key}-${Date.now().toString()}`, {
+        const payload: EventPayload = {
             eventType: 'pull_request_review_batch',
             owner: batch.owner,
             repo: batch.repo,
             prNumber: batch.prNumber,
             comments: batch.comments,
             reviewBodies: batch.reviewBodies,
-        }, onEvent);
-    });
+        };
 
-    webhooks.on('projects_v2_item.edited', async ({ id, payload }) => {
-        console.log(`[GitHubAdapter] Event received: projects_v2_item.edited (${id})`);
-
-        await emitEvent(id, {
-            eventType: 'projects_v2_item',
-            action: payload.action,
-            changes: payload.changes,
-            projects_v2_item: {
-                content_type: payload.projects_v2_item.content_type,
-                content_node_id: payload.projects_v2_item.content_node_id,
-                node_id: payload.projects_v2_item.node_id,
-                project_node_id: payload.projects_v2_item.project_node_id,
-            },
-        }, onEvent);
+        const context = await enrichGithubEvent(payload, deps);
+        await emitEvent(`review-batch-${key}-${Date.now().toString()}`, payload, onEvent, context);
     });
 
     webhooks.on('issue_comment.created', async ({ id, payload }) => {
         console.log(`[GitHubAdapter] Event received: issue_comment.created (${id})`);
 
-        await emitEvent(id, {
+        const eventPayload: EventPayload = {
             eventType: 'issue_comment',
             action: payload.action,
             sender: { type: payload.sender.type },
@@ -72,7 +117,10 @@ export function createGithubAdapter(
                 id: payload.comment.id,
                 body: payload.comment.body,
             },
-        }, onEvent);
+        };
+
+        const context = await enrichGithubEvent(eventPayload, deps);
+        await emitEvent(id, eventPayload, onEvent, context);
     });
 
     // Review events are buffered per PR, then flushed as a single batch Event
