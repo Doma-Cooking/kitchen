@@ -77,10 +77,13 @@ export class Dependencies {
     cookRepository?: CookRepository,
     githubRepository?: GithubRepository,
     stationRepository?: StationRepository,
+    getConfigurationUseCase?: GetConfigurationUseCase,
+    getRepoConfigUseCase?: GetRepoConfigUseCase,
     queueOrderUseCase?: QueueOrderUseCase,
     deleteOrderUseCase?: DeleteOrderUseCase,
     watchOrdersUseCase?: WatchOrdersUseCase,
     createCookUseCase?: CreateCookUseCase,
+    createCooksUseCase?: CreateCooksUseCase,
     resolvePlanningIssueUseCase?: ResolvePlanningIssueUseCase,
     resolveImplementingIssueUseCase?: ResolveImplementingIssueUseCase,
     resolveSlackContextUseCase?: ResolveSlackContextUseCase,
@@ -116,13 +119,13 @@ export class Dependencies {
     this.githubRepository = githubRepository ?? new GithubRepositoryImpl(this.githubSource);
     this.stationRepository = stationRepository ?? new StationRepositoryImpl(this.stationSource);
 
-    this.getConfigurationUseCase = new GetConfigurationUseCaseImpl(this.config);
-    this.getRepoConfigUseCase = new GetRepoConfigUseCaseImpl(this.getConfigurationUseCase);
+    this.getConfigurationUseCase = getConfigurationUseCase ?? new GetConfigurationUseCaseImpl(this.config);
+    this.getRepoConfigUseCase = getRepoConfigUseCase ?? new GetRepoConfigUseCaseImpl(this.getConfigurationUseCase);
     this.queueOrderUseCase = queueOrderUseCase ?? new QueueOrderUseCaseImpl(this.orderRepository);
     this.deleteOrderUseCase = deleteOrderUseCase ?? new DeleteOrderUseCaseImpl(this.orderRepository);
     this.watchOrdersUseCase = watchOrdersUseCase ?? new WatchOrdersUseCaseImpl(this.orderRepository);
     this.createCookUseCase = createCookUseCase ?? new CreateCookUseCaseImpl(this.cookRepository);
-    this.createCooksUseCase = new CreateCooksUseCaseImpl(this.createCookUseCase);
+    this.createCooksUseCase = createCooksUseCase ?? new CreateCooksUseCaseImpl(this.createCookUseCase);
     this.resolvePlanningIssueUseCase = resolvePlanningIssueUseCase ?? new ResolvePlanningIssueUseCaseImpl(
       this.githubRepository,
       this.config.labelEnabled,
