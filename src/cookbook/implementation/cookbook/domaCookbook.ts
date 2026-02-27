@@ -6,6 +6,7 @@ import { beginImplementationRecipe } from "../recipe/beginImplementationRecipe.j
 import { feedbackImplementationRecipe } from "../recipe/feedbackImplementationRecipe.js";
 import { createSubIssuesRecipe } from "../recipe/createSubIssuesRecipe.js";
 import { resolveOrderRecipe } from "../recipe/resolveOrderRecipe.js";
+import { runAgentRecipe } from "../recipe/runAgentRecipe.js";
 
 export const domaCookbook: Cookbook = {
     id: "domaCookbook",
@@ -17,6 +18,7 @@ export const domaCookbook: Cookbook = {
         ["domaBeginImplementationRecipe", beginImplementationRecipe],
         ["domaFeedbackImplementationRecipe", feedbackImplementationRecipe],
         ["domaCreateSubIssuesRecipe", createSubIssuesRecipe],
-        ["domaResolveOrderRecipe", resolveOrderRecipe]
+        ["domaResolveOrderRecipe", resolveOrderRecipe],
+        ["domaRunAgentRecipe", runAgentRecipe]
     ])
 };

@@ -10,6 +10,7 @@ export interface WorktreeAgentTaskInput {
     promptId: string;
     stationId?: string;
     context?: Record<string, string>;
+    pluginPath?: string;
 }
 
 export interface WorktreeAgentTaskOutput {
@@ -40,6 +41,7 @@ export const worktreeAgentTask: Task<WorktreeAgentTaskInput, WorktreeAgentTaskOu
                 stationId: input.stationId,
                 token: setupOutput.token,
                 context: input.context,
+                pluginPath: input.pluginPath,
             },
             config,
             sendMessage,

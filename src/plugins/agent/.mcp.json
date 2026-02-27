@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "agent-slack": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/slack_mcp.ts"
+      ],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      }
+    }
+  }
+}

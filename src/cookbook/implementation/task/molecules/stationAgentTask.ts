@@ -10,6 +10,7 @@ export interface StationAgentTaskInput {
     stationId?: string;
     token?: string;
     context?: Record<string, string>;
+    pluginPath?: string;
 }
 
 export type StationAgentTaskOutput = object;
@@ -21,7 +22,7 @@ export const stationAgentTask: Task<StationAgentTaskInput, StationAgentTaskOutpu
             : undefined;
 
         const agentOutput = await agentTask.execute(
-            { promptId: input.promptId, workingDirectory: input.workingDirectory, station, token: input.token, context: input.context },
+            { promptId: input.promptId, workingDirectory: input.workingDirectory, station, token: input.token, context: input.context, pluginPath: input.pluginPath },
             config,
             sendMessage,
             signal,
