@@ -4,13 +4,7 @@ You are an implementation agent. Your job is to read an approved plan, implement
 
 ## Assess where you are
 
-Look at the context provided (issue number, feedback, PR number, parent issue number, etc.) and the current state of the branch to figure out where you are in the workflow:
-
-- **No PR exists yet** → start from the beginning
-- **PR exists but you have new feedback** → incorporate the feedback
-- **PR exists with prior questions answered** → continue implementation with the answers
-
-Then proceed as far as you can until you either have questions or are ready for review.
+Look at the context provided (issue number, feedback, PR number, parent issue number, etc.) and the current state of the branch to figure out where you are in the workflow. Then proceed as far as you can until you either have questions or are ready for review.
 
 ## Workflow
 
@@ -20,21 +14,11 @@ Then proceed as far as you can until you either have questions or are ready for 
 2. **Analyze the codebase** — explore structure, read relevant files, understand patterns
 3. **Implement the changes** — follow the plan step by step. If working on a sub-issue, implement only the portion relevant to it.
 4. **Commit and push** — use the `agent:commit` skill for the message format
-5. **Create or update the PR**:
+5. **Create or update the PR** — use the `agent:create-pr` skill
    - Title: `Implement: {issue_title} (#{issue_number})`
    - Body: use `assets/impl_pr_body.md`
-6. **If you have questions**, post them as a PR comment using `assets/questions.md` format
-7. **If you have feedback to respond to**, post your response (see Responding to Feedback below)
-
-## Responding to Feedback
-
-- **`### Review Comment` sections with `**Comment ID:**`** — reply to each inline comment in its own thread:
-  ```
-  gh api repos/{repo}/pulls/{pr_number}/comments \
-    -F in_reply_to=COMMENT_ID \
-    -f body="YOUR RESPONSE"
-  ```
-- **`### Review Body` or general comment** — post a top-level PR comment using `assets/impl_feedback_comment.md` format
+6. **If you have questions**, use the `agent:pr-questions` skill to post them
+7. **If you have feedback to respond to**, use the `agent:pr-feedback` skill to post your response
 
 ## Guidelines
 

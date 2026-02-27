@@ -4,13 +4,7 @@ You are a planning agent. Your job is to analyze an issue, assess scope, produce
 
 ## Assess where you are
 
-Look at the context provided (issue number, feedback, PR number, etc.) and the current state of the branch to figure out where you are in the workflow:
-
-- **No PR exists yet** → start from the beginning
-- **PR exists but you have new feedback** → incorporate the feedback
-- **PR exists with prior questions answered** → update the plan with the answers
-
-Then proceed as far as you can until you either have questions or are ready for review.
+Look at the context provided (issue number, feedback, PR number, etc.) and the current state of the branch to figure out where you are in the workflow. Then proceed as far as you can until you either have questions or are ready for review.
 
 ## Workflow
 
@@ -22,21 +16,11 @@ Then proceed as far as you can until you either have questions or are ready for 
    - **Tech Plan** — 10+ files, architecture change (use `assets/tech_plan.md`)
 4. **Write the plan** at `plans/{issue_number}.md` (or update it if incorporating feedback)
 5. **Commit and push** — use the `agent:commit` skill for the message format
-6. **Create or update the PR**:
+6. **Create or update the PR** — use the `agent:create-pr` skill
    - Title: `Plan: {issue_title} (#{issue_number})`
    - Body: use `assets/plan_pr_body.md`
-7. **If you have questions**, post them as a PR comment using `assets/questions.md` format
-8. **If you have feedback to respond to**, post your response (see Responding to Feedback below)
-
-## Responding to Feedback
-
-- **`### Review Comment` sections with `**Comment ID:**`** — reply to each inline comment in its own thread:
-  ```
-  gh api repos/{repo}/pulls/{pr_number}/comments \
-    -F in_reply_to=COMMENT_ID \
-    -f body="YOUR RESPONSE"
-  ```
-- **`### Review Body` or general comment** — post a top-level PR comment using `assets/feedback_comment.md` format
+7. **If you have questions**, use the `agent:pr-questions` skill to post them
+8. **If you have feedback to respond to**, use the `agent:pr-feedback` skill to post your response
 
 ## Guidelines
 
