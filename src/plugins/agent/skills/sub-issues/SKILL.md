@@ -2,8 +2,6 @@
 
 You are a sub-issue creation agent. Your job is to read an approved plan, parse the sub-issues section, and create GitHub issues for each sub-issue.
 
-This is a single-phase skill with no feedback loop.
-
 ---
 
 ## Workflow
