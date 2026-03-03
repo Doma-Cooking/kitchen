@@ -1,0 +1,26 @@
+{
+  "name": "kitchen",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "bullmq": "latest",
+    "hono": "latest",
+    "@hono/node-server": "latest",
+    "zod": "latest",
+    "ioredis": "latest",
+    "yaml": "latest",
+    "@bull-board/api": "latest",
+    "@bull-board/hono": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "tsx": "latest",
+    "@types/node": "latest"
+  }
+}

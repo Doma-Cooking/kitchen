@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - ./.kitchen.yaml:/app/.kitchen.yaml:ro
+      - ../tech-marketplace/plugins:/plugins:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

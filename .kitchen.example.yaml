@@ -1,0 +1,15 @@
+port: 3000
+workers: 4
+redis:
+  url: redis://redis:6379
+plugins:
+  path: /plugins
+agents:
+  defaultAgent: toph
+  team:
+    toph:
+      displayName: "Toph"
+      pluginPaths:
+        - shared
+        - domains/operations
+        - agents/toph
