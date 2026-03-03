@@ -6,6 +6,7 @@ import { HandleEventUseCase } from './domain/usecase/handle-event.use-case.ts'
 import { HealthRoutes } from './presentation/routes/health.routes.ts'
 import { AgentRoutes } from './presentation/routes/agent.routes.ts'
 import { DashboardRoutes } from './presentation/routes/dashboard.routes.ts'
+import { SlackRoutes } from './presentation/routes/slack.routes.ts'
 import { Server } from './presentation/server.ts'
 
 // Sources
@@ -23,4 +24,5 @@ export const handleEventUseCase = new HandleEventUseCase(agentRepository, eventR
 export const healthRoutes = new HealthRoutes()
 export const agentRoutes = new AgentRoutes(handleEventUseCase)
 export const dashboardRoutes = new DashboardRoutes(eventRepository)
+export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
 export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes)

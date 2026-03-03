@@ -13,3 +13,6 @@ agents:
         - shared
         - domains/operations
         - agents/toph
+      slack:
+        appTokenEnv: SLACK_TOPH_APP_TOKEN
+        botTokenEnv: SLACK_TOPH_BOT_TOKEN
