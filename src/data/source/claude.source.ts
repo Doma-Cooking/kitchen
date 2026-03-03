@@ -6,6 +6,7 @@ export class ClaudeSource {
     prompt: string,
     pluginPaths: string[],
     onMessage: (msg: AgentMessage) => void,
+    env?: Record<string, string>,
   ): Promise<string> {
     const messages = query({
       prompt,
@@ -15,6 +16,7 @@ export class ClaudeSource {
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
         maxTurns: 10,
+        env: { ...process.env, ...env },
       },
     })
 

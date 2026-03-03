@@ -19,6 +19,7 @@ export class AgentRepository {
       id,
       displayName: agentEntry.displayName,
       pluginPaths,
+      slack: agentEntry.slack,
     }
   }
 

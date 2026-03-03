@@ -45,12 +45,16 @@ export class EventRepository {
             throw new Error(`No agent config found for agent: ${agentId}`)
           }
 
+          const prompt = this.buildPrompt(event)
+          const env = agentConfig.slack ? { SLACK_BOT_TOKEN: agentConfig.slack.botToken } : undefined
+
           const response = await this.claudeSource.invokeAgent(
-            event.message,
+            prompt,
             agentConfig.pluginPaths,
             (msg: AgentMessage) => {
               job.log(`[${msg.category}:${msg.type}] ${msg.content}`)
             },
+            env,
           )
 
           return response
@@ -60,6 +64,18 @@ export class EventRepository {
         },
       )
     )
+  }
+
+  private buildPrompt(event: AgentEvent): string {
+    switch (event.trigger.type) {
+      case 'slack': {
+        const { channelId, threadTs, userId } = event.trigger
+        const context = `[Source: slack | channel: ${channelId} | thread_ts: ${threadTs ?? 'none'} | user: ${userId}]`
+        return `${context}\n${event.message}`
+      }
+      default:
+        return event.message
+    }
   }
 
   async enqueueEvent(event: AgentEvent): Promise<string> {

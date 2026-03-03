@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { parse } from 'yaml'
+import type { SlackBotConfig } from '../../domain/entity/agent-config.ts'
 import type { KitchenConfig } from '../../domain/entity/kitchen-config.ts'
 
 interface YamlConfig {
@@ -9,7 +10,7 @@ interface YamlConfig {
   plugins: { path: string }
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; pluginPaths: string[] }>
+    team: Record<string, { displayName: string; pluginPaths: string[]; slack?: { appTokenEnv: string; botTokenEnv: string } }>
   }
 }
 
@@ -28,13 +29,37 @@ export class ConfigRepository {
     const yaml = this.loadYamlConfig()
     const env = this.loadEnvConfig()
 
-    this.cachedConfig = { ...yaml, ...env }
+    const resolvedTeam: KitchenConfig['agents']['team'] = {}
+    for (const [id, agent] of Object.entries(yaml.agents.team)) {
+      resolvedTeam[id] = {
+        displayName: agent.displayName,
+        pluginPaths: agent.pluginPaths,
+        slack: this.resolveSlackConfig(agent.slack),
+      }
+    }
+
+    this.cachedConfig = {
+      ...yaml,
+      ...env,
+      agents: { ...yaml.agents, team: resolvedTeam },
+    }
     return this.cachedConfig
   }
 
   private loadYamlConfig(): YamlConfig {
     const raw = readFileSync('.kitchen.yaml', 'utf8')
     return parse(raw) as YamlConfig
+  }
+
+  private resolveSlackConfig(slack?: { appTokenEnv: string; botTokenEnv: string }): SlackBotConfig | undefined {
+    if (!slack) return undefined
+
+    const appToken = process.env[slack.appTokenEnv]
+    const botToken = process.env[slack.botTokenEnv]
+
+    if (!appToken || !botToken) return undefined
+
+    return { appToken, botToken }
   }
 
   private loadEnvConfig(): EnvConfig {

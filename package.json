@@ -16,7 +16,8 @@
     "ioredis": "latest",
     "yaml": "latest",
     "@bull-board/api": "latest",
-    "@bull-board/hono": "latest"
+    "@bull-board/hono": "latest",
+    "@slack/bolt": "latest"
   },
   "devDependencies": {
     "typescript": "latest",

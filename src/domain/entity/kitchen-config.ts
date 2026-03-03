@@ -1,3 +1,5 @@
+import type { SlackBotConfig } from './agent-config.ts'
+
 export interface KitchenConfig {
   // Yaml Config
   port: number
@@ -6,7 +8,7 @@ export interface KitchenConfig {
   plugins: { path: string }
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; pluginPaths: string[] }>
+    team: Record<string, { displayName: string; pluginPaths: string[]; slack?: SlackBotConfig }>
   }
 
   // Env Config
