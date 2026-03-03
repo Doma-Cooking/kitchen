@@ -51,6 +51,7 @@ export class EventRepository {
           const response = await this.claudeSource.invokeAgent(
             prompt,
             agentConfig.pluginPaths,
+            agentConfig.agentPrompt,
             (msg: AgentMessage) => {
               job.log(`[${msg.category}:${msg.type}] ${msg.content}`)
             },

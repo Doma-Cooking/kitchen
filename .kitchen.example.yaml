@@ -9,10 +9,10 @@ agents:
   team:
     toph:
       displayName: "Toph"
+      agentPrompt: agents/toph/agents/toph.md
       pluginPaths:
         - shared
         - domains/operations
-        - agents/toph
       slack:
         appTokenEnv: SLACK_TOPH_APP_TOKEN
         botTokenEnv: SLACK_TOPH_BOT_TOKEN

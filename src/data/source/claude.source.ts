@@ -5,13 +5,14 @@ export class ClaudeSource {
   async invokeAgent(
     prompt: string,
     pluginPaths: string[],
+    agentPrompt: string,
     onMessage: (msg: AgentMessage) => void,
     env?: Record<string, string>,
   ): Promise<string> {
     const messages = query({
       prompt,
       options: {
-        systemPrompt: { type: 'preset', preset: 'claude_code' },
+        systemPrompt: { type: 'preset', preset: 'claude_code', append: agentPrompt },
         plugins: pluginPaths.map((path) => ({ type: 'local' as const, path })),
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,

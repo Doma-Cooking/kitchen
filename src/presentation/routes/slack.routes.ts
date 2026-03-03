@@ -44,7 +44,7 @@ export class SlackRoutes {
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: mentionEvent.channel, threadTs, userId: mentionEvent.user },
+          trigger: { type: 'slack', channelId: mentionEvent.channel, threadTs, userId: mentionEvent.user! },
           agentId: agent.id,
           message: mentionEvent.text ?? '',
           timestamp: new Date().toISOString(),

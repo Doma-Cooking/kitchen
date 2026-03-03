@@ -17,7 +17,8 @@
     "yaml": "latest",
     "@bull-board/api": "latest",
     "@bull-board/hono": "latest",
-    "@slack/bolt": "latest"
+    "@slack/bolt": "latest",
+    "@modelcontextprotocol/sdk": "latest"
   },
   "devDependencies": {
     "typescript": "latest",

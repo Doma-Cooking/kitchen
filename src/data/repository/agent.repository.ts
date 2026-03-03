@@ -1,4 +1,3 @@
-import { join } from 'node:path'
 import type { AgentConfig } from '../../domain/entity/agent-config.ts'
 import type { ConfigRepository } from './config.repository.ts'
 
@@ -12,14 +11,9 @@ export class AgentRepository {
       return undefined
     }
 
-    const pluginsBase = config.plugins.path
-    const pluginPaths = agentEntry.pluginPaths.map((p) => join(pluginsBase, p))
-
     return {
       id,
-      displayName: agentEntry.displayName,
-      pluginPaths,
-      slack: agentEntry.slack,
+      ...agentEntry,
     }
   }
 

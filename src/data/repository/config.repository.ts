@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig } from '../../domain/entity/agent-config.ts'
 import type { KitchenConfig } from '../../domain/entity/kitchen-config.ts'
@@ -10,7 +11,7 @@ interface YamlConfig {
   plugins: { path: string }
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; pluginPaths: string[]; slack?: { appTokenEnv: string; botTokenEnv: string } }>
+    team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: { appTokenEnv: string; botTokenEnv: string } }>
   }
 }
 
@@ -33,7 +34,8 @@ export class ConfigRepository {
     for (const [id, agent] of Object.entries(yaml.agents.team)) {
       resolvedTeam[id] = {
         displayName: agent.displayName,
-        pluginPaths: agent.pluginPaths,
+        agentPrompt: readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8'),
+        pluginPaths: agent.pluginPaths.map((p) => join(yaml.plugins.path, p)),
         slack: this.resolveSlackConfig(agent.slack),
       }
     }

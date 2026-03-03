@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "slack": {
+      "command": "npx",
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/slack-send-message.ts"],
+      "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}" }
+    },
+    "write_doc": {
+      "command": "echo",
+      "args": ["stub: write_doc not yet implemented"]
+    },
+    "read_doc": {
+      "command": "echo",
+      "args": ["stub: read_doc not yet implemented"]
+    }
+  }
+}
