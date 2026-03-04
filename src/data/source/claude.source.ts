@@ -9,13 +9,14 @@ export class ClaudeSource {
     onMessage: (msg: AgentMessage) => void,
     env?: Record<string, string>,
     sessionId?: string,
+    maxTurns?: number,
   ): Promise<{ result: string; sessionId: string }> {
     const baseOptions = {
       systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: agentPrompt },
       plugins: pluginPaths.map((path) => ({ type: 'local' as const, path })),
       permissionMode: 'bypassPermissions' as const,
       allowDangerouslySkipPermissions: true,
-      maxTurns: 10,
+      maxTurns: maxTurns ?? 50,
       env: { ...process.env, ...env },
     }
 
@@ -55,7 +56,9 @@ export class ClaudeSource {
         }
         case 'result': {
           const isSuccess = msg.subtype === 'success'
-          const content = isSuccess ? msg.result : msg.errors.join('\n')
+          const content = isSuccess
+            ? msg.result
+            : msg.errors.length ? `${msg.subtype}: ${msg.errors.join('\n')}` : msg.subtype
           onMessage({ category: 'result', type: isSuccess ? 'success' : 'error', content })
           if (msg.subtype === 'success') {
             result = msg.result

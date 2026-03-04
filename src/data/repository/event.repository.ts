@@ -68,6 +68,9 @@ export class EventRepository {
             env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
             env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
           }
+          if (agentConfig.notion) {
+            env.NOTION_TOKEN = agentConfig.notion.token
+          }
 
           const memoryId = event.memoryId ?? agentId
           const memory = await this.memoryRepository.getMemory(memoryId)
@@ -81,6 +84,7 @@ export class EventRepository {
             },
             env,
             memory?.sessionId,
+            config.maxTurns,
           )
 
           if (sessionId) await this.memoryRepository.setMemory(memoryId, { sessionId })
