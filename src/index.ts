@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { configRepository, agentRepository, eventRepository, slackRoutes, server } from './dependencies.ts'
+import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, server } from './dependencies.ts'
 
 const config = configRepository.getConfig()
 const app = server.createApp()
@@ -16,6 +16,7 @@ async function shutdown(): Promise<void> {
   console.log('Shutting down...')
   await slackRoutes.stop()
   await eventRepository.closeWorkers()
+  await postgresSource.close()
   httpServer.close(() => {
     process.exit(0)
   })

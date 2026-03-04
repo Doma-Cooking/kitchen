@@ -8,6 +8,7 @@ interface YamlConfig {
   port: number
   workers: number
   redis: { url: string }
+  postgres: { url: string }
   plugins: { path: string }
   agents: {
     defaultAgent: string
@@ -17,6 +18,7 @@ interface YamlConfig {
 
 interface EnvConfig {
   apiKey: string
+  claudeConfigDir: string
 }
 
 export class ConfigRepository {
@@ -69,6 +71,7 @@ export class ConfigRepository {
     if (!apiKey) {
       throw new Error('No API key found. Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN.')
     }
-    return { apiKey }
+    const claudeConfigDir = process.env['CLAUDE_CONFIG_DIR'] ?? '/data/claude'
+    return { apiKey, claudeConfigDir }
   }
 }

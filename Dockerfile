@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git gosu && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -9,6 +9,8 @@ RUN npm ci
 
 COPY src/ ./src/
 
-USER node
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["npx", "tsx", "src/index.ts"]

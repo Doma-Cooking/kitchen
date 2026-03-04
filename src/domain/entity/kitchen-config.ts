@@ -5,6 +5,7 @@ export interface KitchenConfig {
   port: number
   workers: number
   redis: { url: string }
+  postgres: { url: string }
   plugins: { path: string }
   agents: {
     defaultAgent: string
@@ -13,4 +14,5 @@ export interface KitchenConfig {
 
   // Env Config
   apiKey: string
+  claudeConfigDir: string
 }

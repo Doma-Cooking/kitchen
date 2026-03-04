@@ -2,8 +2,10 @@ port: 3000
 workers: 4
 redis:
   url: redis://redis:6379
+postgres:
+  url: postgres://kitchen:kitchen@postgres:5432/kitchen
 plugins:
-  path: /plugins
+  path: /app/src/plugins
 agents:
   defaultAgent: toph
   team:
