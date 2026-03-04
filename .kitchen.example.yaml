@@ -1,5 +1,6 @@
 port: 3000
 workers: 4
+maxTurns: 50
 redis:
   url: redis://redis:6379
 postgres:
@@ -24,3 +25,5 @@ agents:
       linear:
         clientIdEnv: TOPH_LINEAR_CLIENT_ID
         clientSecretEnv: TOPH_LINEAR_CLIENT_SECRET
+      notion:
+        tokenEnv: TOPH_NOTION_TOKEN

@@ -13,6 +13,10 @@ export interface LinearConfig {
   clientSecret: string        // OAuth2 client secret from Linear app settings
 }
 
+export interface NotionConfig {
+  token: string  // Internal Integration Token (ntn_*)
+}
+
 export interface AgentConfig {
   id: string                  // agent ID, e.g. "toph" — the yaml key
   displayName: string         // e.g. "Toph"
@@ -21,4 +25,5 @@ export interface AgentConfig {
   slack?: SlackBotConfig      // per-agent Slack bot credentials
   github?: GitHubConfig       // per-agent GitHub API credentials
   linear?: LinearConfig       // per-agent Linear API credentials
+  notion?: NotionConfig       // per-agent Notion API credentials
 }

@@ -22,6 +22,11 @@
         "LINEAR_CLIENT_ID": "${LINEAR_CLIENT_ID}",
         "LINEAR_CLIENT_SECRET": "${LINEAR_CLIENT_SECRET}"
       }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/notion.ts"],
+      "env": { "NOTION_TOKEN": "${NOTION_TOKEN}" }
     }
   }
 }
