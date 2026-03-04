@@ -9,22 +9,26 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "latest",
-    "bullmq": "latest",
-    "hono": "latest",
-    "@hono/node-server": "latest",
-    "zod": "latest",
-    "ioredis": "latest",
-    "yaml": "latest",
     "@bull-board/api": "latest",
     "@bull-board/hono": "latest",
-    "@slack/bolt": "latest",
+    "@hono/node-server": "latest",
+    "@linear/sdk": "latest",
     "@modelcontextprotocol/sdk": "latest",
-    "pg": "latest"
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "latest",
+    "@slack/bolt": "latest",
+    "@slack/web-api": "latest",
+    "bullmq": "latest",
+    "hono": "latest",
+    "ioredis": "latest",
+    "pg": "latest",
+    "yaml": "latest",
+    "zod": "latest"
   },
   "devDependencies": {
-    "typescript": "latest",
-    "tsx": "latest",
     "@types/node": "latest",
-    "@types/pg": "latest"
+    "@types/pg": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
   }
 }

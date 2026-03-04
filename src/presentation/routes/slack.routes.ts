@@ -33,7 +33,7 @@ export class SlackRoutes {
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: message.channel, threadTs, userId: message.user!, recentMessages },
+          trigger: { type: 'slack', channelId: message.channel, threadTs, messageTs: message.ts, userId: message.user!, recentMessages },
           agentId: agent.id,
           message: 'text' in message ? message.text ?? '' : '',
           timestamp: new Date().toISOString(),
@@ -48,7 +48,7 @@ export class SlackRoutes {
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: mentionEvent.channel, threadTs, userId: mentionEvent.user!, recentMessages },
+          trigger: { type: 'slack', channelId: mentionEvent.channel, threadTs, messageTs: mentionEvent.ts, userId: mentionEvent.user!, recentMessages },
           agentId: agent.id,
           message: mentionEvent.text ?? '',
           timestamp: new Date().toISOString(),
@@ -76,7 +76,7 @@ export class SlackRoutes {
       ? all.slice(0, -1).slice(-5)
       : all.slice(1, 6).reverse()
 
-    return prior.map((m) => ({ user: m.user ?? 'unknown', text: m.text ?? '' }))
+    return prior.map((m) => ({ user: m.user ?? 'unknown', text: m.text ?? '', ts: m.ts }))
   }
 
   async stop(): Promise<void> {

@@ -1,4 +1,4 @@
-import type { SlackBotConfig } from './agent-config.ts'
+import type { SlackBotConfig, GitHubConfig, LinearConfig } from './agent-config.ts'
 
 export interface KitchenConfig {
   // Yaml Config
@@ -9,7 +9,7 @@ export interface KitchenConfig {
   plugins: { path: string }
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: SlackBotConfig }>
+    team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: SlackBotConfig; github?: GitHubConfig; linear?: LinearConfig }>
   }
 
   // Env Config

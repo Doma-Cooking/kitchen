@@ -2,16 +2,26 @@
   "mcpServers": {
     "slack": {
       "command": "npx",
-      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/slack-send-message.ts"],
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/slack.ts"],
       "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}" }
     },
-    "write_doc": {
-      "command": "echo",
-      "args": ["stub: write_doc not yet implemented"]
+    "github": {
+      "command": "npx",
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/github.ts"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_APP_ID": "${GITHUB_APP_ID}",
+        "GITHUB_PRIVATE_KEY": "${GITHUB_PRIVATE_KEY}",
+        "GITHUB_INSTALLATION_ID": "${GITHUB_INSTALLATION_ID}"
+      }
     },
-    "read_doc": {
-      "command": "echo",
-      "args": ["stub: read_doc not yet implemented"]
+    "linear": {
+      "command": "npx",
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/linear.ts"],
+      "env": {
+        "LINEAR_CLIENT_ID": "${LINEAR_CLIENT_ID}",
+        "LINEAR_CLIENT_SECRET": "${LINEAR_CLIENT_SECRET}"
+      }
     }
   }
 }
