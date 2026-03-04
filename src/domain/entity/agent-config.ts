@@ -1,6 +1,7 @@
 export interface SlackBotConfig {
   appToken: string
   botToken: string
+  userToken?: string  // xoxp-* token for user-token-only APIs (e.g. search.messages)
 }
 
 export type GitHubConfig =

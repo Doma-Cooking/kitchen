@@ -123,5 +123,188 @@ server.registerTool(
   },
 )
 
+server.registerTool(
+  'github_get_pr_diff',
+  {
+    description: 'Get the raw diff of a pull request',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      pull_number: z.number().describe('PR number'),
+    },
+  },
+  async ({ owner, repo, pull_number }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.pulls.get({
+      owner,
+      repo,
+      pull_number,
+      mediaType: { format: 'diff' },
+    })
+    return {
+      content: [{ type: 'text' as const, text: data as unknown as string }],
+    }
+  },
+)
+
+server.registerTool(
+  'github_list_pr_reviews',
+  {
+    description: 'List reviews on a pull request',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      pull_number: z.number().describe('PR number'),
+    },
+  },
+  async ({ owner, repo, pull_number }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.pulls.listReviews({ owner, repo, pull_number })
+    const summary = data
+      .map((r) => `${r.user?.login}: ${r.state} (${r.submitted_at})`)
+      .join('\n')
+    return {
+      content: [{ type: 'text' as const, text: summary || 'No reviews found.' }],
+    }
+  },
+)
+
+server.registerTool(
+  'github_request_reviewers',
+  {
+    description: 'Request reviewers for a pull request',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      pull_number: z.number().describe('PR number'),
+      reviewers: z.array(z.string()).optional().describe('GitHub usernames to request'),
+      team_reviewers: z.array(z.string()).optional().describe('Team slugs to request'),
+    },
+  },
+  async ({ owner, repo, pull_number, reviewers, team_reviewers }) => {
+    const octokit = getOctokit()
+    await octokit.pulls.requestReviewers({
+      owner,
+      repo,
+      pull_number,
+      reviewers,
+      team_reviewers,
+    })
+    return {
+      content: [{ type: 'text' as const, text: `Reviewers requested for PR #${pull_number}` }],
+    }
+  },
+)
+
+server.registerTool(
+  'github_merge_pull_request',
+  {
+    description: 'Merge a pull request',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      pull_number: z.number().describe('PR number'),
+      merge_method: z.enum(['merge', 'squash', 'rebase']).optional().describe('Merge method (default: merge)'),
+      commit_title: z.string().optional().describe('Custom commit title'),
+      commit_message: z.string().optional().describe('Custom commit message'),
+    },
+  },
+  async ({ owner, repo, pull_number, merge_method, commit_title, commit_message }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.pulls.merge({
+      owner,
+      repo,
+      pull_number,
+      merge_method,
+      commit_title,
+      commit_message,
+    })
+    return {
+      content: [{ type: 'text' as const, text: `PR #${pull_number} merged: ${data.message} (sha: ${data.sha})` }],
+    }
+  },
+)
+
+server.registerTool(
+  'github_get_file_contents',
+  {
+    description: 'Get the contents of a file or list a directory from a GitHub repository',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      path: z.string().describe('File or directory path'),
+      ref: z.string().optional().describe('Git ref (branch, tag, or SHA)'),
+    },
+  },
+  async ({ owner, repo, path, ref }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.repos.getContent({ owner, repo, path, ref })
+
+    if (Array.isArray(data)) {
+      const listing = data.map((item) => `${item.type}\t${item.name}`).join('\n')
+      return { content: [{ type: 'text' as const, text: listing }] }
+    }
+
+    if ('content' in data && data.encoding === 'base64') {
+      const decoded = Buffer.from(data.content, 'base64').toString('utf-8')
+      return { content: [{ type: 'text' as const, text: decoded }] }
+    }
+
+    return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] }
+  },
+)
+
+server.registerTool(
+  'github_list_workflow_runs',
+  {
+    description: 'List recent workflow runs (CI/CD) for a repository',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      branch: z.string().optional().describe('Filter by branch name'),
+      status: z.enum(['completed', 'action_required', 'cancelled', 'failure', 'neutral', 'skipped', 'stale', 'success', 'timed_out', 'in_progress', 'queued', 'requested', 'waiting', 'pending']).optional().describe('Filter by status'),
+      per_page: z.number().optional().describe('Results per page (default 10)'),
+    },
+  },
+  async ({ owner, repo, branch, status, per_page }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.actions.listWorkflowRunsForRepo({
+      owner,
+      repo,
+      branch,
+      status,
+      per_page: per_page ?? 10,
+    })
+    const summary = data.workflow_runs
+      .map((r) => `#${r.id} ${r.name} (${r.status}/${r.conclusion ?? 'pending'}) — ${r.head_branch} — ${r.created_at}`)
+      .join('\n')
+    return {
+      content: [{ type: 'text' as const, text: summary || 'No workflow runs found.' }],
+    }
+  },
+)
+
+server.registerTool(
+  'github_list_branches',
+  {
+    description: 'List branches in a GitHub repository',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      per_page: z.number().optional().describe('Results per page (default 30)'),
+    },
+  },
+  async ({ owner, repo, per_page }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.repos.listBranches({ owner, repo, per_page: per_page ?? 30 })
+    const summary = data
+      .map((b) => `${b.name}${b.protected ? ' (protected)' : ''}`)
+      .join('\n')
+    return {
+      content: [{ type: 'text' as const, text: summary || 'No branches found.' }],
+    }
+  },
+)
+
 const transport = new StdioServerTransport()
 await server.connect(transport)

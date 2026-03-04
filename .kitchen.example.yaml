@@ -18,6 +18,7 @@ agents:
       slack:
         appTokenEnv: TOPH_SLACK_APP_TOKEN
         botTokenEnv: TOPH_SLACK_BOT_TOKEN
+        userTokenEnv: TOPH_SLACK_USER_TOKEN
       github:
         tokenEnv: TOPH_GITHUB_TOKEN
       linear:

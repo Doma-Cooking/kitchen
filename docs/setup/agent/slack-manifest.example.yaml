@@ -3,7 +3,8 @@
 # After creating the app:
 #   1. Copy the App-Level Token (xapp-) from Socket Mode settings
 #   2. Install to your workspace and copy the Bot Token (xoxb-) from OAuth & Permissions
-#   3. Add both tokens to your .env file
+#   3. Copy the User Token (xoxp-) from OAuth & Permissions (needed for search)
+#   4. Add all tokens to your .env file
 
 display_information:
   name: Agent
@@ -21,10 +22,17 @@ oauth_config:
       - app_mentions:read
       - channels:read
       - channels:history
+      - channels:manage
+      - groups:read
       - groups:history
+      - groups:manage
       - im:history
       - mpim:history
       - reactions:write
+      - users:read
+      - files:write
+    user:
+      - search:read
 
 settings:
   socket_mode_enabled: true

@@ -29,6 +29,8 @@ From the **machine user's** GitHub account:
 5. Under **Permissions → Repository permissions**, grant:
    - **Pull requests**: Read and write
    - **Issues**: Read and write (needed for PR comments)
+   - **Contents**: Read (needed for reading file contents)
+   - **Actions**: Read (needed for CI/CD workflow status)
 6. Click **Generate token** and copy the `github_pat_` token
 
 ## 3. Configure Kitchen
@@ -66,8 +68,13 @@ Instead of a machine user PAT, you can authenticate using a **GitHub App install
 ### 1. Create a GitHub App
 
 1. Go to your org's **Settings → Developer settings → GitHub Apps → New GitHub App**
-2. Set the required permissions (Pull requests: Read & write, Issues: Read & write)
+2. Set the required permissions:
+   - **Pull requests**: Read & write
+   - **Issues**: Read & write
+   - **Contents**: Read
+   - **Actions**: Read (must be explicitly enabled — without this, `list_workflow_runs` returns "Resource not accessible by integration")
 3. Install the app on the target repositories
+4. **Important**: After changing permissions on an existing app, you must update the installation — go to the app's **Install App** page and click **Configure** next to the org/account, then approve the new permissions
 4. Note the **App ID**, **Installation ID**, and generate a **private key**
 
 ### 2. Configure Kitchen
@@ -94,6 +101,13 @@ Because the agent operates as a regular GitHub user, you can @mention it nativel
 - **`github_list_pull_requests`** — list PRs with optional state filter
 - **`github_get_pull_request`** — get PR details (diff stats, description, mergeable status)
 - **`github_add_pr_comment`** — add a comment to a PR
+- **`github_get_pr_diff`** — get the raw diff of a pull request
+- **`github_list_pr_reviews`** — list reviews and their states on a PR
+- **`github_request_reviewers`** — request reviewers (users or teams) for a PR
+- **`github_merge_pull_request`** — merge a PR (merge, squash, or rebase)
+- **`github_get_file_contents`** — read a file or list a directory from a repository
+- **`github_list_workflow_runs`** — list CI/CD workflow runs with branch/status filters
+- **`github_list_branches`** — list branches with protected flag
 
 ## Troubleshooting
 
@@ -101,4 +115,5 @@ Because the agent operates as a regular GitHub user, you can @mention it nativel
 - **401 Unauthorized**: Token may be expired or revoked — regenerate it from the machine user's account
 - **403 Forbidden**: Token lacks required permissions — check repository access and PR scopes
 - **Agent actions appear under wrong user**: Ensure the PAT belongs to the machine user, not your personal account
+- **"Resource not accessible by integration"**: The GitHub App or PAT lacks the required permission. For `list_workflow_runs`, grant **Actions: Read**. For GitHub Apps, you must also approve the updated permissions on the installation (org owners will see a pending request)
 - **No GitHub config without errors**: If the env var is missing, Kitchen skips GitHub for that agent — check your `.env` file
