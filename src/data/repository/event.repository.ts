@@ -52,6 +52,19 @@ export class EventRepository {
           const prompt = prefix ? `${prefix}\n${event.message}` : event.message
           const env: Record<string, string> = { CLAUDE_CONFIG_DIR: config.claudeConfigDir }
           if (agentConfig.slack) env.SLACK_BOT_TOKEN = agentConfig.slack.botToken
+          if (agentConfig.github) {
+            if (agentConfig.github.mode === 'app') {
+              env.GITHUB_APP_ID = agentConfig.github.appId
+              env.GITHUB_PRIVATE_KEY = agentConfig.github.privateKey
+              env.GITHUB_INSTALLATION_ID = agentConfig.github.installationId
+            } else {
+              env.GITHUB_TOKEN = agentConfig.github.token
+            }
+          }
+          if (agentConfig.linear) {
+            env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
+            env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
+          }
 
           const memoryId = event.memoryId ?? agentId
           const memory = await this.memoryRepository.getMemory(memoryId)

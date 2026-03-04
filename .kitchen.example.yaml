@@ -16,5 +16,10 @@ agents:
         - shared
         - domains/operations
       slack:
-        appTokenEnv: SLACK_TOPH_APP_TOKEN
-        botTokenEnv: SLACK_TOPH_BOT_TOKEN
+        appTokenEnv: TOPH_SLACK_APP_TOKEN
+        botTokenEnv: TOPH_SLACK_BOT_TOKEN
+      github:
+        tokenEnv: TOPH_GITHUB_TOKEN
+      linear:
+        clientIdEnv: TOPH_LINEAR_CLIENT_ID
+        clientSecretEnv: TOPH_LINEAR_CLIENT_SECRET

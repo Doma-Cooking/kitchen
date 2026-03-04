@@ -1,8 +1,17 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { SlackBotConfig } from '../../domain/entity/agent-config.ts'
+import type { SlackBotConfig, GitHubConfig, LinearConfig } from '../../domain/entity/agent-config.ts'
 import type { KitchenConfig } from '../../domain/entity/kitchen-config.ts'
+
+interface YamlAgentConfig {
+  displayName: string
+  agentPrompt: string
+  pluginPaths: string[]
+  slack?: { appTokenEnv?: string; botTokenEnv?: string } | boolean
+  github?: { tokenEnv?: string; appIdEnv?: string; privateKeyEnv?: string; installationIdEnv?: string } | boolean
+  linear?: { clientIdEnv?: string; clientSecretEnv?: string } | boolean
+}
 
 interface YamlConfig {
   port: number
@@ -12,7 +21,7 @@ interface YamlConfig {
   plugins: { path: string }
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: { appTokenEnv: string; botTokenEnv: string } }>
+    team: Record<string, YamlAgentConfig>
   }
 }
 
@@ -34,11 +43,14 @@ export class ConfigRepository {
 
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
     for (const [id, agent] of Object.entries(yaml.agents.team)) {
+      const prefix = id.toUpperCase()
       resolvedTeam[id] = {
         displayName: agent.displayName,
         agentPrompt: readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8'),
         pluginPaths: agent.pluginPaths.map((p) => join(yaml.plugins.path, p)),
-        slack: this.resolveSlackConfig(agent.slack),
+        slack: this.resolveSlackConfig(agent.slack, prefix),
+        github: this.resolveGitHubConfig(agent.github, prefix),
+        linear: this.resolveLinearConfig(agent.linear, prefix),
       }
     }
 
@@ -55,15 +67,42 @@ export class ConfigRepository {
     return parse(raw) as YamlConfig
   }
 
-  private resolveSlackConfig(slack?: { appTokenEnv: string; botTokenEnv: string }): SlackBotConfig | undefined {
-    if (!slack) return undefined
+  private resolveSlackConfig(slack: YamlAgentConfig['slack'], prefix: string): SlackBotConfig | undefined {
+    const cfg = typeof slack === 'object' ? slack : {}
 
-    const appToken = process.env[slack.appTokenEnv]
-    const botToken = process.env[slack.botTokenEnv]
+    const appToken = process.env[cfg.appTokenEnv ?? `${prefix}_SLACK_APP_TOKEN`]
+    const botToken = process.env[cfg.botTokenEnv ?? `${prefix}_SLACK_BOT_TOKEN`]
 
     if (!appToken || !botToken) return undefined
 
     return { appToken, botToken }
+  }
+
+  private resolveGitHubConfig(github: YamlAgentConfig['github'], prefix: string): GitHubConfig | undefined {
+    const cfg = typeof github === 'object' ? github : {}
+
+    const appId = process.env[cfg.appIdEnv ?? `${prefix}_GITHUB_APP_ID`]
+    const privateKey = process.env[cfg.privateKeyEnv ?? `${prefix}_GITHUB_PRIVATE_KEY`]
+    const installationId = process.env[cfg.installationIdEnv ?? `${prefix}_GITHUB_INSTALLATION_ID`]
+
+    if (appId && privateKey && installationId) {
+      return { mode: 'app', appId, privateKey, installationId }
+    }
+
+    const token = process.env[cfg.tokenEnv ?? `${prefix}_GITHUB_TOKEN`]
+    if (!token) return undefined
+
+    return { mode: 'pat', token }
+  }
+
+  private resolveLinearConfig(linear: YamlAgentConfig['linear'], prefix: string): LinearConfig | undefined {
+    const cfg = typeof linear === 'object' ? linear : {}
+
+    const clientId = process.env[cfg.clientIdEnv ?? `${prefix}_LINEAR_CLIENT_ID`]
+    const clientSecret = process.env[cfg.clientSecretEnv ?? `${prefix}_LINEAR_CLIENT_SECRET`]
+    if (!clientId || !clientSecret) return undefined
+
+    return { clientId, clientSecret }
   }
 
   private loadEnvConfig(): EnvConfig {
