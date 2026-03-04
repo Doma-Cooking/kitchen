@@ -5,6 +5,7 @@ import type { AgentRepository } from './agent.repository.ts'
 import type { AgentMessage } from '../../domain/entity/agent-message.ts'
 import type { ClaudeSource } from '../source/claude.source.ts'
 import type { ConfigRepository } from './config.repository.ts'
+import type { MemoryRepository } from './memory.repository.ts'
 
 const QUEUE_NAME = 'agent-events'
 
@@ -16,6 +17,7 @@ export class EventRepository {
     private readonly configRepository: ConfigRepository,
     private readonly agentRepository: AgentRepository,
     private readonly claudeSource: ClaudeSource,
+    private readonly memoryRepository: MemoryRepository,
   ) {
     const config = this.configRepository.getConfig()
 
@@ -48,9 +50,13 @@ export class EventRepository {
 
           const prefix = triggerToString(event.trigger)
           const prompt = prefix ? `${prefix}\n${event.message}` : event.message
-          const env = agentConfig.slack ? { SLACK_BOT_TOKEN: agentConfig.slack.botToken } : undefined
+          const env: Record<string, string> = { CLAUDE_CONFIG_DIR: config.claudeConfigDir }
+          if (agentConfig.slack) env.SLACK_BOT_TOKEN = agentConfig.slack.botToken
 
-          const response = await this.claudeSource.invokeAgent(
+          const memoryId = event.memoryId ?? agentId
+          const memory = await this.memoryRepository.getMemory(memoryId)
+
+          const { result, sessionId } = await this.claudeSource.invokeAgent(
             prompt,
             agentConfig.pluginPaths,
             agentConfig.agentPrompt,
@@ -58,9 +64,12 @@ export class EventRepository {
               job.log(`[${msg.category}:${msg.type}] ${msg.content}`)
             },
             env,
+            memory?.sessionId,
           )
 
-          return response
+          if (sessionId) await this.memoryRepository.setMemory(memoryId, { sessionId })
+
+          return { result, sessionId }
         },
         {
           connection: { url: redisUrl },

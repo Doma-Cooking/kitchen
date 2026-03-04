@@ -18,11 +18,13 @@
     "@bull-board/api": "latest",
     "@bull-board/hono": "latest",
     "@slack/bolt": "latest",
-    "@modelcontextprotocol/sdk": "latest"
+    "@modelcontextprotocol/sdk": "latest",
+    "pg": "latest"
   },
   "devDependencies": {
     "typescript": "latest",
     "tsx": "latest",
-    "@types/node": "latest"
+    "@types/node": "latest",
+    "@types/pg": "latest"
   }
 }

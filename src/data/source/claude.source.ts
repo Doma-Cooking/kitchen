@@ -8,21 +8,40 @@ export class ClaudeSource {
     agentPrompt: string,
     onMessage: (msg: AgentMessage) => void,
     env?: Record<string, string>,
-  ): Promise<string> {
-    const messages = query({
-      prompt,
-      options: {
-        systemPrompt: { type: 'preset', preset: 'claude_code', append: agentPrompt },
-        plugins: pluginPaths.map((path) => ({ type: 'local' as const, path })),
-        permissionMode: 'bypassPermissions',
-        allowDangerouslySkipPermissions: true,
-        maxTurns: 10,
-        env: { ...process.env, ...env },
-      },
-    })
+    sessionId?: string,
+  ): Promise<{ result: string; sessionId: string }> {
+    const baseOptions = {
+      systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: agentPrompt },
+      plugins: pluginPaths.map((path) => ({ type: 'local' as const, path })),
+      permissionMode: 'bypassPermissions' as const,
+      allowDangerouslySkipPermissions: true,
+      maxTurns: 10,
+      env: { ...process.env, ...env },
+    }
+
+    try {
+      return await this.executeQuery(prompt, { ...baseOptions, ...(sessionId ? { resume: sessionId } : {}) }, onMessage)
+    } catch (error) {
+      if (!sessionId) throw error
+      console.warn(`Failed to resume session ${sessionId}, starting fresh`)
+      return await this.executeQuery(prompt, baseOptions, onMessage)
+    }
+  }
+
+  private async executeQuery(
+    prompt: string,
+    options: Parameters<typeof query>[0]['options'],
+    onMessage: (msg: AgentMessage) => void,
+  ): Promise<{ result: string; sessionId: string }> {
+    const messages = query({ prompt, options })
 
     let result = ''
+    let resolvedSessionId = ''
     for await (const msg of messages) {
+      if (msg.session_id) {
+        resolvedSessionId = msg.session_id
+      }
+
       switch (msg.type) {
         case 'assistant': {
           for (const block of msg.message.content) {
@@ -45,6 +64,6 @@ export class ClaudeSource {
         }
       }
     }
-    return result
+    return { result, sessionId: resolvedSessionId }
   }
 }
