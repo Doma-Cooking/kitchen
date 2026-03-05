@@ -25,7 +25,7 @@ oauth_config:
       - channels:manage
       - groups:read
       - groups:history
-      - groups:manage
+      - groups:write.topic
       - im:history
       - mpim:history
       - reactions:write

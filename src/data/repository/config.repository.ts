@@ -22,6 +22,7 @@ interface YamlConfig {
   postgres: { url: string }
   plugins: { path: string }
   agents: {
+    basePrompt?: string
     defaultAgent: string
     team: Record<string, YamlAgentConfig>
   }
@@ -43,12 +44,16 @@ export class ConfigRepository {
     const yaml = this.loadYamlConfig()
     const env = this.loadEnvConfig()
 
+    const basePrompt = yaml.agents.basePrompt
+      ? readFileSync(join(yaml.plugins.path, yaml.agents.basePrompt), 'utf8')
+      : ''
+
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
     for (const [id, agent] of Object.entries(yaml.agents.team)) {
       const prefix = id.toUpperCase()
       resolvedTeam[id] = {
         displayName: agent.displayName,
-        agentPrompt: readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8'),
+        agentPrompt: basePrompt + readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8'),
         pluginPaths: agent.pluginPaths.map((p) => join(yaml.plugins.path, p)),
         slack: this.resolveSlackConfig(agent.slack, prefix),
         github: this.resolveGitHubConfig(agent.github, prefix),

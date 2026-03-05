@@ -27,7 +27,7 @@ server.registerTool(
     inputSchema: {
       channel: z.string().describe('Slack channel ID'),
       thread_ts: z.string().optional().describe('Thread timestamp to reply in. Omit to post at the top level of the channel.'),
-      text: z.string().describe('Message text to send. Note: Slack uses single asterisks for bold (*bold*), not double.'),
+      text: z.string().describe('Message text to send. Note: Slack uses single asterisks for bold (*bold*), not double. If you want someone to see your message, remember to @mention them.'),
     },
   },
   async ({ channel, thread_ts, text }) => {

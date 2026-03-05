@@ -8,11 +8,12 @@ postgres:
 plugins:
   path: /app/src/plugins
 agents:
+  basePrompt: agents/agents/base.md
   defaultAgent: toph
   team:
     toph:
       displayName: "Toph"
-      agentPrompt: agents/toph/agents/toph.md
+      agentPrompt: agents/agents/toph.md
       pluginPaths:
         - shared
         - domains/operations

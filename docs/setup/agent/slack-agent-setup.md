@@ -36,7 +36,7 @@ If you prefer to configure the app step-by-step:
    - `channels:manage` — set channel topics in public channels
    - `groups:read` — list private channels
    - `groups:history` — read message history in private channels
-   - `groups:manage` — set channel topics in private channels
+   - `groups:write.topic` — set channel topics in private channels
    - `im:history` — receive DMs
    - `mpim:history` — receive group DMs
    - `reactions:write` — add emoji reactions
