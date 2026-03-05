@@ -1,6 +1,7 @@
 import { Queue, Worker } from 'bullmq'
 import type { AgentEvent } from '../../domain/entity/agent-event.ts'
 import { triggerToString } from '../../domain/entity/event-trigger.ts'
+import { agentConfigToEnv } from '../../domain/entity/agent-config.ts'
 import type { AgentRepository } from './agent.repository.ts'
 import type { AgentMessage } from '../../domain/entity/agent-message.ts'
 import type { ClaudeSource } from '../source/claude.source.ts'
@@ -50,26 +51,9 @@ export class EventRepository {
 
           const prefix = triggerToString(event.trigger)
           const prompt = prefix ? `${prefix}\n${event.message}` : event.message
-          const env: Record<string, string> = { CLAUDE_CONFIG_DIR: config.claudeConfigDir }
-          if (agentConfig.slack) {
-            env.SLACK_BOT_TOKEN = agentConfig.slack.botToken
-            if (agentConfig.slack.userToken) env.SLACK_USER_TOKEN = agentConfig.slack.userToken
-          }
-          if (agentConfig.github) {
-            if (agentConfig.github.mode === 'app') {
-              env.GITHUB_APP_ID = agentConfig.github.appId
-              env.GITHUB_PRIVATE_KEY = agentConfig.github.privateKey
-              env.GITHUB_INSTALLATION_ID = agentConfig.github.installationId
-            } else {
-              env.GITHUB_TOKEN = agentConfig.github.token
-            }
-          }
-          if (agentConfig.linear) {
-            env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
-            env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
-          }
-          if (agentConfig.notion) {
-            env.NOTION_TOKEN = agentConfig.notion.token
+          const env: Record<string, string> = {
+            CLAUDE_CONFIG_DIR: config.claudeConfigDir,
+            ...agentConfigToEnv(agentConfig),
           }
 
           const memoryId = event.memoryId ?? agentId

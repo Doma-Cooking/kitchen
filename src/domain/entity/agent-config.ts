@@ -27,3 +27,28 @@ export interface AgentConfig {
   linear?: LinearConfig       // per-agent Linear API credentials
   notion?: NotionConfig       // per-agent Notion API credentials
 }
+
+export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, string> {
+  const env: Record<string, string> = {}
+  if (agentConfig.slack) {
+    env.SLACK_BOT_TOKEN = agentConfig.slack.botToken
+    if (agentConfig.slack.userToken) env.SLACK_USER_TOKEN = agentConfig.slack.userToken
+  }
+  if (agentConfig.github) {
+    if (agentConfig.github.mode === 'app') {
+      env.GITHUB_APP_ID = agentConfig.github.appId
+      env.GITHUB_PRIVATE_KEY = agentConfig.github.privateKey
+      env.GITHUB_INSTALLATION_ID = agentConfig.github.installationId
+    } else {
+      env.GITHUB_TOKEN = agentConfig.github.token
+    }
+  }
+  if (agentConfig.linear) {
+    env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
+    env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
+  }
+  if (agentConfig.notion) {
+    env.NOTION_TOKEN = agentConfig.notion.token
+  }
+  return env
+}
