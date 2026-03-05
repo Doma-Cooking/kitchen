@@ -21,6 +21,8 @@ interface YamlConfig {
   redis: { url: string }
   postgres: { url: string }
   plugins: { path: string }
+  lockTtlSeconds?: number
+  lockRetryIntervalMs?: number
   agents: {
     basePrompt?: string
     defaultAgent: string
@@ -65,6 +67,8 @@ export class ConfigRepository {
     this.cachedConfig = {
       ...yaml,
       ...env,
+      lockTtlSeconds: yaml.lockTtlSeconds ?? 1800,
+      lockRetryIntervalMs: yaml.lockRetryIntervalMs ?? 5000,
       agents: { ...yaml.agents, team: resolvedTeam },
     }
     return this.cachedConfig

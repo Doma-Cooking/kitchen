@@ -8,6 +8,8 @@ export interface KitchenConfig {
   redis: { url: string }
   postgres: { url: string }
   plugins: { path: string }
+  lockTtlSeconds: number
+  lockRetryIntervalMs: number
   agents: {
     defaultAgent: string
     team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: SlackBotConfig; github?: GitHubConfig; linear?: LinearConfig; notion?: NotionConfig }>
