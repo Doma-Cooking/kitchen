@@ -471,6 +471,42 @@ server.registerTool(
   },
 )
 
+server.registerTool(
+  'linear_get_templates',
+  {
+    description: 'List issue templates available in the workspace. Returns template names, descriptions, and their full template data (fields like title, description, priority, labels, etc.).',
+    inputSchema: {
+      teamId: z.string().optional().describe('Filter templates to a specific team'),
+    },
+  },
+  async ({ teamId }) => {
+    const templates = await withRetry(async (client) => {
+      if (teamId) {
+        const team = await client.team(teamId)
+        return team.templates()
+      }
+      return client.templates
+    })
+
+    const nodes = Array.isArray(templates) ? templates : (templates as { nodes: unknown[] }).nodes
+    const summary = await Promise.all(
+      (nodes as Array<{ id: string; name: string; description?: string; templateData: unknown; team?: { name: string; id: string } | null }>).map(async (t) => {
+        const team = t.team ? (typeof t.team === 'object' && 'name' in t.team ? t.team : await (t.team as unknown as Promise<{ name: string; id: string }>)) : null
+        return [
+          `## ${t.name} (${t.id})`,
+          team ? `Team: ${team.name}` : 'Workspace-level template',
+          t.description ? `Description: ${t.description}` : '',
+          `Template data:\n${JSON.stringify(t.templateData, null, 2)}`,
+        ].filter(Boolean).join('\n')
+      }),
+    )
+
+    return {
+      content: [{ type: 'text' as const, text: summary.join('\n\n---\n\n') || 'No templates found.' }],
+    }
+  },
+)
+
 // ── Workflow ──────────────────────────────────────────────────────
 
 server.registerTool(
