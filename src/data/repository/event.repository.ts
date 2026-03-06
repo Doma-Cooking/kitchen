@@ -8,7 +8,7 @@ import type { AgentRepository } from './agent.repository.ts'
 import type { AgentMessage } from '../../domain/entity/agent-message.ts'
 import type { ClaudeSource } from '../source/claude.source.ts'
 import type { ConfigRepository } from './config.repository.ts'
-import type { MemoryRepository } from './memory.repository.ts'
+import type { StationRepository } from './station.repository.ts'
 
 const QUEUE_NAME = 'agent-events'
 
@@ -22,7 +22,7 @@ export class EventRepository {
     private readonly configRepository: ConfigRepository,
     private readonly agentRepository: AgentRepository,
     private readonly claudeSource: ClaudeSource,
-    private readonly memoryRepository: MemoryRepository,
+    private readonly stationRepository: StationRepository,
   ) {
     const config = this.configRepository.getConfig()
 
@@ -73,8 +73,8 @@ export class EventRepository {
               ...agentConfigToEnv(agentConfig),
             }
 
-            const memoryId = event.memoryId ?? agentId
-            const memory = await this.memoryRepository.getMemory(memoryId)
+            const stationId = event.stationId ?? agentId
+            const station = await this.stationRepository.getStation(stationId)
 
             const { result, sessionId } = await this.claudeSource.invokeAgent(
               prompt,
@@ -84,11 +84,11 @@ export class EventRepository {
                 job.log(`[${msg.category}:${msg.type}] ${msg.content}`)
               },
               env,
-              memory?.sessionId,
+              station?.sessionId,
               config.maxTurns,
             )
 
-            if (sessionId) await this.memoryRepository.setMemory(memoryId, { sessionId })
+            if (sessionId) await this.stationRepository.setStation(stationId, { sessionId })
 
             return { result, sessionId }
           } finally {

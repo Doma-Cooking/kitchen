@@ -33,17 +33,17 @@ server.registerTool(
     inputSchema: {
       agentId: z.string().describe('Target agent ID to invoke'),
       message: z.string().describe('The prompt/message for the target agent'),
-      memoryId: z.string().optional().describe('Optional memory session ID to resume a previous conversation'),
+      stationId: z.string().optional().describe('Optional station session ID to resume a previous conversation'),
       data: z.record(z.string(), z.unknown()).optional().describe('Arbitrary data to include in the prompt/message'),
       delay: z.number().int().min(0).optional().describe('Delay in seconds before the event is processed'),
     },
   },
-  async ({ agentId, message, memoryId, data, delay }) => {
+  async ({ agentId, message, stationId, data, delay }) => {
     const event = {
       id: crypto.randomUUID(),
       trigger: { type: 'agent' as const, data: data ?? {} },
       agentId,
-      memoryId,
+      stationId,
       message,
       timestamp: new Date().toISOString(),
     }

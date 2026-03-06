@@ -3,7 +3,7 @@ import { ClaudeSource } from './data/source/claude.source.ts'
 import { PostgresSource } from './data/source/postgres.source.ts'
 import { AgentRepository } from './data/repository/agent.repository.ts'
 import { EventRepository } from './data/repository/event.repository.ts'
-import { MemoryRepository } from './data/repository/memory.repository.ts'
+import { StationRepository } from './data/repository/station.repository.ts'
 import { HandleEventUseCase } from './domain/usecase/handle-event.use-case.ts'
 import { HealthRoutes } from './presentation/routes/health.routes.ts'
 import { AgentRoutes } from './presentation/routes/agent.routes.ts'
@@ -18,8 +18,8 @@ export const configRepository = new ConfigRepository()
 export const claudeSource = new ClaudeSource()
 export const postgresSource = new PostgresSource(configRepository)
 export const agentRepository = new AgentRepository(configRepository)
-export const memoryRepository = new MemoryRepository(postgresSource.pool)
-export const eventRepository = new EventRepository(configRepository, agentRepository, claudeSource, memoryRepository)
+export const stationRepository = new StationRepository(postgresSource.pool)
+export const eventRepository = new EventRepository(configRepository, agentRepository, claudeSource, stationRepository)
 
 // Use cases
 export const handleEventUseCase = new HandleEventUseCase(agentRepository, eventRepository)

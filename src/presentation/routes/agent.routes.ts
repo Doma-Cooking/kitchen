@@ -11,13 +11,13 @@ export class AgentRoutes {
     this.router.post('/agent/:id/invoke', async (c) => {
       try {
         const agentId = c.req.param('id')
-        const body = await c.req.json<{ message: string; memoryId?: string }>()
+        const body = await c.req.json<{ message: string; stationId?: string }>()
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
           trigger: { type: 'api' },
           agentId,
-          memoryId: body.memoryId,
+          stationId: body.stationId,
           message: body.message,
           timestamp: new Date().toISOString(),
         }
