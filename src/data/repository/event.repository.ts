@@ -69,6 +69,7 @@ export class EventRepository {
             const prompt = prefix ? `${prefix}\n${event.message}` : event.message
             const env: Record<string, string> = {
               CLAUDE_CONFIG_DIR: config.claudeConfigDir,
+              REDIS_URL: config.redis.url,
               ...agentConfigToEnv(agentConfig),
             }
 

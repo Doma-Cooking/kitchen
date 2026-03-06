@@ -27,6 +27,11 @@
       "command": "npx",
       "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/notion.ts"],
       "env": { "NOTION_TOKEN": "${NOTION_TOKEN}" }
+    },
+    "kitchen": {
+      "command": "npx",
+      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/kitchen.ts"],
+      "env": { "REDIS_URL": "${REDIS_URL}" }
     }
   }
 }

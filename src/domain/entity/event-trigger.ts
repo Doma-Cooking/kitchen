@@ -6,7 +6,8 @@ export interface SlackMessage {
 
 export type ApiTrigger = { type: 'api' }
 export type SlackTrigger = { type: 'slack'; channelId: string; threadTs?: string; messageTs?: string; userId: string; recentMessages?: SlackMessage[] }
-export type EventTrigger = ApiTrigger | SlackTrigger
+export type AgentTrigger = { type: 'agent'; data: Record<string, unknown> }
+export type EventTrigger = ApiTrigger | SlackTrigger | AgentTrigger
 
 export function triggerToString(trigger: EventTrigger): string {
   switch (trigger.type) {
@@ -22,6 +23,8 @@ export function triggerToString(trigger: EventTrigger): string {
 
       return `${meta}\n[Recent messages]\n${history}`
     }
+    case 'agent':
+      return `[Source: agent | data: ${JSON.stringify(trigger.data)}]`
     default:
       return ''
   }
