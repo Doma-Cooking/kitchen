@@ -3,6 +3,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { WebClient } from '@slack/web-api'
+import { MessageElement } from '@slack/web-api/dist/types/response/ConversationsHistoryResponse.js'
 import { z } from 'zod'
 
 const server = new McpServer({
@@ -10,8 +11,23 @@ const server = new McpServer({
   version: '1.0.0',
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Slack message types are complex unions
-function formatMessage(m: any): string {
+type SlackTokenType = 'bot' | 'user'
+
+const TOKEN_ENV: Record<SlackTokenType, string> = {
+  bot: 'SLACK_BOT_TOKEN',
+  user: 'SLACK_USER_TOKEN',
+}
+
+function getClient(tokenType: SlackTokenType): WebClient {
+  const envVar = TOKEN_ENV[tokenType]
+  const token = process.env[envVar]
+  if (!token) {
+    throw new Error(`${envVar} not set`)
+  }
+  return new WebClient(token)
+}
+
+function formatMessage(m: MessageElement): string {
   let line = `[${m.ts}] <${m.user}>: ${m.text}`
   if (m.files?.length) {
     const fileInfo = m.files.map((f: any) => `${f.name} (${f.mimetype})`).join(', ')
@@ -23,20 +39,15 @@ function formatMessage(m: any): string {
 server.registerTool(
   'slack_send_message',
   {
-    description: 'Send a message to a Slack channel or thread',
+    description: 'Send a message to a Slack channel or thread.\n\nIMPORTANT:\n- Slack uses single asterisks for bold (*bold*), NOT double (**bold**).\n- If you need a response from someone, always @mention them.',
     inputSchema: {
       channel: z.string().describe('Slack channel ID'),
       thread_ts: z.string().optional().describe('Thread timestamp to reply in. Omit to post at the top level of the channel.'),
-      text: z.string().describe('Message text to send. Note: Slack uses single asterisks for bold (*bold*), not double. If you want someone to see your message, remember to @mention them.'),
+      text: z.string().describe('Message text to send.'),
     },
   },
   async ({ channel, thread_ts, text }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
 
     await client.chat.postMessage({
       channel,
@@ -60,12 +71,7 @@ server.registerTool(
     },
   },
   async ({ channel, timestamp, name }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
 
     await client.reactions.add({
       channel,
@@ -88,12 +94,7 @@ server.registerTool(
     },
   },
   async ({ channel, thread_ts, limit }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const result = await client.conversations.replies({ channel, ts: thread_ts, limit: limit ?? 100 })
 
     const messages = (result.messages ?? []).map(formatMessage).join('\n')
@@ -113,12 +114,7 @@ server.registerTool(
     },
   },
   async ({ channel, limit, oldest, latest }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const result = await client.conversations.history({ channel, limit: limit ?? 20, oldest, latest })
 
     const messages = (result.messages ?? []).map(formatMessage).join('\n')
@@ -136,12 +132,7 @@ server.registerTool(
     },
   },
   async ({ channel, ts }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const result = await client.conversations.history({ channel, latest: ts, inclusive: true, limit: 1 })
 
     const msg = result.messages?.[0]
@@ -173,17 +164,7 @@ server.registerTool(
     },
   },
   async ({ query, count, sort }) => {
-    const token = process.env['SLACK_USER_TOKEN']
-    if (!token) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: 'Error: SLACK_USER_TOKEN not set. search.messages requires a user token (xoxp-*), not a bot token. See slack-agent-setup.md for configuration.',
-        }],
-      }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('user')
     const result = await client.search.messages({ query, count: count ?? 20, sort: sort ?? 'score' })
 
     const matches = (result.messages?.matches ?? [])
@@ -202,12 +183,7 @@ server.registerTool(
     },
   },
   async ({ user }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const result = await client.users.info({ user })
 
     const u = result.user
@@ -236,12 +212,7 @@ server.registerTool(
     },
   },
   async ({ types, limit, exclude_archived }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const result = await client.conversations.list({
       types: types ?? 'public_channel',
       limit: limit ?? 100,
@@ -266,12 +237,7 @@ server.registerTool(
     },
   },
   async ({ channel, ts, text }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     await client.chat.update({ channel, ts, text })
 
     return { content: [{ type: 'text' as const, text: `Message ${ts} updated in ${channel}` }] }
@@ -292,16 +258,46 @@ server.registerTool(
     },
   },
   async ({ channel_id, content, filename, title, initial_comment, thread_ts }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     const shared = { channel_id, content, filename, title, initial_comment } as const
     await client.filesUploadV2(thread_ts ? { ...shared, thread_ts } : shared)
 
     return { content: [{ type: 'text' as const, text: `File "${filename}" uploaded to ${channel_id}` }] }
+  },
+)
+
+server.registerTool(
+  'slack_search_users',
+  {
+    description: 'Search for Slack users by name or email address',
+    inputSchema: {
+      query: z.string().describe('Search query — matches against real name, display name, and email'),
+    },
+  },
+  async ({ query }) => {
+    const client = getClient('bot')
+    const result = await client.users.list({})
+
+    const q = query.toLowerCase()
+    const matches = (result.members ?? [])
+      .filter((u) => !u.deleted && u.id !== 'USLACKBOT')
+      .filter((u) => {
+        const name = (u.real_name ?? '').toLowerCase()
+        const display = (u.profile?.display_name ?? '').toLowerCase()
+        const email = (u.profile?.email ?? '').toLowerCase()
+        return name.includes(q) || display.includes(q) || email.includes(q)
+      })
+      .map((u) => [
+        `ID: ${u.id}`,
+        `Name: ${u.real_name ?? u.name}`,
+        `Display name: ${u.profile?.display_name}`,
+        `Title: ${u.profile?.title}`,
+        `Email: ${u.profile?.email}`,
+        `Is bot: ${u.is_bot}`,
+        `Timezone: ${u.tz}`,
+      ].join('\n'))
+
+    return { content: [{ type: 'text' as const, text: matches.join('\n---\n') || 'No users found.' }] }
   },
 )
 
@@ -315,12 +311,7 @@ server.registerTool(
     },
   },
   async ({ channel, topic }) => {
-    const token = process.env['SLACK_BOT_TOKEN']
-    if (!token) {
-      return { content: [{ type: 'text' as const, text: 'Error: SLACK_BOT_TOKEN not set' }] }
-    }
-
-    const client = new WebClient(token)
+    const client = getClient('bot')
     await client.conversations.setTopic({ channel, topic })
 
     return { content: [{ type: 'text' as const, text: `Topic set for ${channel}` }] }
