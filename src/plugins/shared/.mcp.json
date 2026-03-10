@@ -5,16 +5,6 @@
       "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/slack.ts"],
       "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}", "SLACK_USER_TOKEN": "${SLACK_USER_TOKEN}" }
     },
-    "github": {
-      "command": "npx",
-      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/github.ts"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
-        "GITHUB_APP_ID": "${GITHUB_APP_ID}",
-        "GITHUB_PRIVATE_KEY": "${GITHUB_PRIVATE_KEY}",
-        "GITHUB_INSTALLATION_ID": "${GITHUB_INSTALLATION_ID}"
-      }
-    },
     "linear": {
       "command": "npx",
       "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/linear.ts"],
