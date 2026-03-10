@@ -23,6 +23,7 @@
     "hono": "latest",
     "ioredis": "latest",
     "pg": "latest",
+    "ts-morph": "latest",
     "yaml": "latest",
     "zod": "latest"
   },

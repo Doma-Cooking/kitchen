@@ -196,34 +196,34 @@ server.registerTool(
   },
 )
 
-server.registerTool(
-  'github_merge_pull_request',
-  {
-    description: 'Merge a pull request',
-    inputSchema: {
-      owner: z.string().describe('Repository owner (user or org)'),
-      repo: z.string().describe('Repository name'),
-      pull_number: z.number().describe('PR number'),
-      merge_method: z.enum(['merge', 'squash', 'rebase']).optional().describe('Merge method (default: merge)'),
-      commit_title: z.string().optional().describe('Custom commit title'),
-      commit_message: z.string().optional().describe('Custom commit message'),
-    },
-  },
-  async ({ owner, repo, pull_number, merge_method, commit_title, commit_message }) => {
-    const octokit = getOctokit()
-    const { data } = await octokit.pulls.merge({
-      owner,
-      repo,
-      pull_number,
-      merge_method,
-      commit_title,
-      commit_message,
-    })
-    return {
-      content: [{ type: 'text' as const, text: `PR #${pull_number} merged: ${data.message} (sha: ${data.sha})` }],
-    }
-  },
-)
+// TODO: Uncomment if we want to support merging PRs from the agent.
+//   'github_merge_pull_request',
+//   {
+//     description: 'Merge a pull request',
+//     inputSchema: {
+//       owner: z.string().describe('Repository owner (user or org)'),
+//       repo: z.string().describe('Repository name'),
+//       pull_number: z.number().describe('PR number'),
+//       merge_method: z.enum(['merge', 'squash', 'rebase']).optional().describe('Merge method (default: merge)'),
+//       commit_title: z.string().optional().describe('Custom commit title'),
+//       commit_message: z.string().optional().describe('Custom commit message'),
+//     },
+//   },
+//   async ({ owner, repo, pull_number, merge_method, commit_title, commit_message }) => {
+//     const octokit = getOctokit()
+//     const { data } = await octokit.pulls.merge({
+//       owner,
+//       repo,
+//       pull_number,
+//       merge_method,
+//       commit_title,
+//       commit_message,
+//     })
+//     return {
+//       content: [{ type: 'text' as const, text: `PR #${pull_number} merged: ${data.message} (sha: ${data.sha})` }],
+//     }
+//   },
+// )
 
 server.registerTool(
   'github_get_file_contents',
