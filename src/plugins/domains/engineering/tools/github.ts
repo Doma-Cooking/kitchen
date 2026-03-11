@@ -170,6 +170,28 @@ server.registerTool(
 )
 
 server.registerTool(
+  'github_get_pr_review_comments',
+  {
+    description: 'Get inline review comments on a pull request',
+    inputSchema: {
+      owner: z.string().describe('Repository owner (user or org)'),
+      repo: z.string().describe('Repository name'),
+      pull_number: z.number().describe('PR number'),
+    },
+  },
+  async ({ owner, repo, pull_number }) => {
+    const octokit = getOctokit()
+    const { data } = await octokit.pulls.listReviewComments({ owner, repo, pull_number })
+    const summary = data
+      .map((c) => `[${c.path}:${c.line ?? '?'}] ${c.user?.login}: ${c.body}`)
+      .join('\n\n')
+    return {
+      content: [{ type: 'text' as const, text: summary || 'No review comments found.' }],
+    }
+  },
+)
+
+server.registerTool(
   'github_request_reviewers',
   {
     description: 'Request reviewers for a pull request',
