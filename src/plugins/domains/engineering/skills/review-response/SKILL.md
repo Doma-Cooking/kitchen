@@ -38,8 +38,9 @@ Address all agreed fixes in one pass — don't respond piecemeal. Batch all chan
 
 ### 5. Respond
 
-- Reply to individual comments where needed (`github_add_pr_comment`)
-- Post a summary comment on the PR noting what was addressed and any points of disagreement
+- Reply to the individual comments that were addressed with a concise update using (`github_add_pr_comment`).
+- Post a summary comment on the PR noting what was addressed and any points of disagreement.
+- Post an update in the communication channel where the review response was requested (ie: Slack, Linear).
 
 ### 6. Request Re-review
 
