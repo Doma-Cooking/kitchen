@@ -1,5 +1,12 @@
 import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from './agent-config.ts'
 
+export interface RepositoryConfig {
+  name: string
+  url: string
+  description: string
+  defaultBranch: string
+}
+
 export interface KitchenConfig {
   // Yaml Config
   port: number
@@ -10,9 +17,18 @@ export interface KitchenConfig {
   plugins: { path: string }
   lockTtlSeconds: number
   lockRetryIntervalMs: number
+  repositories: RepositoryConfig[]
   agents: {
     defaultAgent: string
-    team: Record<string, { displayName: string; agentPrompt: string; pluginPaths: string[]; slack?: SlackBotConfig; github?: GitHubConfig; linear?: LinearConfig; notion?: NotionConfig }>
+    team: Record<string, {
+      displayName: string;
+      agentPrompt: string;
+      pluginPaths: string[];
+      slack?: SlackBotConfig;
+      github?: GitHubConfig;
+      linear?: LinearConfig;
+      notion?: NotionConfig
+    }>
   }
 
   // Env Config

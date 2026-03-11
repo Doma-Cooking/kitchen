@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from '../../domain/entity/agent-config.ts'
-import type { KitchenConfig } from '../../domain/entity/kitchen-config.ts'
+import type { KitchenConfig, RepositoryConfig } from '../../domain/entity/kitchen-config.ts'
 
 interface YamlAgentConfig {
   displayName: string
@@ -23,6 +23,12 @@ interface YamlConfig {
   plugins: { path: string }
   lockTtlSeconds?: number
   lockRetryIntervalMs?: number
+  repositories?: Array<{
+    name: string
+    url: string
+    description: string
+    defaultBranch: string
+  }>
   agents: {
     basePrompt?: string
     defaultAgent: string
@@ -48,9 +54,16 @@ export class ConfigRepository {
     const yaml = this.loadYamlConfig()
     const env = this.loadEnvConfig()
 
-    const basePrompt = yaml.agents.basePrompt
+    const repositories: RepositoryConfig[] = yaml.repositories ?? []
+
+    let basePrompt = yaml.agents.basePrompt
       ? readFileSync(join(yaml.plugins.path, yaml.agents.basePrompt), 'utf8')
       : ''
+
+    if (repositories.length > 0) {
+      const rows = repositories.map((r) => `| ${r.name} | ${r.url} | ${r.description} | ${r.defaultBranch} |`).join('\n')
+      basePrompt += `\n\n## Repositories\nThe following repositories are available:\n| Name | URL | Description | Default Branch |\n| --- | --- | --- | --- |\n${rows}\n`
+    }
 
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
     for (const [id, agent] of Object.entries(yaml.agents.team)) {
@@ -69,6 +82,7 @@ export class ConfigRepository {
     this.cachedConfig = {
       ...yaml,
       ...env,
+      repositories,
       lockTtlSeconds: yaml.lockTtlSeconds ?? 1800,
       lockRetryIntervalMs: yaml.lockRetryIntervalMs ?? 5000,
       agents: { ...yaml.agents, team: resolvedTeam },

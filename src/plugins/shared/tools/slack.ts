@@ -39,7 +39,7 @@ function formatMessage(m: MessageElement): string {
 server.registerTool(
   'slack_send_message',
   {
-    description: 'Send a message to a Slack channel or thread.\n\nIMPORTANT:\n- Slack uses single asterisks for bold (*bold*), NOT double (**bold**).\n- If you need a response from someone, always @mention them.',
+    description: 'Send a message to a Slack channel or thread.\n\nIMPORTANT:\n- If you need a response from someone, always @mention them.\n- Slack uses single asterisks for bold (*bold*), NOT double (**bold**).\n- Slack markdown does NOT support tables.',
     inputSchema: {
       channel: z.string().describe('Slack channel ID'),
       thread_ts: z.string().optional().describe('Thread timestamp to reply in. Omit to post at the top level of the channel.'),

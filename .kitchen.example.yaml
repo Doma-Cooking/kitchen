@@ -7,6 +7,11 @@ postgres:
   url: postgres://kitchen:kitchen@postgres:5432/kitchen
 plugins:
   path: /app/src/plugins
+repositories:
+  - name: example
+    url: https://github.com/example/example-repo
+    description: Example repository
+    defaultBranch: main
 agents:
   basePrompt: agents/agents/base.md
   defaultAgent: toph
