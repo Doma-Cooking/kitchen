@@ -16,7 +16,8 @@ You are executing the review response workflow. Follow these steps in order:
 ### 1. Fetch PR and Reviews
 
 - Use `github_get_pull_request` to get the PR details
-- Use `github_list_pr_reviews` to get all review comments
+- Use `github_list_pr_reviews` to get review summaries
+- Use `github_get_pr_review_comments` to get inline review comments
 - Use `github_get_pr_diff` to understand the current diff
 
 Read everything before taking action.
