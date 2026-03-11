@@ -41,9 +41,8 @@ If any required information is missing or ambiguous, follow SOP-04:
 
 ### 4. Create Tech Plan Ticket
 
-Per SOP-02, create a child ticket for the tech plan:
+Per SOP-02, create a ticket for the tech plan:
 - Title: `<PARENT-ID>: Tech Plan — <description>`
-- Link it to the parent ticket
 
 ### 5. Transition Parent Ticket
 
