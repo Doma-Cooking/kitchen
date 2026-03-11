@@ -10,6 +10,7 @@ export class ClaudeSource {
     env?: Record<string, string>,
     sessionId?: string,
     maxTurns?: number,
+    cwd?: string,
   ): Promise<{ result: string; sessionId: string }> {
     const baseOptions = {
       systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: agentPrompt },
@@ -18,6 +19,7 @@ export class ClaudeSource {
       allowDangerouslySkipPermissions: true,
       maxTurns: maxTurns ?? 50,
       env: { ...process.env, ...env },
+      ...(cwd ? { cwd } : {}),
     }
 
     try {

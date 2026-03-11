@@ -7,6 +7,8 @@ services:
     volumes:
       - ./.kitchen.yaml:/app/.kitchen.yaml:ro
       - claude-data:${CLAUDE_CONFIG_DIR:-/data/claude}
+      - workspace-data:${WORKSPACES_PATH:-/data/workspaces}
+      - snapshot-data:${SNAPSHOTS_PATH:-/data/snapshots}
     depends_on:
       redis:
         condition: service_healthy
@@ -39,3 +41,5 @@ services:
 
 volumes:
   claude-data:
+  workspace-data:
+  snapshot-data:

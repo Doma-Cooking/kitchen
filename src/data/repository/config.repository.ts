@@ -33,6 +33,8 @@ interface YamlConfig {
 interface EnvConfig {
   apiKey: string
   claudeConfigDir: string
+  workspacesPath: string
+  snapshotsPath: string
 }
 
 export class ConfigRepository {
@@ -134,6 +136,8 @@ export class ConfigRepository {
       throw new Error('No API key found. Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN.')
     }
     const claudeConfigDir = process.env['CLAUDE_CONFIG_DIR'] ?? '/data/claude'
-    return { apiKey, claudeConfigDir }
+    const workspacesPath = process.env['WORKSPACES_PATH'] ?? '/data/workspaces'
+    const snapshotsPath = process.env['SNAPSHOTS_PATH'] ?? '/data/snapshots'
+    return { apiKey, claudeConfigDir, workspacesPath, snapshotsPath }
   }
 }

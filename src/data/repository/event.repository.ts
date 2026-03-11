@@ -9,6 +9,7 @@ import type { AgentMessage } from '../../domain/entity/agent-message.ts'
 import type { ClaudeSource } from '../source/claude.source.ts'
 import type { ConfigRepository } from './config.repository.ts'
 import type { StationRepository } from './station.repository.ts'
+import type { WorkspaceSource } from '../source/workspace.source.ts'
 
 const QUEUE_NAME = 'agent-events'
 
@@ -23,6 +24,7 @@ export class EventRepository {
     private readonly agentRepository: AgentRepository,
     private readonly claudeSource: ClaudeSource,
     private readonly stationRepository: StationRepository,
+    private readonly workspaceSource: WorkspaceSource,
   ) {
     const config = this.configRepository.getConfig()
 
@@ -76,6 +78,8 @@ export class EventRepository {
             const stationId = event.stationId ?? agentId
             const station = await this.stationRepository.getStation(stationId)
 
+            const workspacePath = await this.workspaceSource.restore(stationId)
+
             const { result, sessionId } = await this.claudeSource.invokeAgent(
               prompt,
               agentConfig.pluginPaths,
@@ -86,12 +90,17 @@ export class EventRepository {
               env,
               station?.sessionId,
               config.maxTurns,
+              workspacePath,
             )
 
             if (sessionId) await this.stationRepository.setStation(stationId, { sessionId })
 
             return { result, sessionId }
           } finally {
+            const finalStationId = event.stationId ?? agentId
+            await this.workspaceSource.snapshot(finalStationId).catch((err) => {
+              console.error(`Failed to snapshot workspace for station ${finalStationId}:`, err)
+            })
             await this.redisLock.releaseAll(lockKeys, tokens)
             this.activeLocks.delete(lockId)
           }

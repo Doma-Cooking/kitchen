@@ -18,4 +18,6 @@ export interface KitchenConfig {
   // Env Config
   apiKey: string
   claudeConfigDir: string
+  workspacesPath: string
+  snapshotsPath: string
 }
