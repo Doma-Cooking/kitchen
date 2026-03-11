@@ -5,10 +5,6 @@ description: Respond to code review feedback on a PR. Use when asked to address 
 
 # Review Response Skill
 
-## Reference Standards
-
-!cat ${CLAUDE_SKILL_DIR}/../../sops/08-code-review-response.md
-
 ## Workflow
 
 You are executing the review response workflow. Follow these steps in order:
@@ -31,8 +27,9 @@ For each review comment, decide:
 
 ### 3. Implement Fixes
 
-- Address all agreed fixes in the code
-- Keep fix commits **separate** from original implementation
+Address all agreed fixes in one pass — don't respond piecemeal. Batch all changes together, push once, reply once.
+
+- Keep fix commits **separate** from original implementation commits. Do not amend or squash into previous commits — reviewers need to see what changed.
 - Commit format: `<TICKET-ID>: address review feedback`
 
 ### 4. Verify
