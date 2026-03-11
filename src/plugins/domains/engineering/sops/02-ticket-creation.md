@@ -13,34 +13,8 @@ Every ticket must include:
 - **Team** — the owning team
 - **Priority** — urgency and importance
 
-## Description Structure
+Use the template in `../templates/` that matches the ticket type for the description structure.
 
-```
-## Background
-<Why this work is needed. Link to related tickets or discussions.>
+## Labels
 
-## Requirements
-<What needs to be done. Acceptance criteria as a checklist.>
-
-## Technical Notes
-<Optional. Architecture considerations, constraints, relevant code pointers.>
-```
-
-## Labels & Tags
-
-Apply labels when relevant context exists (e.g. `bug`, `feature`, `tech-debt`, `infra`). Don't over-label — use them when they aid filtering and triage.
-
-## Sub-tickets
-
-Break work into sub-tickets when:
-- A feature has distinct, independently deliverable parts
-- A tech plan is needed (tech plan ticket + implementation ticket)
-- Work spans multiple repos or domains
-
-## Tech Plan Tickets
-
-When a tech plan is required (see SOP-03):
-- Create a child/related ticket to the parent feature ticket
-- Title format: `<PARENT-ID>: Tech Plan — <description>`
-- The tech plan ticket tracks the planning work itself (writing the plan, PR review)
-- The parent ticket tracks the overall feature/work
+Labels align with ticket types: `feature`, `bug`, `refactor`, `tech-plan`.

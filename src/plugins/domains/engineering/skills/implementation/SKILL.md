@@ -19,8 +19,9 @@ You are executing the implementation workflow. Follow these steps in order:
 
 ### 1. Locate the Tech Plan
 
-Check for an approved tech plan:
-- Look for a `plans/<ticket-id>-*.md` file linked from the ticket or a merged tech plan PR
+Check if a tech plan exists for this ticket:
+- Check if the implementation ticket has a parent ticket in Linear — if so, look for a merged `plans/<parent-ticket-id>-*.md` in the repo
+- If a tech plan exists, read it before starting
 - If no tech plan exists and the work is non-trivial, run the `/planning` skill first
 - For trivial changes, proceed without a tech plan
 
@@ -41,7 +42,7 @@ Per SOP-05:
 ### 4. Verify
 
 Before creating a PR:
-- Run `ts_diagnostics` — zero errors required
+- Run linting/type checking — zero errors required
 - Verify changes match the ticket's acceptance criteria
 - Ensure no unrelated changes are included
 
