@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "bin": {
-    "kitchen-github": "src/plugins/domains/engineering/tools/github.ts",
+    "kitchen-github": "src/plugins/shared/tools/github.ts",
     "kitchen-typescript": "src/plugins/domains/engineering/tools/typescript.ts",
     "kitchen-slack": "src/plugins/shared/tools/slack.ts",
     "kitchen-linear": "src/plugins/shared/tools/linear.ts",
