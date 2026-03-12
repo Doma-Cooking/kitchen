@@ -48,12 +48,12 @@ Before creating a PR:
 
 Per SOP-07:
 - Title: `<TICKET-ID>: <short description>`
-- Use `github_create_pull_request`
+- Use `kitchen-github create-pull-request`
 
 ### 6. Update Ticket
 
 - Link the PR to the Linear ticket
-- Set ticket status to **In Review** (`linear_update_issue`)
+- Set ticket status to **In Review** (`kitchen-linear update-issue`)
 
 ### 7. Report
 
