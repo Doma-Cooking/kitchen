@@ -19,7 +19,7 @@ Example: `KIT-42: add webhook handler for Slack events`
 
 ## GitHub Operations
 
-**Use MCP tools, not CLI tools.** The runtime environment does not have `gh`, `curl`, or similar CLI tools installed. GitHub App credentials (`GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_INSTALLATION_ID`) are available but no `GITHUB_TOKEN`.
+**Use MCP tools, not CLI tools.** The runtime environment does not have `gh`, `curl`, or similar CLI tools installed. Git push authentication is handled automatically — just use `git push` directly.
 
 Always use the GitHub MCP tools provided by the engineering plugin for all GitHub API operations. If a needed operation isn't covered, add a new tool to `tools/github.ts` following the existing patterns.
 
