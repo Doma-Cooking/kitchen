@@ -11,30 +11,33 @@ const server = new McpServer({
   version: '1.0.0',
 })
 
-const projectRoot = process.env.PROJECT_ROOT || process.cwd()
-const tsconfigPath = process.env.TSCONFIG_PATH || undefined
+let cachedProject: Project | null = null
+let cachedProjectRoot: string | null = null
+let cachedTsconfigPath: string | undefined = undefined
 
-let project: Project | null = null
-
-function getProject(): Project {
-  if (!project) {
-    const resolvedTsconfig = tsconfigPath
-      ? path.resolve(projectRoot, tsconfigPath)
-      : ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json')
-
-    if (resolvedTsconfig) {
-      project = new Project({ tsConfigFilePath: resolvedTsconfig })
-    } else {
-      project = new Project({
-        compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
-      })
-    }
+function getProject(projectRoot: string, tsconfigPath?: string): Project {
+  // Reinitialize if config changed
+  if (cachedProject && cachedProjectRoot === projectRoot && cachedTsconfigPath === tsconfigPath) {
+    return cachedProject
   }
-  return project
+
+  const resolvedTsconfig = tsconfigPath
+    ? path.resolve(projectRoot, tsconfigPath)
+    : ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json')
+
+  if (resolvedTsconfig) {
+    cachedProject = new Project({ tsConfigFilePath: resolvedTsconfig })
+  } else {
+    cachedProject = new Project({
+      compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
+    })
+  }
+  cachedProjectRoot = projectRoot
+  cachedTsconfigPath = tsconfigPath
+  return cachedProject
 }
 
-function refreshFiles(files?: string[]) {
-  const proj = getProject()
+function refreshFiles(proj: Project, files?: string[]) {
   if (files && files.length > 0) {
     for (const filePath of files) {
       const sourceFile = proj.getSourceFile(filePath)
@@ -47,7 +50,7 @@ function refreshFiles(files?: string[]) {
   }
 }
 
-function rel(filePath: string): string {
+function rel(projectRoot: string, filePath: string): string {
   return path.relative(projectRoot, filePath)
 }
 
@@ -57,16 +60,18 @@ server.registerTool(
     description:
       'Get TypeScript compiler errors and warnings for specific files or the whole project. Returns diagnostics with file path, line, column, error code, and message.',
     inputSchema: {
+      projectRoot: z.string().describe('Absolute path to the project root directory.'),
+      tsconfigPath: z.string().optional().describe('Relative path to tsconfig.json from projectRoot. Auto-detected if omitted.'),
       files: z
         .array(z.string())
         .optional()
         .describe('Absolute file paths to check. Omit to check the whole project.'),
     },
   },
-  async ({ files }) => {
+  async ({ projectRoot, tsconfigPath, files }) => {
     try {
-      const proj = getProject()
-      refreshFiles(files)
+      const proj = getProject(projectRoot, tsconfigPath)
+      refreshFiles(proj, files)
 
       const diagnostics = files
         ? files.flatMap((f) => {
@@ -85,7 +90,7 @@ server.registerTool(
       for (const d of diagnostics.slice(0, cap)) {
         const sf = d.getSourceFile()
         const start = d.getStart()
-        const filePath = sf ? rel(sf.getFilePath()) : '<unknown>'
+        const filePath = sf ? rel(projectRoot, sf.getFilePath()) : '<unknown>'
         let line = 0
         let col = 0
         if (sf && start !== undefined) {
@@ -118,15 +123,17 @@ server.registerTool(
     description:
       'Resolve the fully evaluated TypeScript type at a source location. Expands generics, resolves inference, and shows the concrete type.',
     inputSchema: {
+      projectRoot: z.string().describe('Absolute path to the project root directory.'),
+      tsconfigPath: z.string().optional().describe('Relative path to tsconfig.json from projectRoot. Auto-detected if omitted.'),
       file: z.string().describe('Absolute path to the file.'),
       line: z.number().describe('1-based line number.'),
       column: z.number().describe('1-based column number.'),
     },
   },
-  async ({ file, line, column }) => {
+  async ({ projectRoot, tsconfigPath, file, line, column }) => {
     try {
-      const proj = getProject()
-      refreshFiles([file])
+      const proj = getProject(projectRoot, tsconfigPath)
+      refreshFiles(proj, [file])
 
       const sourceFile = proj.getSourceFile(file)
       if (!sourceFile) {
@@ -165,15 +172,17 @@ server.registerTool(
     description:
       'Jump to the source definition of a symbol. Resolves through barrel re-exports, path aliases, and type aliases.',
     inputSchema: {
+      projectRoot: z.string().describe('Absolute path to the project root directory.'),
+      tsconfigPath: z.string().optional().describe('Relative path to tsconfig.json from projectRoot. Auto-detected if omitted.'),
       file: z.string().describe('Absolute path to the file.'),
       line: z.number().describe('1-based line number.'),
       column: z.number().describe('1-based column number.'),
     },
   },
-  async ({ file, line, column }) => {
+  async ({ projectRoot, tsconfigPath, file, line, column }) => {
     try {
-      const proj = getProject()
-      refreshFiles([file])
+      const proj = getProject(projectRoot, tsconfigPath)
+      refreshFiles(proj, [file])
 
       const sourceFile = proj.getSourceFile(file)
       if (!sourceFile) {
@@ -199,7 +208,7 @@ server.registerTool(
         content: [
           {
             type: 'text' as const,
-            text: `${rel(defSourceFile.getFilePath())}:${defPos.line}:${defPos.column}`,
+            text: `${rel(projectRoot, defSourceFile.getFilePath())}:${defPos.line}:${defPos.column}`,
           },
         ],
       }
@@ -217,15 +226,17 @@ server.registerTool(
     description:
       'Find all semantic references to a symbol. Understands re-exports, renamed imports, and type-level usage.',
     inputSchema: {
+      projectRoot: z.string().describe('Absolute path to the project root directory.'),
+      tsconfigPath: z.string().optional().describe('Relative path to tsconfig.json from projectRoot. Auto-detected if omitted.'),
       file: z.string().describe('Absolute path to the file.'),
       line: z.number().describe('1-based line number.'),
       column: z.number().describe('1-based column number.'),
     },
   },
-  async ({ file, line, column }) => {
+  async ({ projectRoot, tsconfigPath, file, line, column }) => {
     try {
-      const proj = getProject()
-      refreshFiles([file])
+      const proj = getProject(projectRoot, tsconfigPath)
+      refreshFiles(proj, [file])
 
       const sourceFile = proj.getSourceFile(file)
       if (!sourceFile) {
@@ -250,7 +261,7 @@ server.registerTool(
         const defSourceFile = definition.getSourceFile()
         const defPos = defSourceFile.getLineAndColumnAtPos(definition.getTextSpan().getStart())
         lines.push(
-          `${rel(defSourceFile.getFilePath())}:${defPos.line}:${defPos.column} (definition)`,
+          `${rel(projectRoot, defSourceFile.getFilePath())}:${defPos.line}:${defPos.column} (definition)`,
         )
 
         for (const ref of refEntry.getReferences()) {
@@ -259,7 +270,7 @@ server.registerTool(
           const refPos = refSf.getLineAndColumnAtPos(ref.getTextSpan().getStart())
           const isDefinition = ref.isDefinition()
           const suffix = isDefinition ? ' (definition)' : ''
-          lines.push(`${rel(refSf.getFilePath())}:${refPos.line}:${refPos.column}${suffix}`)
+          lines.push(`${rel(projectRoot, refSf.getFilePath())}:${refPos.line}:${refPos.column}${suffix}`)
         }
         if (lines.length >= cap) break
       }

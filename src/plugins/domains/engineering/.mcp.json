@@ -2,7 +2,10 @@
   "mcpServers": {
     "github": {
       "command": "npx",
-      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/github.ts"],
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/tools/github.ts"
+      ],
       "env": {
         "GITHUB_TOKEN": "${GITHUB_TOKEN}",
         "GITHUB_APP_ID": "${GITHUB_APP_ID}",
@@ -12,11 +15,10 @@
     },
     "typescript": {
       "command": "npx",
-      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/tools/typescript.ts"],
-      "env": {
-        "PROJECT_ROOT": "${PROJECT_ROOT}",
-        "TSCONFIG_PATH": "${TSCONFIG_PATH}"
-      }
+      "args": [
+        "tsx",
+        "${CLAUDE_PLUGIN_ROOT}/tools/typescript.ts"
+      ]
     }
   }
 }
