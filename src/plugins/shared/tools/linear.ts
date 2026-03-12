@@ -1,14 +1,7 @@
 #!/usr/bin/env npx tsx
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { Command } from 'commander'
 import { LinearClient } from '@linear/sdk'
-import { z } from 'zod'
-
-const server = new McpServer({
-  name: 'linear',
-  version: '1.0.0',
-})
 
 const LINEAR_TOKEN_URL = 'https://api.linear.app/oauth/token'
 const LINEAR_SCOPES = 'app:mentionable,app:assignable,read,write'
@@ -62,486 +55,407 @@ async function withRetry<T>(fn: (client: LinearClient) => Promise<T>): Promise<T
   }
 }
 
-server.registerTool(
-  'linear_create_issue',
-  {
-    description: 'Create an issue in Linear',
-    inputSchema: {
-      title: z.string().describe('Issue title'),
-      teamId: z.string().describe('Team ID to create the issue in'),
-      description: z.string().optional().describe('Issue description (markdown)'),
-      priority: z.number().optional().describe('Priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)'),
-      assigneeId: z.string().optional().describe('User ID to assign the issue to'),
-      labelIds: z.array(z.string()).optional().describe('Label IDs to apply'),
-    },
-  },
-  async ({ title, teamId, description, priority, assigneeId, labelIds }) => {
-    const result = await withRetry((client) =>
-      client.createIssue({ title, teamId, description, priority, assigneeId, labelIds }),
-    )
-    const issue = await result.issue
-    return {
-      content: [{ type: 'text' as const, text: `Issue created: ${issue?.identifier} — ${issue?.title}\nURL: ${issue?.url}` }],
-    }
-  },
-)
+function fail(e: unknown): never {
+  console.error((e as Error).message)
+  process.exit(1)
+}
 
-server.registerTool(
-  'linear_update_issue',
-  {
-    description: 'Update an existing Linear issue',
-    inputSchema: {
-      issueId: z.string().describe('Issue ID to update'),
-      title: z.string().optional().describe('New title'),
-      description: z.string().optional().describe('New description'),
-      stateId: z.string().optional().describe('New state/status ID'),
-      priority: z.number().optional().describe('New priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)'),
-    },
-  },
-  async ({ issueId, title, description, stateId, priority }) => {
-    await withRetry((client) => client.updateIssue(issueId, { title, description, stateId, priority }))
-    return {
-      content: [{ type: 'text' as const, text: `Issue ${issueId} updated.` }],
-    }
-  },
-)
+const program = new Command()
+  .name('kitchen-linear')
+  .description('Linear tools CLI')
 
-server.registerTool(
-  'linear_add_comment',
-  {
-    description: 'Add a comment to a Linear issue',
-    inputSchema: {
-      issueId: z.string().describe('Issue ID to comment on'),
-      body: z.string().describe('Comment body (markdown)'),
-    },
-  },
-  async ({ issueId, body }) => {
-    await withRetry((client) => client.createComment({ issueId, body }))
-    return {
-      content: [{ type: 'text' as const, text: `Comment added to issue ${issueId}.` }],
-    }
-  },
-)
+program
+  .command('create-issue')
+  .description('Create an issue in Linear')
+  .requiredOption('--title <title>', 'Issue title')
+  .requiredOption('--teamId <id>', 'Team ID to create the issue in')
+  .option('--description <text>', 'Issue description (markdown)')
+  .option('--priority <number>', 'Priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)', parseInt)
+  .option('--assigneeId <id>', 'User ID to assign the issue to')
+  .option('--labelIds <json>', 'Label IDs to apply (JSON array)', '[]')
+  .action(async (opts) => {
+    try {
+      const result = await withRetry((client) =>
+        client.createIssue({
+          title: opts.title,
+          teamId: opts.teamId,
+          description: opts.description,
+          priority: opts.priority,
+          assigneeId: opts.assigneeId,
+          labelIds: JSON.parse(opts.labelIds),
+        }),
+      )
+      const issue = await result.issue
+      console.log(`Issue created: ${issue?.identifier} — ${issue?.title}\nURL: ${issue?.url}`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_issues',
-  {
-    description: 'List issues in a Linear team',
-    inputSchema: {
-      teamId: z.string().describe('Team ID to list issues for'),
-      filter: z.string().optional().describe('Optional filter query string'),
-    },
-  },
-  async ({ teamId, filter }) => {
-    const team = await withRetry((client) => client.team(teamId))
-    const issues = await team.issues({
-      first: 25,
-      filter: filter ? { title: { contains: filter } } : undefined,
-    })
-    const summary = issues.nodes
-      .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No issues found.' }],
-    }
-  },
-)
+program
+  .command('update-issue')
+  .description('Update an existing Linear issue')
+  .requiredOption('--issueId <id>', 'Issue ID to update')
+  .option('--title <title>', 'New title')
+  .option('--description <text>', 'New description')
+  .option('--stateId <id>', 'New state/status ID')
+  .option('--priority <number>', 'New priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)', parseInt)
+  .action(async (opts) => {
+    try {
+      await withRetry((client) =>
+        client.updateIssue(opts.issueId, {
+          title: opts.title,
+          description: opts.description,
+          stateId: opts.stateId,
+          priority: opts.priority,
+        }),
+      )
+      console.log(`Issue ${opts.issueId} updated.`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_emit_activity',
-  {
-    description: 'Emit an activity on a Linear agent session (thought, response, action, error)',
-    inputSchema: {
-      agentSessionId: z.string().describe('Agent session ID from the webhook event'),
-      type: z.enum(['thought', 'response', 'action', 'error', 'elicitation']).describe('Activity type'),
-      body: z.string().optional().describe('Activity body (markdown). Required for thought, response, error, elicitation.'),
-      action: z.string().optional().describe('Action name (for type=action)'),
-      parameter: z.string().optional().describe('Action parameter (for type=action)'),
-      result: z.string().optional().describe('Action result (for type=action)'),
-    },
-  },
-  async ({ agentSessionId, type, body, action, parameter, result }) => {
-    let content: Record<string, unknown>
-    if (type === 'action') {
-      content = { type, action, parameter, result }
-    } else {
-      content = { type, body }
-    }
-    const response = await withRetry((client) =>
-      client.createAgentActivity({ agentSessionId, content }),
-    )
-    return {
-      content: [{ type: 'text' as const, text: response.success ? `Activity emitted: ${type}` : 'Failed to emit activity.' }],
-    }
-  },
-)
+program
+  .command('add-comment')
+  .description('Add a comment to a Linear issue')
+  .requiredOption('--issueId <id>', 'Issue ID to comment on')
+  .requiredOption('--body <text>', 'Comment body (markdown)')
+  .action(async (opts) => {
+    try {
+      await withRetry((client) => client.createComment({ issueId: opts.issueId, body: opts.body }))
+      console.log(`Comment added to issue ${opts.issueId}.`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_update_session',
-  {
-    description: 'Update a Linear agent session (set plan steps or external URLs)',
-    inputSchema: {
-      agentSessionId: z.string().describe('Agent session ID'),
-      plan: z.array(z.object({
-        content: z.string().describe('Step description'),
-        status: z.enum(['pending', 'inProgress', 'completed', 'canceled']).describe('Step status'),
-      })).optional().describe('Plan steps to display in the session'),
-      externalUrls: z.array(z.object({
-        label: z.string().describe('Link label'),
-        url: z.string().describe('Link URL (must be unique)'),
-      })).optional().describe('External URLs to display'),
-    },
-  },
-  async ({ agentSessionId, plan, externalUrls }) => {
-    const input: Record<string, unknown> = {}
-    if (plan) input.plan = plan
-    if (externalUrls) input.addedExternalUrls = externalUrls
-    await withRetry((client) => client.updateAgentSession(agentSessionId, input))
-    return {
-      content: [{ type: 'text' as const, text: `Session ${agentSessionId} updated.` }],
-    }
-  },
-)
+program
+  .command('list-issues')
+  .description('List issues in a Linear team')
+  .requiredOption('--teamId <id>', 'Team ID to list issues for')
+  .option('--filter <text>', 'Optional filter query string')
+  .action(async (opts) => {
+    try {
+      const team = await withRetry((client) => client.team(opts.teamId))
+      const issues = await team.issues({
+        first: 25,
+        filter: opts.filter ? { title: { contains: opts.filter } } : undefined,
+      })
+      const summary = issues.nodes
+        .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
+        .join('\n')
+      console.log(summary || 'No issues found.')
+    } catch (e) { fail(e) }
+  })
 
-// ── Discovery / Read ──────────────────────────────────────────────
-
-server.registerTool(
-  'linear_list_teams',
-  {
-    description: 'List all teams in the Linear workspace',
-    inputSchema: {},
-  },
-  async () => {
-    const teams = await withRetry((client) => client.teams())
-    const summary = teams.nodes
-      .map((t) => `${t.key} — ${t.name} (${t.id})`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No teams found.' }],
-    }
-  },
-)
-
-server.registerTool(
-  'linear_list_projects',
-  {
-    description: 'List projects in the workspace, optionally filtered by team',
-    inputSchema: {
-      teamId: z.string().optional().describe('Filter projects to a specific team'),
-    },
-  },
-  async ({ teamId }) => {
-    const projects = await withRetry(async (client) => {
-      if (teamId) {
-        const team = await client.team(teamId)
-        return team.projects({ first: 50 })
+program
+  .command('emit-activity')
+  .description('Emit an activity on a Linear agent session (thought, response, action, error)')
+  .requiredOption('--agentSessionId <id>', 'Agent session ID from the webhook event')
+  .requiredOption('--type <type>', 'Activity type (thought, response, action, error, elicitation)')
+  .option('--body <text>', 'Activity body (markdown). Required for thought, response, error, elicitation.')
+  .option('--action <name>', 'Action name (for type=action)')
+  .option('--parameter <value>', 'Action parameter (for type=action)')
+  .option('--result <value>', 'Action result (for type=action)')
+  .action(async (opts) => {
+    try {
+      let content: Record<string, unknown>
+      if (opts.type === 'action') {
+        content = { type: opts.type, action: opts.action, parameter: opts.parameter, result: opts.result }
+      } else {
+        content = { type: opts.type, body: opts.body }
       }
-      return client.projects({ first: 50 })
-    })
-    const summary = projects.nodes
-      .map((p) => `${p.name} (${p.id}) — state: ${p.state}, progress: ${Math.round(p.progress * 100)}%`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No projects found.' }],
-    }
-  },
-)
+      const response = await withRetry((client) =>
+        client.createAgentActivity({ agentSessionId: opts.agentSessionId, content }),
+      )
+      console.log(response.success ? `Activity emitted: ${opts.type}` : 'Failed to emit activity.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_get_issue',
-  {
-    description: 'Get detailed information about a single Linear issue',
-    inputSchema: {
-      issueId: z.string().describe('Issue ID or identifier (e.g. "ENG-123")'),
-    },
-  },
-  async ({ issueId }) => {
-    const issue = await withRetry((client) => client.issue(issueId))
-    const state = await issue.state
-    const assignee = await issue.assignee
-    const labels = await issue.labels()
-    const labelNames = labels.nodes.map((l) => l.name).join(', ')
-    const text = [
-      `${issue.identifier}: ${issue.title}`,
-      `State: ${state?.name ?? 'unknown'}`,
-      `Priority: P${issue.priority}`,
-      `Assignee: ${assignee?.name ?? 'unassigned'}`,
-      `Labels: ${labelNames || 'none'}`,
-      `URL: ${issue.url}`,
-      issue.description ? `\nDescription:\n${issue.description}` : '',
-    ].filter(Boolean).join('\n')
-    return {
-      content: [{ type: 'text' as const, text }],
-    }
-  },
-)
+program
+  .command('update-session')
+  .description('Update a Linear agent session (set plan steps or external URLs)')
+  .requiredOption('--agentSessionId <id>', 'Agent session ID')
+  .option('--plan <json>', 'Plan steps (JSON array of {content, status} objects)')
+  .option('--externalUrls <json>', 'External URLs (JSON array of {label, url} objects)')
+  .action(async (opts) => {
+    try {
+      const input: Record<string, unknown> = {}
+      if (opts.plan) input.plan = JSON.parse(opts.plan)
+      if (opts.externalUrls) input.addedExternalUrls = JSON.parse(opts.externalUrls)
+      await withRetry((client) => client.updateAgentSession(opts.agentSessionId, input))
+      console.log(`Session ${opts.agentSessionId} updated.`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_states',
-  {
-    description: 'List workflow states for a team',
-    inputSchema: {
-      teamId: z.string().describe('Team ID to list states for'),
-    },
-  },
-  async ({ teamId }) => {
-    const team = await withRetry((client) => client.team(teamId))
-    const states = await team.states()
-    const summary = states.nodes
-      .map((s) => `${s.name} (${s.id}) — type: ${s.type}`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No states found.' }],
-    }
-  },
-)
+program
+  .command('list-teams')
+  .description('List all teams in the Linear workspace')
+  .action(async () => {
+    try {
+      const teams = await withRetry((client) => client.teams())
+      const summary = teams.nodes
+        .map((t) => `${t.key} — ${t.name} (${t.id})`)
+        .join('\n')
+      console.log(summary || 'No teams found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_members',
-  {
-    description: 'List members in the workspace, optionally filtered by team',
-    inputSchema: {
-      teamId: z.string().optional().describe('Filter members to a specific team'),
-    },
-  },
-  async ({ teamId }) => {
-    const members = await withRetry(async (client) => {
-      if (teamId) {
-        const team = await client.team(teamId)
-        return team.members({ first: 50 })
-      }
-      return client.users({ first: 50 })
-    })
-    const summary = members.nodes
-      .map((m) => `${m.name} (${m.id}) — ${m.displayName} — ${m.email}`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No members found.' }],
-    }
-  },
-)
+program
+  .command('list-projects')
+  .description('List projects in the workspace, optionally filtered by team')
+  .option('--teamId <id>', 'Filter projects to a specific team')
+  .action(async (opts) => {
+    try {
+      const projects = await withRetry(async (client) => {
+        if (opts.teamId) {
+          const team = await client.team(opts.teamId)
+          return team.projects({ first: 50 })
+        }
+        return client.projects({ first: 50 })
+      })
+      const summary = projects.nodes
+        .map((p) => `${p.name} (${p.id}) — state: ${p.state}, progress: ${Math.round(p.progress * 100)}%`)
+        .join('\n')
+      console.log(summary || 'No projects found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_labels',
-  {
-    description: 'List labels in the workspace, optionally filtered by team',
-    inputSchema: {
-      teamId: z.string().optional().describe('Filter labels to a specific team'),
-    },
-  },
-  async ({ teamId }) => {
-    const labels = await withRetry(async (client) => {
-      if (teamId) {
-        const team = await client.team(teamId)
-        return team.labels({ first: 50 })
-      }
-      return client.issueLabels({ first: 50 })
-    })
-    const summary = labels.nodes
-      .map((l) => `${l.name} (${l.id}) — color: ${l.color}`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No labels found.' }],
-    }
-  },
-)
+program
+  .command('get-issue')
+  .description('Get detailed information about a single Linear issue')
+  .requiredOption('--issueId <id>', 'Issue ID or identifier (e.g. "ENG-123")')
+  .action(async (opts) => {
+    try {
+      const issue = await withRetry((client) => client.issue(opts.issueId))
+      const state = await issue.state
+      const assignee = await issue.assignee
+      const labels = await issue.labels()
+      const labelNames = labels.nodes.map((l) => l.name).join(', ')
+      const text = [
+        `${issue.identifier}: ${issue.title}`,
+        `State: ${state?.name ?? 'unknown'}`,
+        `Priority: P${issue.priority}`,
+        `Assignee: ${assignee?.name ?? 'unassigned'}`,
+        `Labels: ${labelNames || 'none'}`,
+        `URL: ${issue.url}`,
+        issue.description ? `\nDescription:\n${issue.description}` : '',
+      ].filter(Boolean).join('\n')
+      console.log(text)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_project_statuses',
-  {
-    description: 'List available project statuses in the workspace (use these IDs when creating/updating projects)',
-    inputSchema: {},
-  },
-  async () => {
-    const statuses = await withRetry((client) => client.projectStatuses())
-    const summary = statuses.nodes
-      .map((s) => `${s.name} (${s.id}) — type: ${s.type}`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No project statuses found.' }],
-    }
-  },
-)
+program
+  .command('list-states')
+  .description('List workflow states for a team')
+  .requiredOption('--teamId <id>', 'Team ID to list states for')
+  .action(async (opts) => {
+    try {
+      const team = await withRetry((client) => client.team(opts.teamId))
+      const states = await team.states()
+      const summary = states.nodes
+        .map((s) => `${s.name} (${s.id}) — type: ${s.type}`)
+        .join('\n')
+      console.log(summary || 'No states found.')
+    } catch (e) { fail(e) }
+  })
 
-// ── Project Management ────────────────────────────────────────────
+program
+  .command('list-members')
+  .description('List members in the workspace, optionally filtered by team')
+  .option('--teamId <id>', 'Filter members to a specific team')
+  .action(async (opts) => {
+    try {
+      const members = await withRetry(async (client) => {
+        if (opts.teamId) {
+          const team = await client.team(opts.teamId)
+          return team.members({ first: 50 })
+        }
+        return client.users({ first: 50 })
+      })
+      const summary = members.nodes
+        .map((m) => `${m.name} (${m.id}) — ${m.displayName} — ${m.email}`)
+        .join('\n')
+      console.log(summary || 'No members found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_create_project',
-  {
-    description: 'Create a new project in Linear',
-    inputSchema: {
-      name: z.string().describe('Project name'),
-      teamIds: z.array(z.string()).describe('Team IDs to associate with the project'),
-      description: z.string().optional().describe('Project description'),
-      statusId: z.string().optional().describe('Project status ID'),
-      targetDate: z.string().optional().describe('Target date (ISO 8601)'),
-    },
-  },
-  async ({ name, teamIds, description, statusId, targetDate }) => {
-    const result = await withRetry((client) =>
-      client.createProject({ name, teamIds, description, statusId, targetDate }),
-    )
-    const project = await result.project
-    return {
-      content: [{ type: 'text' as const, text: `Project created: ${project?.name} (${project?.id})\nURL: ${project?.url}` }],
-    }
-  },
-)
+program
+  .command('list-labels')
+  .description('List labels in the workspace, optionally filtered by team')
+  .option('--teamId <id>', 'Filter labels to a specific team')
+  .action(async (opts) => {
+    try {
+      const labels = await withRetry(async (client) => {
+        if (opts.teamId) {
+          const team = await client.team(opts.teamId)
+          return team.labels({ first: 50 })
+        }
+        return client.issueLabels({ first: 50 })
+      })
+      const summary = labels.nodes
+        .map((l) => `${l.name} (${l.id}) — color: ${l.color}`)
+        .join('\n')
+      console.log(summary || 'No labels found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_update_project',
-  {
-    description: 'Update an existing Linear project',
-    inputSchema: {
-      projectId: z.string().describe('Project ID to update'),
-      name: z.string().optional().describe('New name'),
-      description: z.string().optional().describe('New description'),
-      statusId: z.string().optional().describe('Project status ID'),
-      targetDate: z.string().optional().describe('New target date (ISO 8601)'),
-    },
-  },
-  async ({ projectId, name, description, statusId, targetDate }) => {
-    await withRetry((client) =>
-      client.updateProject(projectId, { name, description, statusId, targetDate }),
-    )
-    return {
-      content: [{ type: 'text' as const, text: `Project ${projectId} updated.` }],
-    }
-  },
-)
+program
+  .command('list-project-statuses')
+  .description('List available project statuses in the workspace')
+  .action(async () => {
+    try {
+      const statuses = await withRetry((client) => client.projectStatuses())
+      const summary = statuses.nodes
+        .map((s) => `${s.name} (${s.id}) — type: ${s.type}`)
+        .join('\n')
+      console.log(summary || 'No project statuses found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_add_issue_to_project',
-  {
-    description: 'Add an issue to a project',
-    inputSchema: {
-      issueId: z.string().describe('Issue ID to add to the project'),
-      projectId: z.string().describe('Project ID to add the issue to'),
-    },
-  },
-  async ({ issueId, projectId }) => {
-    await withRetry((client) => client.updateIssue(issueId, { projectId }))
-    return {
-      content: [{ type: 'text' as const, text: `Issue ${issueId} added to project ${projectId}.` }],
-    }
-  },
-)
+program
+  .command('create-project')
+  .description('Create a new project in Linear')
+  .requiredOption('--name <name>', 'Project name')
+  .requiredOption('--teamIds <json>', 'Team IDs to associate with the project (JSON array)')
+  .option('--description <text>', 'Project description')
+  .option('--statusId <id>', 'Project status ID')
+  .option('--targetDate <date>', 'Target date (ISO 8601)')
+  .action(async (opts) => {
+    try {
+      const result = await withRetry((client) =>
+        client.createProject({
+          name: opts.name,
+          teamIds: JSON.parse(opts.teamIds),
+          description: opts.description,
+          statusId: opts.statusId,
+          targetDate: opts.targetDate,
+        }),
+      )
+      const project = await result.project
+      console.log(`Project created: ${project?.name} (${project?.id})\nURL: ${project?.url}`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_list_project_issues',
-  {
-    description: 'List issues in a project',
-    inputSchema: {
-      projectId: z.string().describe('Project ID to list issues for'),
-    },
-  },
-  async ({ projectId }) => {
-    const project = await withRetry((client) => client.project(projectId))
-    const issues = await project.issues({ first: 50 })
-    const summary = issues.nodes
-      .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No issues found.' }],
-    }
-  },
-)
+program
+  .command('update-project')
+  .description('Update an existing Linear project')
+  .requiredOption('--projectId <id>', 'Project ID to update')
+  .option('--name <name>', 'New name')
+  .option('--description <text>', 'New description')
+  .option('--statusId <id>', 'Project status ID')
+  .option('--targetDate <date>', 'New target date (ISO 8601)')
+  .action(async (opts) => {
+    try {
+      await withRetry((client) =>
+        client.updateProject(opts.projectId, {
+          name: opts.name,
+          description: opts.description,
+          statusId: opts.statusId,
+          targetDate: opts.targetDate,
+        }),
+      )
+      console.log(`Project ${opts.projectId} updated.`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_get_project',
-  {
-    description: 'Get detailed information about a Linear project',
-    inputSchema: {
-      projectId: z.string().describe('Project ID'),
-    },
-  },
-  async ({ projectId }) => {
-    const project = await withRetry((client) => client.project(projectId))
-    const text = [
-      `${project.name} (${project.id})`,
-      `State: ${project.state}`,
-      `Progress: ${Math.round(project.progress * 100)}%`,
-      project.targetDate ? `Target date: ${project.targetDate}` : '',
-      `URL: ${project.url}`,
-      project.description ? `\nDescription:\n${project.description}` : '',
-    ].filter(Boolean).join('\n')
-    return {
-      content: [{ type: 'text' as const, text }],
-    }
-  },
-)
+program
+  .command('add-issue-to-project')
+  .description('Add an issue to a project')
+  .requiredOption('--issueId <id>', 'Issue ID to add to the project')
+  .requiredOption('--projectId <id>', 'Project ID to add the issue to')
+  .action(async (opts) => {
+    try {
+      await withRetry((client) => client.updateIssue(opts.issueId, { projectId: opts.projectId }))
+      console.log(`Issue ${opts.issueId} added to project ${opts.projectId}.`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'linear_get_templates',
-  {
-    description: 'List issue templates available in the workspace. Returns template names, descriptions, and their full template data (fields like title, description, priority, labels, etc.).',
-    inputSchema: {
-      teamId: z.string().optional().describe('Filter templates to a specific team'),
-    },
-  },
-  async ({ teamId }) => {
-    const templates = await withRetry(async (client) => {
-      if (teamId) {
-        const team = await client.team(teamId)
-        return team.templates()
-      }
-      return client.templates
-    })
+program
+  .command('list-project-issues')
+  .description('List issues in a project')
+  .requiredOption('--projectId <id>', 'Project ID to list issues for')
+  .action(async (opts) => {
+    try {
+      const project = await withRetry((client) => client.project(opts.projectId))
+      const issues = await project.issues({ first: 50 })
+      const summary = issues.nodes
+        .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
+        .join('\n')
+      console.log(summary || 'No issues found.')
+    } catch (e) { fail(e) }
+  })
 
-    const nodes = Array.isArray(templates) ? templates : (templates as { nodes: unknown[] }).nodes
-    const summary = await Promise.all(
-      (nodes as Array<{ id: string; name: string; description?: string; templateData: unknown; team?: { name: string; id: string } | null }>).map(async (t) => {
-        const team = t.team ? (typeof t.team === 'object' && 'name' in t.team ? t.team : await (t.team as unknown as Promise<{ name: string; id: string }>)) : null
-        return [
-          `## ${t.name} (${t.id})`,
-          team ? `Team: ${team.name}` : 'Workspace-level template',
-          t.description ? `Description: ${t.description}` : '',
-          `Template data:\n${JSON.stringify(t.templateData, null, 2)}`,
-        ].filter(Boolean).join('\n')
-      }),
-    )
+program
+  .command('get-project')
+  .description('Get detailed information about a Linear project')
+  .requiredOption('--projectId <id>', 'Project ID')
+  .action(async (opts) => {
+    try {
+      const project = await withRetry((client) => client.project(opts.projectId))
+      const text = [
+        `${project.name} (${project.id})`,
+        `State: ${project.state}`,
+        `Progress: ${Math.round(project.progress * 100)}%`,
+        project.targetDate ? `Target date: ${project.targetDate}` : '',
+        `URL: ${project.url}`,
+        project.description ? `\nDescription:\n${project.description}` : '',
+      ].filter(Boolean).join('\n')
+      console.log(text)
+    } catch (e) { fail(e) }
+  })
 
-    return {
-      content: [{ type: 'text' as const, text: summary.join('\n\n---\n\n') || 'No templates found.' }],
-    }
-  },
-)
+program
+  .command('get-templates')
+  .description('List issue templates available in the workspace')
+  .option('--teamId <id>', 'Filter templates to a specific team')
+  .action(async (opts) => {
+    try {
+      const templates = await withRetry(async (client) => {
+        if (opts.teamId) {
+          const team = await client.team(opts.teamId)
+          return team.templates()
+        }
+        return client.templates
+      })
+      const nodes = Array.isArray(templates) ? templates : (templates as { nodes: unknown[] }).nodes
+      const summary = await Promise.all(
+        (nodes as Array<{ id: string; name: string; description?: string; templateData: unknown; team?: { name: string; id: string } | null }>).map(async (t) => {
+          const team = t.team ? (typeof t.team === 'object' && 'name' in t.team ? t.team : await (t.team as unknown as Promise<{ name: string; id: string }>)) : null
+          return [
+            `## ${t.name} (${t.id})`,
+            team ? `Team: ${team.name}` : 'Workspace-level template',
+            t.description ? `Description: ${t.description}` : '',
+            `Template data:\n${JSON.stringify(t.templateData, null, 2)}`,
+          ].filter(Boolean).join('\n')
+        }),
+      )
+      console.log(summary.join('\n\n---\n\n') || 'No templates found.')
+    } catch (e) { fail(e) }
+  })
 
-// ── Workflow ──────────────────────────────────────────────────────
+program
+  .command('search-issues')
+  .description('Search and filter issues across the workspace')
+  .option('--teamId <id>', 'Filter by team ID')
+  .option('--stateId <id>', 'Filter by state ID')
+  .option('--assigneeId <id>', 'Filter by assignee user ID')
+  .option('--labelId <id>', 'Filter by label ID')
+  .option('--priority <number>', 'Filter by priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)', parseInt)
+  .option('--query <text>', 'Search by title (contains)')
+  .action(async (opts) => {
+    try {
+      const filter: Record<string, unknown> = {}
+      if (opts.teamId) filter.team = { id: { eq: opts.teamId } }
+      if (opts.stateId) filter.state = { id: { eq: opts.stateId } }
+      if (opts.assigneeId) filter.assignee = { id: { eq: opts.assigneeId } }
+      if (opts.labelId) filter.labels = { id: { eq: opts.labelId } }
+      if (opts.priority !== undefined) filter.priority = { eq: opts.priority }
+      if (opts.query) filter.title = { contains: opts.query }
 
-server.registerTool(
-  'linear_search_issues',
-  {
-    description: 'Search and filter issues across the workspace',
-    inputSchema: {
-      teamId: z.string().optional().describe('Filter by team ID'),
-      stateId: z.string().optional().describe('Filter by state ID'),
-      assigneeId: z.string().optional().describe('Filter by assignee user ID'),
-      labelId: z.string().optional().describe('Filter by label ID'),
-      priority: z.number().optional().describe('Filter by priority (0=none, 1=urgent, 2=high, 3=medium, 4=low)'),
-      query: z.string().optional().describe('Search by title (contains)'),
-    },
-  },
-  async ({ teamId, stateId, assigneeId, labelId, priority, query }) => {
-    const filter: Record<string, unknown> = {}
-    if (teamId) filter.team = { id: { eq: teamId } }
-    if (stateId) filter.state = { id: { eq: stateId } }
-    if (assigneeId) filter.assignee = { id: { eq: assigneeId } }
-    if (labelId) filter.labels = { id: { eq: labelId } }
-    if (priority !== undefined) filter.priority = { eq: priority }
-    if (query) filter.title = { contains: query }
+      const issues = await withRetry((client) =>
+        client.issues({ first: 50, filter }),
+      )
+      const summary = issues.nodes
+        .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
+        .join('\n')
+      console.log(summary || 'No issues found.')
+    } catch (e) { fail(e) }
+  })
 
-    const issues = await withRetry((client) =>
-      client.issues({ first: 50, filter }),
-    )
-    const summary = issues.nodes
-      .map((i) => `${i.identifier}: ${i.title} [${i.state ? 'stateful' : 'unknown'}] (P${i.priority})`)
-      .join('\n')
-    return {
-      content: [{ type: 'text' as const, text: summary || 'No issues found.' }],
-    }
-  },
-)
-
-const transport = new StdioServerTransport()
-await server.connect(transport)
+await program.parseAsync()

@@ -1,15 +1,8 @@
 #!/usr/bin/env npx tsx
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { Command } from 'commander'
 import { WebClient } from '@slack/web-api'
 import { MessageElement } from '@slack/web-api/dist/types/response/ConversationsHistoryResponse.js'
-import { z } from 'zod'
-
-const server = new McpServer({
-  name: 'slack',
-  version: '1.0.0',
-})
 
 type SlackTokenType = 'bot' | 'user'
 
@@ -21,274 +14,131 @@ const TOKEN_ENV: Record<SlackTokenType, string> = {
 function getClient(tokenType: SlackTokenType): WebClient {
   const envVar = TOKEN_ENV[tokenType]
   const token = process.env[envVar]
-  if (!token) {
-    throw new Error(`${envVar} not set`)
-  }
+  if (!token) throw new Error(`${envVar} not set`)
   return new WebClient(token)
 }
 
 function formatMessage(m: MessageElement): string {
   let line = `[${m.ts}] <${m.user}>: ${m.text}`
   if (m.files?.length) {
-    const fileInfo = m.files.map((f: any) => `${f.name} (${f.mimetype})`).join(', ')
-    line += ` [files: ${fileInfo}]`
+    line += ` [files: ${m.files.map((f: any) => `${f.name} (${f.mimetype})`).join(', ')}]`
   }
   return line
 }
 
-server.registerTool(
-  'slack_send_message',
-  {
-    description: 'Send a message to a Slack channel or thread.\n\nIMPORTANT:\n- If you need a response from someone, always @mention them.\n- Slack uses single asterisks for bold (*bold*), NOT double (**bold**).\n- Slack markdown does NOT support tables.',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      thread_ts: z.string().optional().describe('Thread timestamp to reply in. Omit to post at the top level of the channel.'),
-      text: z.string().describe('Message text to send.'),
-    },
-  },
-  async ({ channel, thread_ts, text }) => {
-    const client = getClient('bot')
+function fail(e: unknown): never {
+  console.error((e as Error).message)
+  process.exit(1)
+}
 
-    await client.chat.postMessage({
-      channel,
-      thread_ts,
-      text,
-    })
+const program = new Command()
+  .name('kitchen-slack')
+  .description('Slack tools CLI')
 
-    const target = thread_ts ? `thread ${thread_ts} in ${channel}` : channel
-    return { content: [{ type: 'text' as const, text: `Message sent to ${target}` }] }
-  },
-)
+program
+  .command('send-message')
+  .description('Send a message to a Slack channel or thread')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--text <text>', 'Message text to send')
+  .option('--threadTs <ts>', 'Thread timestamp to reply in. Omit to post at top level.')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      await client.chat.postMessage({ channel: opts.channel, thread_ts: opts.threadTs, text: opts.text })
+      const target = opts.threadTs ? `thread ${opts.threadTs} in ${opts.channel}` : opts.channel
+      console.log(`Message sent to ${target}`)
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'slack_add_reaction',
-  {
-    description: 'Add an emoji reaction to a Slack message',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      timestamp: z.string().describe('Timestamp of the message to react to'),
-      name: z.string().describe('Emoji name without colons (e.g. "thumbsup")'),
-    },
-  },
-  async ({ channel, timestamp, name }) => {
-    const client = getClient('bot')
+program
+  .command('add-reaction')
+  .description('Add an emoji reaction to a Slack message')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--timestamp <ts>', 'Timestamp of the message to react to')
+  .requiredOption('--name <emoji>', 'Emoji name without colons (e.g. thumbsup)')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      await client.reactions.add({ channel: opts.channel, timestamp: opts.timestamp, name: opts.name })
+      console.log(`Reacted with :${opts.name}: in ${opts.channel}`)
+    } catch (e) { fail(e) }
+  })
 
-    await client.reactions.add({
-      channel,
-      timestamp,
-      name,
-    })
+program
+  .command('get-thread-replies')
+  .description('Get all replies in a Slack thread')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--threadTs <ts>', 'Timestamp of the parent message')
+  .option('--limit <number>', 'Max replies to return (default 100)', parseInt)
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.conversations.replies({ channel: opts.channel, ts: opts.threadTs, limit: opts.limit ?? 100 })
+      console.log((result.messages ?? []).map(formatMessage).join('\n') || 'No replies found.')
+    } catch (e) { fail(e) }
+  })
 
-    return { content: [{ type: 'text' as const, text: `Reacted with :${name}: in ${channel}` }] }
-  },
-)
+program
+  .command('get-channel-history')
+  .description('Get recent messages from a Slack channel')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .option('--limit <number>', 'Max messages to return (default 20)', parseInt)
+  .option('--oldest <ts>', 'Only messages after this Unix timestamp')
+  .option('--latest <ts>', 'Only messages before this Unix timestamp')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.conversations.history({ channel: opts.channel, limit: opts.limit ?? 20, oldest: opts.oldest, latest: opts.latest })
+      console.log((result.messages ?? []).map(formatMessage).join('\n') || 'No messages found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'slack_get_thread_replies',
-  {
-    description: 'Get all replies in a Slack thread',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      thread_ts: z.string().describe('Timestamp of the parent message'),
-      limit: z.number().optional().describe('Max replies to return (default 100)'),
-    },
-  },
-  async ({ channel, thread_ts, limit }) => {
-    const client = getClient('bot')
-    const result = await client.conversations.replies({ channel, ts: thread_ts, limit: limit ?? 100 })
+program
+  .command('get-message')
+  .description('Get a single Slack message by timestamp, including file attachments and full metadata')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--ts <ts>', 'Timestamp of the message to fetch')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.conversations.history({ channel: opts.channel, latest: opts.ts, inclusive: true, limit: 1 })
+      const msg = result.messages?.[0]
+      if (!msg) { console.log('Message not found.'); return }
+      const parts = [`ts: ${msg.ts}`, `user: ${msg.user}`, `text: ${msg.text}`]
+      if (msg.files?.length) parts.push(`files: ${msg.files.map((f) => `${f.name} (${f.mimetype}, ${f.url_private})`).join(', ')}`)
+      if (msg.reactions?.length) parts.push(`reactions: ${msg.reactions.map((r) => `:${r.name}: (${r.count})`).join(', ')}`)
+      console.log(parts.join('\n'))
+    } catch (e) { fail(e) }
+  })
 
-    const messages = (result.messages ?? []).map(formatMessage).join('\n')
-    return { content: [{ type: 'text' as const, text: messages || 'No replies found.' }] }
-  },
-)
+program
+  .command('search-messages')
+  .description('Search for messages across the Slack workspace. Requires a user token (xoxp-).')
+  .requiredOption('--query <query>', 'Search query string')
+  .option('--count <number>', 'Max results to return (default 20)', parseInt)
+  .option('--sort <sort>', 'Sort order: score or timestamp (default: score)', 'score')
+  .action(async (opts) => {
+    try {
+      const client = getClient('user')
+      const result = await client.search.messages({ query: opts.query, count: opts.count ?? 20, sort: opts.sort })
+      const matches = (result.messages?.matches ?? [])
+        .map((m) => `[${m.ts}] #${m.channel?.name ?? m.channel?.id} <${m.user}>: ${m.text}`)
+        .join('\n')
+      console.log(matches || 'No messages found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'slack_get_channel_history',
-  {
-    description: 'Get recent messages from a Slack channel',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      limit: z.number().optional().describe('Max messages to return (default 20)'),
-      oldest: z.string().optional().describe('Only messages after this Unix timestamp'),
-      latest: z.string().optional().describe('Only messages before this Unix timestamp'),
-    },
-  },
-  async ({ channel, limit, oldest, latest }) => {
-    const client = getClient('bot')
-    const result = await client.conversations.history({ channel, limit: limit ?? 20, oldest, latest })
-
-    const messages = (result.messages ?? []).map(formatMessage).join('\n')
-    return { content: [{ type: 'text' as const, text: messages || 'No messages found.' }] }
-  },
-)
-
-server.registerTool(
-  'slack_get_message',
-  {
-    description: 'Get a single Slack message by timestamp, including file attachments and full metadata',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      ts: z.string().describe('Timestamp of the message to fetch'),
-    },
-  },
-  async ({ channel, ts }) => {
-    const client = getClient('bot')
-    const result = await client.conversations.history({ channel, latest: ts, inclusive: true, limit: 1 })
-
-    const msg = result.messages?.[0]
-    if (!msg) return { content: [{ type: 'text' as const, text: 'Message not found.' }] }
-
-    const parts = [
-      `ts: ${msg.ts}`,
-      `user: ${msg.user}`,
-      `text: ${msg.text}`,
-    ]
-    if (msg.files?.length) {
-      parts.push(`files: ${msg.files.map((f) => `${f.name} (${f.mimetype}, ${f.url_private})`).join(', ')}`)
-    }
-    if (msg.reactions?.length) {
-      parts.push(`reactions: ${msg.reactions.map((r) => `:${r.name}: (${r.count})`).join(', ')}`)
-    }
-    return { content: [{ type: 'text' as const, text: parts.join('\n') }] }
-  },
-)
-
-server.registerTool(
-  'slack_search_messages',
-  {
-    description: 'Search for messages across the Slack workspace. Requires a user token (xoxp-), not a bot token.',
-    inputSchema: {
-      query: z.string().describe('Search query string'),
-      count: z.number().optional().describe('Max results to return (default 20)'),
-      sort: z.enum(['score', 'timestamp']).optional().describe('Sort order (default: score)'),
-    },
-  },
-  async ({ query, count, sort }) => {
-    const client = getClient('user')
-    const result = await client.search.messages({ query, count: count ?? 20, sort: sort ?? 'score' })
-
-    const matches = (result.messages?.matches ?? [])
-      .map((m) => `[${m.ts}] #${m.channel?.name ?? m.channel?.id} <${m.user}>: ${m.text}`)
-      .join('\n')
-    return { content: [{ type: 'text' as const, text: matches || 'No messages found.' }] }
-  },
-)
-
-server.registerTool(
-  'slack_get_user_info',
-  {
-    description: 'Get information about a Slack user by their user ID',
-    inputSchema: {
-      user: z.string().describe('Slack user ID (e.g. U01234ABCDE)'),
-    },
-  },
-  async ({ user }) => {
-    const client = getClient('bot')
-    const result = await client.users.info({ user })
-
-    const u = result.user
-    if (!u) return { content: [{ type: 'text' as const, text: 'User not found.' }] }
-
-    const info = [
-      `Name: ${u.real_name ?? u.name}`,
-      `Display name: ${u.profile?.display_name}`,
-      `Title: ${u.profile?.title}`,
-      `Email: ${u.profile?.email}`,
-      `Is bot: ${u.is_bot}`,
-      `Timezone: ${u.tz}`,
-    ].join('\n')
-    return { content: [{ type: 'text' as const, text: info }] }
-  },
-)
-
-server.registerTool(
-  'slack_list_channels',
-  {
-    description: 'List Slack channels in the workspace',
-    inputSchema: {
-      types: z.string().optional().describe('Comma-separated channel types: public_channel, private_channel, mpim, im (default: public_channel)'),
-      limit: z.number().optional().describe('Max channels to return (default 100)'),
-      exclude_archived: z.boolean().optional().describe('Exclude archived channels (default true)'),
-    },
-  },
-  async ({ types, limit, exclude_archived }) => {
-    const client = getClient('bot')
-    const result = await client.conversations.list({
-      types: types ?? 'public_channel',
-      limit: limit ?? 100,
-      exclude_archived: exclude_archived ?? true,
-    })
-
-    const channels = (result.channels ?? [])
-      .map((c) => `${c.id} #${c.name} — ${c.topic?.value || '(no topic)'}`)
-      .join('\n')
-    return { content: [{ type: 'text' as const, text: channels || 'No channels found.' }] }
-  },
-)
-
-server.registerTool(
-  'slack_update_message',
-  {
-    description: 'Update (edit) a previously sent Slack message',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      ts: z.string().describe('Timestamp of the message to update'),
-      text: z.string().describe('New message text'),
-    },
-  },
-  async ({ channel, ts, text }) => {
-    const client = getClient('bot')
-    await client.chat.update({ channel, ts, text })
-
-    return { content: [{ type: 'text' as const, text: `Message ${ts} updated in ${channel}` }] }
-  },
-)
-
-server.registerTool(
-  'slack_upload_file',
-  {
-    description: 'Upload a file to a Slack channel (from string content)',
-    inputSchema: {
-      channel_id: z.string().describe('Slack channel ID to upload to'),
-      content: z.string().describe('File content as a string'),
-      filename: z.string().describe('Filename (e.g. "report.txt")'),
-      title: z.string().optional().describe('Display title for the file'),
-      initial_comment: z.string().optional().describe('Message to include with the upload'),
-      thread_ts: z.string().optional().describe('Thread timestamp to upload in'),
-    },
-  },
-  async ({ channel_id, content, filename, title, initial_comment, thread_ts }) => {
-    const client = getClient('bot')
-    const shared = { channel_id, content, filename, title, initial_comment } as const
-    await client.filesUploadV2(thread_ts ? { ...shared, thread_ts } : shared)
-
-    return { content: [{ type: 'text' as const, text: `File "${filename}" uploaded to ${channel_id}` }] }
-  },
-)
-
-server.registerTool(
-  'slack_search_users',
-  {
-    description: 'Search for Slack users by name or email address',
-    inputSchema: {
-      query: z.string().describe('Search query — matches against real name, display name, and email'),
-    },
-  },
-  async ({ query }) => {
-    const client = getClient('bot')
-    const result = await client.users.list({})
-
-    const q = query.toLowerCase()
-    const matches = (result.members ?? [])
-      .filter((u) => !u.deleted && u.id !== 'USLACKBOT')
-      .filter((u) => {
-        const name = (u.real_name ?? '').toLowerCase()
-        const display = (u.profile?.display_name ?? '').toLowerCase()
-        const email = (u.profile?.email ?? '').toLowerCase()
-        return name.includes(q) || display.includes(q) || email.includes(q)
-      })
-      .map((u) => [
-        `ID: ${u.id}`,
+program
+  .command('get-user-info')
+  .description('Get information about a Slack user by their user ID')
+  .requiredOption('--user <id>', 'Slack user ID (e.g. U01234ABCDE)')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.users.info({ user: opts.user })
+      const u = result.user
+      if (!u) { console.log('User not found.'); return }
+      console.log([
         `Name: ${u.real_name ?? u.name}`,
         `Display name: ${u.profile?.display_name}`,
         `Title: ${u.profile?.title}`,
@@ -296,27 +146,88 @@ server.registerTool(
         `Is bot: ${u.is_bot}`,
         `Timezone: ${u.tz}`,
       ].join('\n'))
+    } catch (e) { fail(e) }
+  })
 
-    return { content: [{ type: 'text' as const, text: matches.join('\n---\n') || 'No users found.' }] }
-  },
-)
+program
+  .command('list-channels')
+  .description('List Slack channels in the workspace')
+  .option('--types <types>', 'Comma-separated channel types (default: public_channel)', 'public_channel')
+  .option('--limit <number>', 'Max channels to return (default 100)', parseInt)
+  .option('--excludeArchived', 'Exclude archived channels (default true)')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.conversations.list({ types: opts.types, limit: opts.limit ?? 100, exclude_archived: opts.excludeArchived !== false })
+      console.log((result.channels ?? []).map((c) => `${c.id} #${c.name} — ${c.topic?.value || '(no topic)'}`).join('\n') || 'No channels found.')
+    } catch (e) { fail(e) }
+  })
 
-server.registerTool(
-  'slack_set_channel_topic',
-  {
-    description: 'Set the topic of a Slack channel',
-    inputSchema: {
-      channel: z.string().describe('Slack channel ID'),
-      topic: z.string().describe('New channel topic text'),
-    },
-  },
-  async ({ channel, topic }) => {
-    const client = getClient('bot')
-    await client.conversations.setTopic({ channel, topic })
+program
+  .command('update-message')
+  .description('Update (edit) a previously sent Slack message')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--ts <ts>', 'Timestamp of the message to update')
+  .requiredOption('--text <text>', 'New message text')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      await client.chat.update({ channel: opts.channel, ts: opts.ts, text: opts.text })
+      console.log(`Message ${opts.ts} updated in ${opts.channel}`)
+    } catch (e) { fail(e) }
+  })
 
-    return { content: [{ type: 'text' as const, text: `Topic set for ${channel}` }] }
-  },
-)
+program
+  .command('upload-file')
+  .description('Upload a file to a Slack channel (from string content)')
+  .requiredOption('--channelId <id>', 'Slack channel ID to upload to')
+  .requiredOption('--content <text>', 'File content as a string')
+  .requiredOption('--filename <name>', 'Filename (e.g. report.txt)')
+  .option('--title <title>', 'Display title for the file')
+  .option('--initialComment <text>', 'Message to include with the upload')
+  .option('--threadTs <ts>', 'Thread timestamp to upload in')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const shared = { channel_id: opts.channelId, content: opts.content, filename: opts.filename, title: opts.title, initial_comment: opts.initialComment } as const
+      await client.filesUploadV2(opts.threadTs ? { ...shared, thread_ts: opts.threadTs } : shared)
+      console.log(`File "${opts.filename}" uploaded to ${opts.channelId}`)
+    } catch (e) { fail(e) }
+  })
 
-const transport = new StdioServerTransport()
-await server.connect(transport)
+program
+  .command('search-users')
+  .description('Search for Slack users by name or email address')
+  .requiredOption('--query <query>', 'Search query — matches against real name, display name, and email')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      const result = await client.users.list({})
+      const q = opts.query.toLowerCase()
+      const matches = (result.members ?? [])
+        .filter((u) => !u.deleted && u.id !== 'USLACKBOT')
+        .filter((u) => {
+          const name = (u.real_name ?? '').toLowerCase()
+          const display = (u.profile?.display_name ?? '').toLowerCase()
+          const email = (u.profile?.email ?? '').toLowerCase()
+          return name.includes(q) || display.includes(q) || email.includes(q)
+        })
+        .map((u) => [`ID: ${u.id}`, `Name: ${u.real_name ?? u.name}`, `Display name: ${u.profile?.display_name}`, `Title: ${u.profile?.title}`, `Email: ${u.profile?.email}`, `Is bot: ${u.is_bot}`, `Timezone: ${u.tz}`].join('\n'))
+      console.log(matches.join('\n---\n') || 'No users found.')
+    } catch (e) { fail(e) }
+  })
+
+program
+  .command('set-channel-topic')
+  .description('Set the topic of a Slack channel')
+  .requiredOption('--channel <id>', 'Slack channel ID')
+  .requiredOption('--topic <text>', 'New channel topic text')
+  .action(async (opts) => {
+    try {
+      const client = getClient('bot')
+      await client.conversations.setTopic({ channel: opts.channel, topic: opts.topic })
+      console.log(`Topic set for ${opts.channel}`)
+    } catch (e) { fail(e) }
+  })
+
+await program.parseAsync()
