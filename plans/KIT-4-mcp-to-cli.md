@@ -11,10 +11,11 @@ binaries available system-wide after `npm install`.
 
 ## Approach
 
-Each `src/plugins/shared/tools/*.ts` file is converted from an MCP server (`McpServer.registerTool`)
-to a CLI binary with one subcommand per tool. The shebang (`#!/usr/bin/env npx tsx`) is already
-present on all files. Binaries are registered in `package.json` `bin` field and installed via
-`npm install` in the Docker build.
+Each tool file is converted from an MCP server (`McpServer.registerTool`) to a CLI binary with one
+subcommand per tool. The shebang (`#!/usr/bin/env npx tsx`) is already present on all files.
+Binaries are registered in `package.json` `bin` field and installed via `npm install` in the Docker
+build. A brief usage skill is created alongside each binary in its plugin, so agents know what
+subcommands are available without relying on MCP's automatic schema injection.
 
 **Framework:** `commander` (npm) for subcommand routing and `--help` generation.
 
@@ -25,15 +26,20 @@ stdout. On error, prints to stderr and exits with code 1.
 
 | File | Change |
 | --- | --- |
-| `src/plugins/shared/tools/github.ts` | Rewrite MCP `registerTool` calls → `commander` subcommands |
+| `src/plugins/domains/engineering/tools/github.ts` | Rewrite MCP `registerTool` calls → `commander` subcommands |
 | `src/plugins/shared/tools/slack.ts` | Same |
 | `src/plugins/shared/tools/linear.ts` | Same |
 | `src/plugins/shared/tools/notion.ts` | Same |
-| `src/plugins/shared/tools/kitchen.ts` | Same |
+| `src/plugins/shared/tools/kitchen.ts` | Same (`create_agent_event` → `kitchen-tools create-agent-event`) |
 | `package.json` | Add `bin` field; add `commander` dependency |
 | `src/plugins/shared/.mcp.json` | Delete |
 | `src/plugins/domains/engineering/.mcp.json` | Delete |
 | Skills/SOPs referencing MCP tool names | Update to CLI invocation style |
+| `src/plugins/domains/engineering/skills/github-cli/SKILL.md` | Create — brief usage docs for `kitchen-github` |
+| `src/plugins/shared/skills/slack-cli/SKILL.md` | Create — brief usage docs for `kitchen-slack` |
+| `src/plugins/shared/skills/linear-cli/SKILL.md` | Create — brief usage docs for `kitchen-linear` |
+| `src/plugins/shared/skills/notion-cli/SKILL.md` | Create — brief usage docs for `kitchen-notion` |
+| `src/plugins/shared/skills/kitchen-cli/SKILL.md` | Create — brief usage docs for `kitchen-tools` |
 
 ### Key Decisions
 
@@ -54,20 +60,20 @@ a future ticket once the CLI shape is proven.
 interface.
 
 **Agent discoverability:** MCP auto-injects tool schemas into the system prompt; CLI has no
-equivalent. Agents learn about available CLIs from: (1) their identity file (`zuko.md`), updated to
-enumerate available binaries and usage patterns, and (2) skills that reference CLI commands directly.
-`--help` provides the full interface schema when needed.
+equivalent. Each CLI binary gets a corresponding usage skill in its plugin (e.g.
+`engineering/skills/github-cli/SKILL.md`). Agents invoke the skill when they need the tool; the
+skill describes available subcommands and key flags. `--help` covers the full interface schema.
 
 ## Implementation Steps
 
 1. Add `commander` to `package.json` dependencies (`npm install commander`)
 2. Convert `src/plugins/shared/tools/kitchen.ts` (1 tool — de-risks the pattern)
-3. Convert `src/plugins/shared/tools/github.ts` (13 tools)
+3. Convert `src/plugins/domains/engineering/tools/github.ts` (13 tools)
 4. Convert `src/plugins/shared/tools/slack.ts` (12 tools)
 5. Convert `src/plugins/shared/tools/linear.ts` (20 tools)
 6. Convert `src/plugins/shared/tools/notion.ts` (11 tools)
 7. Add `bin` field to `package.json` mapping binary names to tool files:
-   - `kitchen-github` → `src/plugins/shared/tools/github.ts`
+   - `kitchen-github` → `src/plugins/domains/engineering/tools/github.ts`
    - `kitchen-slack` → `src/plugins/shared/tools/slack.ts`
    - `kitchen-linear` → `src/plugins/shared/tools/linear.ts`
    - `kitchen-notion` → `src/plugins/shared/tools/notion.ts`
@@ -75,8 +81,12 @@ enumerate available binaries and usage patterns, and (2) skills that reference C
 8. Delete `.mcp.json` files (`src/plugins/shared/.mcp.json`, `src/plugins/domains/engineering/.mcp.json`)
 9. Update skills and SOPs: replace MCP tool-name references with CLI invocation style
    (e.g. `linear_create_issue` → `kitchen-linear create-issue`)
-10. Update agent identity files (e.g. `zuko.md`) to enumerate available CLI binaries so agents know
-    what tools exist — MCP auto-injects tool schemas into the system prompt; CLI does not
+10. Create a usage skill per CLI binary in its relevant plugin (brief — subcommands + key flags):
+    - `src/plugins/domains/engineering/skills/github-cli/SKILL.md`
+    - `src/plugins/shared/skills/slack-cli/SKILL.md`
+    - `src/plugins/shared/skills/linear-cli/SKILL.md`
+    - `src/plugins/shared/skills/notion-cli/SKILL.md`
+    - `src/plugins/shared/skills/kitchen-cli/SKILL.md`
 
 ## Testing Strategy
 
