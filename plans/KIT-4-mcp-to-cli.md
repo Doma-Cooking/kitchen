@@ -27,6 +27,7 @@ stdout. On error, prints to stderr and exits with code 1.
 | File | Change |
 | --- | --- |
 | `src/plugins/domains/engineering/tools/github.ts` | Rewrite MCP `registerTool` calls → `commander` subcommands |
+| `src/plugins/domains/engineering/tools/typescript.ts` | Same (4 tools: diagnostics, type-at-position, go-to-definition, find-references) |
 | `src/plugins/shared/tools/slack.ts` | Same |
 | `src/plugins/shared/tools/linear.ts` | Same |
 | `src/plugins/shared/tools/notion.ts` | Same |
@@ -36,6 +37,7 @@ stdout. On error, prints to stderr and exits with code 1.
 | `src/plugins/domains/engineering/.mcp.json` | Delete |
 | Skills/SOPs referencing MCP tool names | Update to CLI invocation style |
 | `src/plugins/domains/engineering/skills/github-cli/SKILL.md` | Create — brief usage docs for `kitchen-github` |
+| `src/plugins/domains/engineering/skills/typescript-cli/SKILL.md` | Create — brief usage docs for `kitchen-typescript` |
 | `src/plugins/shared/skills/slack-cli/SKILL.md` | Create — brief usage docs for `kitchen-slack` |
 | `src/plugins/shared/skills/linear-cli/SKILL.md` | Create — brief usage docs for `kitchen-linear` |
 | `src/plugins/shared/skills/notion-cli/SKILL.md` | Create — brief usage docs for `kitchen-notion` |
@@ -69,20 +71,23 @@ skill describes available subcommands and key flags. `--help` covers the full in
 1. Add `commander` to `package.json` dependencies (`npm install commander`)
 2. Convert `src/plugins/shared/tools/kitchen.ts` (1 tool — de-risks the pattern)
 3. Convert `src/plugins/domains/engineering/tools/github.ts` (13 tools)
-4. Convert `src/plugins/shared/tools/slack.ts` (12 tools)
-5. Convert `src/plugins/shared/tools/linear.ts` (20 tools)
-6. Convert `src/plugins/shared/tools/notion.ts` (11 tools)
-7. Add `bin` field to `package.json` mapping binary names to tool files:
+4. Convert `src/plugins/domains/engineering/tools/typescript.ts` (4 tools)
+5. Convert `src/plugins/shared/tools/slack.ts` (12 tools)
+6. Convert `src/plugins/shared/tools/linear.ts` (20 tools)
+7. Convert `src/plugins/shared/tools/notion.ts` (11 tools)
+8. Add `bin` field to `package.json` mapping binary names to tool files:
    - `kitchen-github` → `src/plugins/domains/engineering/tools/github.ts`
+   - `kitchen-typescript` → `src/plugins/domains/engineering/tools/typescript.ts`
    - `kitchen-slack` → `src/plugins/shared/tools/slack.ts`
    - `kitchen-linear` → `src/plugins/shared/tools/linear.ts`
    - `kitchen-notion` → `src/plugins/shared/tools/notion.ts`
    - `kitchen-tools` → `src/plugins/shared/tools/kitchen.ts`
-8. Delete `.mcp.json` files (`src/plugins/shared/.mcp.json`, `src/plugins/domains/engineering/.mcp.json`)
-9. Update skills and SOPs: replace MCP tool-name references with CLI invocation style
-   (e.g. `linear_create_issue` → `kitchen-linear create-issue`)
-10. Create a usage skill per CLI binary in its relevant plugin (brief — subcommands + key flags):
+9. Delete `.mcp.json` files (`src/plugins/shared/.mcp.json`, `src/plugins/domains/engineering/.mcp.json`)
+10. Update skills and SOPs: replace MCP tool-name references with CLI invocation style
+    (e.g. `linear_create_issue` → `kitchen-linear create-issue`)
+11. Create a usage skill per CLI binary in its relevant plugin (brief — subcommands + key flags):
     - `src/plugins/domains/engineering/skills/github-cli/SKILL.md`
+    - `src/plugins/domains/engineering/skills/typescript-cli/SKILL.md`
     - `src/plugins/shared/skills/slack-cli/SKILL.md`
     - `src/plugins/shared/skills/linear-cli/SKILL.md`
     - `src/plugins/shared/skills/notion-cli/SKILL.md`
