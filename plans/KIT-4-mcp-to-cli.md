@@ -53,6 +53,11 @@ a future ticket once the CLI shape is proven.
 **Feature parity only:** No new tools added, no existing tools removed. Exact same operations, new
 interface.
 
+**Agent discoverability:** MCP auto-injects tool schemas into the system prompt; CLI has no
+equivalent. Agents learn about available CLIs from: (1) their identity file (`zuko.md`), updated to
+enumerate available binaries and usage patterns, and (2) skills that reference CLI commands directly.
+`--help` provides the full interface schema when needed.
+
 ## Implementation Steps
 
 1. Add `commander` to `package.json` dependencies (`npm install commander`)
@@ -69,8 +74,9 @@ interface.
    - `kitchen-tools` → `src/plugins/shared/tools/kitchen.ts`
 8. Delete `.mcp.json` files (`src/plugins/shared/.mcp.json`, `src/plugins/domains/engineering/.mcp.json`)
 9. Update skills and SOPs: replace MCP tool-name references with CLI invocation style
-   (e.g. `linear_create_issue` → `kitchen-linear create-issue --title "..." --teamId "..."`)
-10. Validate `Dockerfile`: confirm `npm install` creates bin symlinks and `node_modules/.bin` is on PATH
+   (e.g. `linear_create_issue` → `kitchen-linear create-issue`)
+10. Update agent identity files (e.g. `zuko.md`) to enumerate available CLI binaries so agents know
+    what tools exist — MCP auto-injects tool schemas into the system prompt; CLI does not
 
 ## Testing Strategy
 
@@ -82,8 +88,8 @@ interface.
 
 ## Risks & Open Questions
 
-- **Dockerfile bin linking:** `npm install` creates symlinks in `node_modules/.bin`. Need to confirm
-  the Docker image has `./node_modules/.bin` on `PATH`, or use `npm install -g .` as an alternative.
+- **Dockerfile bin linking:** Confirmed — `node_modules/.bin` is on `PATH` in the running container
+  (inherited from the `npx tsx` process). No Dockerfile changes needed.
 - **Complex JSON args:** Notion `children`, Linear `sorts`, GitHub PR `body` — passing nested JSON as
   CLI strings is cumbersome for agents. May warrant a follow-on ticket to support `--input-file` or
   stdin for complex payloads.
