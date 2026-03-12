@@ -31,6 +31,7 @@ Address all agreed fixes in one pass — don't respond piecemeal. Batch all chan
 
 - Keep fix commits **separate** from original implementation commits. Do not amend or squash into previous commits — reviewers need to see what changed.
 - Commit format: `<TICKET-ID>: <brief description of changes>`
+- NEVER include Claude commit attributions
 
 ### 4. Verify
 

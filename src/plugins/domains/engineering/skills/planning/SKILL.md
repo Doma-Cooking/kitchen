@@ -50,6 +50,7 @@ Create `plans/<ticket-id>-<short-desc>.md` in the target repo following the SOP-
 
 - Create a branch per SOP-06: `<ticket-id>/<short-description>`
 - Commit the tech plan file: `<TICKET-ID>: add tech plan`
+- NEVER include Claude commit attributions
 - Create a PR per SOP-07 with the tech plan for review
 
 ### 7. Link and Report

@@ -35,6 +35,7 @@ Per SOP-05:
 - Follow existing patterns in the repo
 - Make small, focused commits
 - Commit format: `<TICKET-ID>: <description>`
+- NEVER include Claude commit attributions
 - Stay focused on the ticket's scope
 
 ### 4. Verify
