@@ -46,12 +46,8 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
     }
 
     // Inject git credential helper via env-based config (no .git/config modification needed)
-    const credentialHelperPath = path.resolve(
-      import.meta.dirname, '../../../plugins/shared/scripts/git-credential-github-app.ts'
-    )
-    const tsxPath = path.resolve(
-      import.meta.dirname, '../../../../node_modules/.bin/tsx'
-    )
+    const credentialHelperPath = path.join(process.cwd(), 'src/plugins/shared/scripts/git-credential-github-app.ts')
+    const tsxPath = path.join(process.cwd(), 'node_modules/.bin/tsx')
     env.GIT_CONFIG_COUNT = '1'
     env.GIT_CONFIG_KEY_0 = 'credential.helper'
     env.GIT_CONFIG_VALUE_0 = `!${tsxPath} ${credentialHelperPath}`
