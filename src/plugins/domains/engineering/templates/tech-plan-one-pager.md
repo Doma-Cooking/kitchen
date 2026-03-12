@@ -1,4 +1,4 @@
-# Tech Plan: <title>
+# One Pager: <title>
 
 ## Context
 

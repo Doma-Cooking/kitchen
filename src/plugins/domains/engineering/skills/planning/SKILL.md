@@ -23,15 +23,7 @@ You are executing the planning workflow. Follow these steps in order:
 
 Use `linear_get_issue` to fetch the ticket details from Linear.
 
-### 2. Check Readiness
-
-Per SOP-01, verify the ticket has all required fields:
-- Title
-- Description with acceptance criteria
-- Team
-- Priority
-
-### 3. Clarify if Needed
+### 2. Clarify if Needed
 
 If any required information is missing or ambiguous, follow SOP-04:
 - State what you understand
@@ -39,40 +31,28 @@ If any required information is missing or ambiguous, follow SOP-04:
 - Ask all questions at once
 - **Stop and wait for answers before proceeding**
 
-### 4. Create Tech Plan Ticket
+### 3. Transition Ticket to In Progress
 
-Per SOP-02, create a ticket for the tech plan:
-- Title: `<PARENT-ID>: Tech Plan — <description>`
+Use `linear_update_issue` to move the tech plan ticket to **In Progress**.
 
-### 5. Transition Parent Ticket
-
-Use `linear_update_issue` to move the parent ticket to **In Progress**.
-
-### 6. Explore the Codebase
+### 4. Explore the Codebase
 
 Read code in the relevant repo to understand:
 - Existing patterns and conventions
 - Files that will need changes
 - Dependencies and constraints
 
-### 7. Write the Tech Plan
+### 5. Write the Tech Plan
 
-Create `plans/<ticket-id>-<short-desc>.md` in the target repo following the SOP-03 template:
-- Context (link to ticket, what and why)
-- Approach (files to change, decisions, trade-offs)
-- Implementation Steps (ordered, commit-sized)
-- Testing Strategy
-- Risks & Open Questions
+Create `plans/<ticket-id>-<short-desc>.md` in the target repo following the SOP-03 template.
 
-### 8. Create Branch and PR
+### 6. Create Branch and PR
 
 - Create a branch per SOP-06: `<ticket-id>/<short-description>`
 - Commit the tech plan file: `<TICKET-ID>: add tech plan`
 - Create a PR per SOP-07 with the tech plan for review
 
-### 9. Link and Report
+### 7. Link and Report
 
-- Link the tech plan PR to the tech plan ticket
-- Report back with:
-  - PR URL
-  - Note that **implementation is blocked on tech plan approval**
+- Link the tech plan PR to the ticket
+- Report back with the PR URL, noting that **implementation is blocked on tech plan approval**

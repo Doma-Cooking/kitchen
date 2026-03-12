@@ -22,8 +22,6 @@ You are executing the implementation workflow. Follow these steps in order:
 Check if a tech plan exists for this ticket:
 - Check if the implementation ticket has a parent ticket in Linear — if so, look for a merged `plans/<parent-ticket-id>-*.md` in the repo
 - If a tech plan exists, read it before starting
-- If no tech plan exists and the work is non-trivial, run the `/planning` skill first
-- For trivial changes, proceed without a tech plan
 
 ### 2. Create Branch
 
@@ -50,7 +48,6 @@ Before creating a PR:
 
 Per SOP-07:
 - Title: `<TICKET-ID>: <short description>`
-- Body includes: Summary, Linear Ticket link, Changes, Testing
 - Use `github_create_pull_request`
 
 ### 6. Update Ticket

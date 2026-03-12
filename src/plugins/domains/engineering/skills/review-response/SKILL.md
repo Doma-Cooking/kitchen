@@ -30,7 +30,7 @@ For each review comment, decide:
 Address all agreed fixes in one pass — don't respond piecemeal. Batch all changes together, push once, reply once.
 
 - Keep fix commits **separate** from original implementation commits. Do not amend or squash into previous commits — reviewers need to see what changed.
-- Commit format: `<TICKET-ID>: address review feedback`
+- Commit format: `<TICKET-ID>: <brief description of changes>`
 
 ### 4. Verify
 

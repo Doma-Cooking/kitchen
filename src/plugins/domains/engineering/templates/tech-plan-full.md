@@ -10,18 +10,20 @@
 
 <High-level strategy. Key architectural decisions and trade-offs.>
 
+### Key Decisions
+
+<Trade-offs considered. Why this approach over alternatives.>
+
 ## Implementation Tickets
 
 <List of tickets to create after this plan is approved. Each should be independently deliverable.>
 
-| Ticket | Description | Depends On |
-|--------|-------------|------------|
-| ... | ... | — |
-| ... | ... | ... |
-
-### Parallelization Notes
-
-<Which tickets can be worked in parallel. Which must be sequential and why.>
+```mermaid
+graph TD
+    A[Ticket: <title>] --> B[Ticket: <title>]
+    A --> C[Ticket: <title>]
+    B --> D[Ticket: <title>]
+```
 
 ## Testing Strategy
 
