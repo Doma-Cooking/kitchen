@@ -7,6 +7,11 @@ description: Slack messaging tools. Use when sending messages, reading channel h
 
 CLI binary for Slack API operations. Invoke via Bash.
 
+IMPORTANT:
+- If you need a response from someone, always @mention them.
+- Slack uses single asterisks for bold (*bold*), NOT double (**bold**).
+- Slack markdown does NOT support tables.
+
 ## Subcommands
 
 | Subcommand | Key flags |
