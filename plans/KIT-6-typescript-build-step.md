@@ -57,8 +57,10 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
    - All 6 `bin` entries: `src/…/*.ts` → `dist/…/*.js`
 
 6. **Update `Dockerfile`**:
-   - Add `COPY scripts/ ./scripts/` and `COPY tsconfig.json ./` before the build step
-   - Add `RUN npm run build` after `COPY src/`
+   - Replace `COPY src/ ./src/` with two targeted copies:
+     - `COPY src/plugins/ ./src/plugins/` — runtime markdown assets only (SKILL.md, SOPs, agent prompts); no TS source needed in prod
+     - `COPY scripts/ ./scripts/` and `COPY tsconfig.json ./` for the build step
+   - Add `RUN npm run build` after the COPY steps
    - Change `CMD` from `["npx", "tsx", "src/index.ts"]` → `["node", "dist/index.js"]`
 
 7. **Update `agent-config.ts`** (credential helper, L49–52):
@@ -68,7 +70,7 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
 8. **Remove `*-cli` SKILL.md files** — replace with `--help` + compact tool index:
    - Delete: `src/plugins/shared/skills/{kitchen,linear,notion,slack,github}-cli/`
    - Delete: `src/plugins/domains/engineering/skills/typescript-cli/`
-   - Migrate any non-CLI operating notes from skill files into `zuko.md` before deleting (e.g. `slack-cli/SKILL.md` contains Slack-specific formatting rules — `*bold*` not `**bold**`, no tables, @mention for responses — that belong in the agent prompt)
+   - Migrate non-CLI operating notes into **`base.md`** (not `zuko.md`) — e.g. `slack-cli/SKILL.md` contains cross-agent formatting rules (`*bold*` not `**bold**`, no tables, @mention for responses) that apply to all agents
    - Add CLI tool index table to `src/plugins/agents/agents/zuko.md` (binary name + one-liner + `--help` reference)
 
 ## Testing Strategy
@@ -89,4 +91,4 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
 | `tsc` strict mode surfaces new errors after removing `allowImportingTsExtensions` | Run `tsc --noEmit` immediately after tsconfig change to catch any new errors before proceeding. |
 | SQL migrations not found at runtime | `postbuild` script copies `.sql` files; directory structure mirrors `src/`. Graceful no-op if no migrations exist. |
 | `dist/` checked into git accidentally | Verify `dist/` is in `.gitignore`. |
-| Plugin markdown assets needed at runtime | `COPY src/ ./src/` in Dockerfile is retained — markdown files remain accessible via `CLAUDE_PLUGIN_ROOT`. |
+| Plugin markdown assets needed at runtime | `COPY src/plugins/ ./src/plugins/` in Dockerfile — scoped to only the runtime markdown assets; no TS source files in the prod image. |
