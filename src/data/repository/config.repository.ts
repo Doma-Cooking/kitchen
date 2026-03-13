@@ -72,7 +72,8 @@ export class ConfigRepository {
     }
 
     if (docs) {
-      basePrompt += `\n\n## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo, write markdown files, and push to the ${docs.branch} branch.\n`
+      const docsPath = join(env.workspacesPath, 'docs')
+      basePrompt += `\n\n## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo to ${docsPath}, write markdown files, and push to the ${docs.branch} branch.\n`
     }
 
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
