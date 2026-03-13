@@ -66,8 +66,9 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
    - Runtime: `tsx` → `node` (drop the `tsxPath` variable)
 
 8. **Remove `*-cli` SKILL.md files** — replace with `--help` + compact tool index:
-   - Delete: `src/plugins/shared/skills/{kitchen,linear,notion,slack}-cli/`
-   - Delete: `src/plugins/domains/engineering/skills/{github,typescript}-cli/`
+   - Delete: `src/plugins/shared/skills/{kitchen,linear,notion,slack,github}-cli/`
+   - Delete: `src/plugins/domains/engineering/skills/typescript-cli/`
+   - Migrate any non-CLI operating notes from skill files into `zuko.md` before deleting (e.g. `slack-cli/SKILL.md` contains Slack-specific formatting rules — `*bold*` not `**bold**`, no tables, @mention for responses — that belong in the agent prompt)
    - Add CLI tool index table to `src/plugins/agents/agents/zuko.md` (binary name + one-liner + `--help` reference)
 
 ## Testing Strategy
