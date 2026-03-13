@@ -1,6 +1,5 @@
-FROM node:22-slim
-
-RUN apt-get update && apt-get install -y git gosu zstd && rm -rf /var/lib/apt/lists/*
+# Builder stage: compile TypeScript
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
@@ -8,9 +7,25 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY tsconfig.json ./
+
+RUN npm run build
+
+# Runtime stage: prod deps + compiled output only
+FROM node:22-slim
+
+RUN apt-get update && apt-get install -y git gosu zstd && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["npx", "tsx", "src/index.ts"]
+CMD ["node", "dist/index.js"]
