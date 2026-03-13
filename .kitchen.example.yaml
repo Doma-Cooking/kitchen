@@ -12,6 +12,10 @@ repositories:
     url: https://github.com/example/example-repo
     description: Example repository
     defaultBranch: main
+docs:
+  owner: example-org
+  repo: example-docs
+  branch: main
 agents:
   basePrompt: agents/agents/base.md
   defaultAgent: toph

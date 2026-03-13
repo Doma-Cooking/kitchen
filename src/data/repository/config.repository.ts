@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from '../../domain/entity/agent-config.js'
-import type { KitchenConfig, RepositoryConfig } from '../../domain/entity/kitchen-config.js'
+import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
 
 interface YamlAgentConfig {
   displayName: string
@@ -29,6 +29,11 @@ interface YamlConfig {
     description: string
     defaultBranch: string
   }>
+  docs?: {
+    owner: string
+    repo: string
+    branch: string
+  }
   agents: {
     basePrompt?: string
     defaultAgent: string
@@ -55,6 +60,7 @@ export class ConfigRepository {
     const env = this.loadEnvConfig()
 
     const repositories: RepositoryConfig[] = yaml.repositories ?? []
+    const docs: DocsConfig | undefined = yaml.docs
 
     let basePrompt = yaml.agents.basePrompt
       ? readFileSync(join(yaml.plugins.path, yaml.agents.basePrompt), 'utf8')
@@ -63,6 +69,10 @@ export class ConfigRepository {
     if (repositories.length > 0) {
       const rows = repositories.map((r) => `| ${r.name} | ${r.url} | ${r.description} | ${r.defaultBranch} |`).join('\n')
       basePrompt += `\n\n## Repositories\nThe following repositories are available:\n| Name | URL | Description | Default Branch |\n| --- | --- | --- | --- |\n${rows}\n`
+    }
+
+    if (docs) {
+      basePrompt += `\n\n## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo to docs/ in your workspace, write markdown files, and push to the ${docs.branch} branch.\n`
     }
 
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
@@ -83,6 +93,7 @@ export class ConfigRepository {
       ...yaml,
       ...env,
       repositories,
+      docs,
       lockTtlSeconds: yaml.lockTtlSeconds ?? 1800,
       lockRetryIntervalMs: yaml.lockRetryIntervalMs ?? 5000,
       agents: { ...yaml.agents, team: resolvedTeam },

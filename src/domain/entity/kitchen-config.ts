@@ -7,6 +7,12 @@ export interface RepositoryConfig {
   defaultBranch: string
 }
 
+export interface DocsConfig {
+  owner: string
+  repo: string
+  branch: string
+}
+
 export interface KitchenConfig {
   // Yaml Config
   port: number
@@ -18,6 +24,7 @@ export interface KitchenConfig {
   lockTtlSeconds: number
   lockRetryIntervalMs: number
   repositories: RepositoryConfig[]
+  docs?: DocsConfig
   agents: {
     defaultAgent: string
     team: Record<string, {
