@@ -1,4 +1,4 @@
-# One Pager: TypeScript Build Step (esbuild)
+# One Pager: TypeScript Build Step (tsc)
 
 ## Context
 
@@ -8,16 +8,19 @@ The kitchen service currently runs all TypeScript via `npx tsx` JIT compilation.
 
 ## Approach
 
-Add an **esbuild** build step via `scripts/build.mjs` that compiles all `.ts` files under `src/` to `dist/` in per-file mode (no bundling). Update `package.json`, `Dockerfile`, and two runtime paths to consume the compiled output.
+Use **`tsc`** to emit compiled JavaScript to `dist/`. This requires two source-level changes first: removing `allowImportingTsExtensions` (so tsc can emit) and renaming all relative import paths from `.ts` → `.js` (the canonical ESM convention TypeScript expects). Once those are in place, the build is just `tsc` — no custom compiler, no post-processing.
 
-**Why esbuild instead of tsc emit:**
-`tsconfig.json` has `allowImportingTsExtensions: true`, which prevents `tsc` from emitting. All imports use `.ts` extensions (`import { Foo } from './foo.ts'`). esbuild resolves `.ts` imports natively. A post-build rewrite step converts `.ts` → `.js` in all emitted import paths so Node.js ESM resolution works correctly.
+**Removing `allowImportingTsExtensions`:**
+The flag was added to allow writing `import { Foo } from './foo.ts'`. TypeScript's canonical ESM approach is to write `import { Foo } from './foo.js'` — the compiler resolves `.js` → `.ts` at compile time and emits the `.js` file. Removing the flag unlocks `tsc` emit and aligns the codebase with standard TypeScript conventions.
 
-**Why `bundle: false`:**
-Per-file transform preserves the directory layout, so `import.meta.dirname` in `migrator.ts` continues to resolve to the correct directory (`dist/data/migration/`). Bundling would collapse the file layout and break this.
+**Why `tsc` over esbuild:**
+tsc is already the type checker; using it for emit keeps the toolchain minimal. Per-file output (one `.js` per `.ts`) preserves the directory layout naturally — no bundling configuration needed, and `import.meta.dirname` in `migrator.ts` continues to resolve correctly without any special handling.
 
-**Type checking is unchanged:**
-`tsc --noEmit` continues as the type checker. esbuild only handles emit. A dedicated `typecheck` script is added to `package.json` for clarity.
+**Shebang handling:**
+Update the 6 CLI source files to `#!/usr/bin/env node` before building. tsc preserves shebangs in output, so no post-processing needed.
+
+**SQL migration copy:**
+tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 lines) copies `src/data/migration/migrations/*.sql` → `dist/data/migration/migrations/` as a `postbuild` npm hook.
 
 **Local dev is unchanged:**
 `npm run dev` continues to use `tsx src/index.ts`. The build step is only required for Docker/production.
@@ -26,48 +29,52 @@ Per-file transform preserves the directory layout, so `import.meta.dirname` in `
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Compiler | esbuild | tsc cannot emit with `allowImportingTsExtensions: true` |
-| Bundle mode | `bundle: false` | Preserves layout; keeps `import.meta.dirname` correct |
-| Import rewriting | Post-process regex | esbuild preserves `.ts` paths verbatim in non-bundle mode |
-| Shebang injection | Post-process | esbuild preserves original shebang; replace with `#!/usr/bin/env node` |
-| Build script format | `scripts/build.mjs` | esbuild CLI glob support is shell-dependent; JS API is reliable |
+| Compiler | `tsc` | Canonical — already the type checker; per-file output preserves layout |
+| Import extension convention | `.js` in source | Required by tsc emit; standard TypeScript ESM practice |
+| Shebang | Update in source files | tsc preserves shebangs; no post-processing needed |
+| SQL asset copy | `postbuild` npm script + minimal helper | tsc doesn't copy non-TS files; 6-line script is the minimal fix |
 
 ## Implementation Steps
 
-1. **Install esbuild** — `npm install --save-dev esbuild`
+1. **Update `tsconfig.json`**:
+   - Remove `allowImportingTsExtensions: true`
+   - Remove `noEmit: true` (tsc now emits to `outDir: dist`)
 
-2. **Write `scripts/build.mjs`** — Node.js script using the esbuild JS API:
-   - Collect all `.ts` files under `src/` recursively
-   - Run `esbuild.build({ bundle: false, platform: 'node', format: 'esm', target: 'node22' })`
-   - Post-process all `.js` output files: rewrite `from '…/foo.ts'` → `from '…/foo.js'` (covers `import`, `export`, and type-only import statements)
-   - Inject `#!/usr/bin/env node` shebang into the 6 CLI binary outputs (stripping any existing shebang first)
-   - Copy `src/data/migration/migrations/*.sql` → `dist/data/migration/migrations/` if any exist
+2. **Rename all `.ts` import paths to `.js`** across the codebase (~32 files):
+   - All relative `from './foo.ts'` → `from './foo.js'`
+   - Covers `import`, `export`, and type-only import statements
 
-3. **Update `package.json`**:
-   - `"build"`: `"tsc"` → `"node scripts/build.mjs"`
+3. **Update shebangs in all 6 CLI source files**:
+   - `#!/usr/bin/env npx tsx` → `#!/usr/bin/env node`
+   - Files: `github.ts`, `linear.ts`, `slack.ts`, `notion.ts`, `kitchen.ts`, `typescript.ts`
+
+4. **Write `scripts/copy-migrations.mjs`** — copies `src/data/migration/migrations/` → `dist/data/migration/migrations/` (no-op if directory doesn't exist)
+
+5. **Update `package.json`**:
+   - `"build"`: `"tsc"`
+   - `"postbuild"`: `"node scripts/copy-migrations.mjs"`
    - Add `"typecheck"`: `"tsc --noEmit"`
    - All 6 `bin` entries: `src/…/*.ts` → `dist/…/*.js`
 
-4. **Update `Dockerfile`**:
+6. **Update `Dockerfile`**:
    - Add `COPY scripts/ ./scripts/` and `COPY tsconfig.json ./` before the build step
    - Add `RUN npm run build` after `COPY src/`
    - Change `CMD` from `["npx", "tsx", "src/index.ts"]` → `["node", "dist/index.js"]`
 
-5. **Update `agent-config.ts`** (credential helper, L49–52):
+7. **Update `agent-config.ts`** (credential helper, L49–52):
    - Path: `src/plugins/shared/scripts/git-credential-github-app.ts` → `dist/plugins/shared/scripts/git-credential-github-app.js`
    - Runtime: `tsx` → `node` (drop the `tsxPath` variable)
 
-6. **Remove `*-cli` SKILL.md files** — replace with `--help` + compact tool index:
+8. **Remove `*-cli` SKILL.md files** — replace with `--help` + compact tool index:
    - Delete: `src/plugins/shared/skills/{kitchen,linear,notion,slack}-cli/`
    - Delete: `src/plugins/domains/engineering/skills/{github,typescript}-cli/`
    - Add CLI tool index table to `src/plugins/agents/agents/zuko.md` (binary name + one-liner + `--help` reference)
 
 ## Testing Strategy
 
-- `npm run typecheck` — zero errors
-- `npm run build` — completes without errors; `dist/` populated with 32 files
+- `npm run typecheck` — zero errors (uses `tsc --noEmit` explicitly, ignoring tsconfig `noEmit`)
+- `npm run build` — tsc emits to `dist/`; postbuild copies SQL migrations
 - Shebang check: `head -1 dist/plugins/shared/tools/github.js` → `#!/usr/bin/env node`
-- Import check: `grep -r "from '.*\.ts'" dist/` → zero matches
 - CLI smoke test: `node dist/plugins/shared/tools/github.js list-pull-requests --owner Doma-Cooking --repo kitchen` — returns PR list
 - Server: `node dist/index.js` starts successfully (requires Postgres + Redis env)
 - Docker: `docker build` completes; container starts and responds to health check
@@ -77,8 +84,8 @@ Per-file transform preserves the directory layout, so `import.meta.dirname` in `
 
 | Risk | Mitigation |
 |---|---|
-| `.ts` import rewrite misses edge cases (dynamic imports, re-exports) | The regex `\bfrom\s+(['"])([^'"]+)\.ts\1` covers `import`, `export`, and type-only imports. Dynamic `import()` calls don't use `.ts` extensions in this codebase (verified). |
-| SQL migrations not found at runtime | Build script copies `.sql` files; directory structure mirrors `src/`. Graceful no-op if no migrations exist yet. |
-| `dist/` checked into git accidentally | Add `dist/` to `.gitignore` if not already present. |
+| Import rename scope | 32 files, all relative imports use `.ts` (verified). A single-pass sed or IDE rename handles this reliably. |
+| `tsc` strict mode surfaces new errors after removing `allowImportingTsExtensions` | Run `tsc --noEmit` immediately after tsconfig change to catch any new errors before proceeding. |
+| SQL migrations not found at runtime | `postbuild` script copies `.sql` files; directory structure mirrors `src/`. Graceful no-op if no migrations exist. |
+| `dist/` checked into git accidentally | Verify `dist/` is in `.gitignore`. |
 | Plugin markdown assets needed at runtime | `COPY src/ ./src/` in Dockerfile is retained — markdown files remain accessible via `CLAUDE_PLUGIN_ROOT`. |
-| CLI skill files deleted before `--help` is ergonomic | Acceptable: bins are now on PATH after `npm link` or Docker install, making `kitchen-github --help` fully usable. |
