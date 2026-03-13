@@ -11,10 +11,10 @@ You are executing the review response workflow. Follow these steps in order:
 
 ### 1. Fetch PR and Reviews
 
-- Use `github_get_pull_request` to get the PR details
-- Use `github_list_pr_reviews` to get review summaries
-- Use `github_get_pr_review_comments` to get inline review comments
-- Use `github_get_pr_diff` to understand the current diff
+- Use `kitchen-github get-pull-request` to get the PR details
+- Use `kitchen-github list-pr-reviews` to get review summaries
+- Use `kitchen-github get-pr-review-comments` to get inline review comments
+- Use `kitchen-github get-pr-diff` to understand the current diff
 
 Read everything before taking action.
 
@@ -39,10 +39,10 @@ Address all agreed fixes in one pass — don't respond piecemeal. Batch all chan
 
 ### 5. Respond
 
-- Reply to the individual comments that were addressed with a concise update using (`github_add_pr_comment`).
+- Reply to the individual comments that were addressed with a concise update using (`kitchen-github add-pr-comment`).
 - Post a summary comment on the PR noting what was addressed and any points of disagreement.
 - Post an update in the communication channel where the review response was requested (ie: Slack, Linear).
 
 ### 6. Request Re-review
 
-If substantive changes were made, use `github_request_reviewers` to request re-review from the original reviewers.
+If substantive changes were made, use `kitchen-github request-reviewers` to request re-review from the original reviewers.

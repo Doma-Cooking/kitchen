@@ -21,7 +21,7 @@ You are executing the planning workflow. Follow these steps in order:
 
 ### 1. Fetch the Ticket
 
-Use `linear_get_issue` to fetch the ticket details from Linear.
+Use `kitchen-linear get-issue` to fetch the ticket details from Linear.
 
 ### 2. Clarify if Needed
 
@@ -33,7 +33,7 @@ If any required information is missing or ambiguous, follow SOP-04:
 
 ### 3. Transition Ticket to In Progress
 
-Use `linear_update_issue` to move the tech plan ticket to **In Progress**.
+Use `kitchen-linear update-issue` to move the tech plan ticket to **In Progress**.
 
 ### 4. Explore the Codebase
 
