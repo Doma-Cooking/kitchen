@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process'
 import { access, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
-import { ConfigRepository } from '../repository/config.repository.ts'
+import { ConfigRepository } from '../repository/config.repository.js'
 
 const execFileAsync = promisify(execFile)
 

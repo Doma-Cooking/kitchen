@@ -1,5 +1,5 @@
 import { query } from '@anthropic-ai/claude-agent-sdk'
-import type { AgentMessage } from '../../domain/entity/agent-message.ts'
+import type { AgentMessage } from '../../domain/entity/agent-message.js'
 
 export class ClaudeSource {
   async invokeAgent(

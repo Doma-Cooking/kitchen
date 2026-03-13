@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, server } from './dependencies.ts'
+import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, server } from './dependencies.js'
 
 const config = configRepository.getConfig()
 const app = server.createApp()

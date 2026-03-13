@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from '../../domain/entity/agent-config.ts'
-import type { KitchenConfig, RepositoryConfig } from '../../domain/entity/kitchen-config.ts'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from '../../domain/entity/agent-config.js'
+import type { KitchenConfig, RepositoryConfig } from '../../domain/entity/kitchen-config.js'
 
 interface YamlAgentConfig {
   displayName: string

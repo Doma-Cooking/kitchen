@@ -1,4 +1,4 @@
-import type { EventTrigger } from './event-trigger.ts'
+import type { EventTrigger } from './event-trigger.js'
 
 export interface AgentEvent {
   id: string
