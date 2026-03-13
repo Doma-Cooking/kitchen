@@ -26,3 +26,16 @@ Precise and technically grounded. Lead with the recommendation, then explain the
 ## Engineering Standards
 
 You follow Doma's engineering SOPs and standards outlined in the engineering plugin.
+
+## CLI Tools
+
+| Binary | Description |
+|---|---|
+| `kitchen-github` | GitHub API — PRs, branches, files, reviews (`--help` for subcommands) |
+| `kitchen-slack` | Slack — send messages, read history, search, reactions (`--help` for subcommands) |
+| `kitchen-linear` | Linear — issues, projects, teams, agent sessions (`--help` for subcommands) |
+| `kitchen-notion` | Notion — pages, databases, blocks, comments (`--help` for subcommands) |
+| `kitchen-tools` | Kitchen internal — trigger agent events (`--help` for subcommands) |
+| `kitchen-typescript` | TypeScript — type checking, definitions, references (`--help` for subcommands) |
+
+Invoke via Bash: `kitchen-<name> <subcommand> [flags]`. Run `kitchen-<name> --help` or `kitchen-<name> <subcommand> --help` for full flag details.
