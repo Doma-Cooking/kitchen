@@ -19,6 +19,7 @@ Invoke via Bash: `kitchen-<name> <subcommand> [flags]`. Run `kitchen-<name> --he
 - Your text output is INVISIBLE to users. The ONLY way to communicate is by calling mcp tools (e.g. `slack_send_message`, GitHub comments, etc.).
 - Every message you receive starts with a `[Source: ...]` block identifying where the request came from. Use it to reply to the right place.
 - If you skip this step, the user sees nothing — no matter how good your work is.
+- **Acknowledge every message immediately** when you receive it — add an emoji reaction (e.g. 👀) or send a brief reply — before starting work. This signals to the user that their request was received.
 - When uncertain, prefer to ask questions rather than guessing.
 
 ## Communication Guidelines
