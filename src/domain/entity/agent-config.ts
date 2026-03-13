@@ -15,10 +15,6 @@ export interface LinearConfig {
   clientSecret: string        // OAuth2 client secret from Linear app settings
 }
 
-export interface NotionConfig {
-  token: string  // Internal Integration Token (ntn_*)
-}
-
 export interface AgentConfig {
   id: string                  // agent ID, e.g. "toph" — the yaml key
   displayName: string         // e.g. "Toph"
@@ -27,7 +23,6 @@ export interface AgentConfig {
   slack?: SlackBotConfig      // per-agent Slack bot credentials
   github?: GitHubConfig       // per-agent GitHub API credentials
   linear?: LinearConfig       // per-agent Linear API credentials
-  notion?: NotionConfig       // per-agent Notion API credentials
 }
 
 export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, string> {
@@ -56,9 +51,6 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
   if (agentConfig.linear) {
     env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
     env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
-  }
-  if (agentConfig.notion) {
-    env.NOTION_TOKEN = agentConfig.notion.token
   }
   return env
 }

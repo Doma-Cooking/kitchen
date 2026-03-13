@@ -1,4 +1,4 @@
-import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from './agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig } from './agent-config.js'
 
 export interface RepositoryConfig {
   name: string
@@ -34,7 +34,6 @@ export interface KitchenConfig {
       slack?: SlackBotConfig;
       github?: GitHubConfig;
       linear?: LinearConfig;
-      notion?: NotionConfig
     }>
   }
 
