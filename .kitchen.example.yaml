@@ -1,6 +1,6 @@
 port: 3000
 workers: 4
-maxTurns: 50
+maxTurns: 500
 redis:
   url: redis://redis:6379
 postgres:
