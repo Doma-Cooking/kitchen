@@ -35,5 +35,3 @@ agents:
       linear:
         clientIdEnv: TOPH_LINEAR_CLIENT_ID
         clientSecretEnv: TOPH_LINEAR_CLIENT_SECRET
-      notion:
-        tokenEnv: TOPH_NOTION_TOKEN

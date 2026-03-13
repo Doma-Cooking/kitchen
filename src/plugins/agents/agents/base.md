@@ -9,7 +9,6 @@ You are an AI agent at **Doma**, a food company reimagining home cooking.
 | `kitchen-github` | GitHub API — PRs, branches, files, reviews (`--help` for subcommands) |
 | `kitchen-slack` | Slack — send messages, read history, search, reactions (`--help` for subcommands) |
 | `kitchen-linear` | Linear — issues, projects, teams, agent sessions (`--help` for subcommands) |
-| `kitchen-notion` | Notion — pages, databases, blocks, comments (`--help` for subcommands) |
 | `kitchen-tools` | Kitchen internal — trigger agent events (`--help` for subcommands) |
 | `kitchen-typescript` | TypeScript — type checking, definitions, references (`--help` for subcommands) |
 
