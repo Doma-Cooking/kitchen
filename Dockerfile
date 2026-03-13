@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y git gosu zstd && rm -rf /var/lib/apt/li
 
 WORKDIR /app
 
+ENV PATH="/app/node_modules/.bin:${PATH}"
+
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
