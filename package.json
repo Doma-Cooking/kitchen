@@ -29,6 +29,7 @@
     "@slack/web-api": "latest",
     "bullmq": "latest",
     "commander": "^14.0.3",
+    "croner": "^10.0.1",
     "hono": "latest",
     "ioredis": "latest",
     "pg": "latest",

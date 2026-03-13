@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { SlackBotConfig, GitHubConfig, LinearConfig } from '../../domain/entity/agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
 import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
 
 interface YamlAgentConfig {
@@ -11,6 +11,7 @@ interface YamlAgentConfig {
   slack?: { appTokenEnv?: string; botTokenEnv?: string; userTokenEnv?: string } | boolean
   github?: { tokenEnv?: string; appIdEnv?: string; privateKeyEnv?: string; installationIdEnv?: string } | boolean
   linear?: { clientIdEnv?: string; clientSecretEnv?: string } | boolean
+  schedules?: ScheduleConfig[]
 }
 
 interface YamlConfig {
@@ -84,6 +85,7 @@ export class ConfigRepository {
         slack: this.resolveSlackConfig(agent.slack, prefix),
         github: this.resolveGitHubConfig(agent.github, prefix),
         linear: this.resolveLinearConfig(agent.linear, prefix),
+        schedules: agent.schedules,
       }
     }
 

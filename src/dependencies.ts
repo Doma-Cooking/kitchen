@@ -10,6 +10,7 @@ import { HealthRoutes } from './presentation/routes/health.routes.js'
 import { AgentRoutes } from './presentation/routes/agent.routes.js'
 import { DashboardRoutes } from './presentation/routes/dashboard.routes.js'
 import { SlackRoutes } from './presentation/routes/slack.routes.js'
+import { SchedulerRoutes } from './presentation/routes/scheduler.routes.js'
 import { Server } from './presentation/server.js'
 
 // Repositories
@@ -31,6 +32,7 @@ export const healthRoutes = new HealthRoutes()
 export const agentRoutes = new AgentRoutes(handleEventUseCase)
 export const dashboardRoutes = new DashboardRoutes(eventRepository)
 export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
+export const schedulerRoutes = new SchedulerRoutes(agentRepository, handleEventUseCase)
 export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes)
 
 // Init
