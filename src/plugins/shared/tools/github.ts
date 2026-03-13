@@ -3,17 +3,39 @@
 import { Command } from 'commander'
 import { Octokit } from '@octokit/rest'
 import { createAppAuth } from '@octokit/auth-app'
+import fs from 'node:fs'
 
-function getOctokit(): Octokit {
+const CACHE_PATH = '/tmp/kitchen-tokens.json'
+
+interface TokenCache {
+  linear?: { token: string; expiresAt: number }
+  github?: { token: string; expiresAt: number }
+}
+
+function readCache(): TokenCache {
+  try { return JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8')) } catch { return {} }
+}
+
+function writeCache(cache: TokenCache): void {
+  try { fs.writeFileSync(CACHE_PATH, JSON.stringify(cache), { mode: 0o600 }) } catch { /* best-effort */ }
+}
+
+async function getOctokit(): Promise<Octokit> {
   const appId = process.env['GITHUB_APP_ID']
   const privateKey = process.env['GITHUB_PRIVATE_KEY']
   const installationId = process.env['GITHUB_INSTALLATION_ID']
 
   if (appId && privateKey && installationId) {
-    return new Octokit({
-      authStrategy: createAppAuth,
-      auth: { appId, privateKey, installationId },
-    })
+    const cached = readCache()
+    if (cached.github && cached.github.expiresAt > Date.now() + 60_000) {
+      return new Octokit({ auth: cached.github.token })
+    }
+    const authFn = createAppAuth({ appId, privateKey, installationId })
+    const { token, expiresAt } = await authFn({ type: 'installation' })
+    const updated = readCache()
+    updated.github = { token, expiresAt: new Date(expiresAt).getTime() }
+    writeCache(updated)
+    return new Octokit({ auth: token })
   }
 
   const token = process.env['GITHUB_TOKEN']
@@ -43,7 +65,7 @@ program
   .requiredOption('--base <base>', 'Branch to merge into')
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.create({ owner: opts.owner, repo: opts.repo, title: opts.title, body: opts.body, head: opts.head, base: opts.base })
       out(`PR #${data.number} created: ${data.html_url}`)
     } catch (e) { fail(e) }
@@ -57,7 +79,7 @@ program
   .option('--state <state>', 'Filter by state: open, closed, all', 'open')
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.list({ owner: opts.owner, repo: opts.repo, state: opts.state })
       out(data.map((pr) => `#${pr.number} ${pr.title} (${pr.state})`).join('\n') || 'No pull requests found.')
     } catch (e) { fail(e) }
@@ -71,7 +93,7 @@ program
   .requiredOption('--pullNumber <number>', 'PR number', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.get({ owner: opts.owner, repo: opts.repo, pull_number: opts.pullNumber })
       out([
         `#${data.number}: ${data.title}`,
@@ -93,7 +115,7 @@ program
   .requiredOption('--body <body>', 'Comment body')
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.issues.createComment({ owner: opts.owner, repo: opts.repo, issue_number: opts.pullNumber, body: opts.body })
       out(`Comment added: ${data.html_url}`)
     } catch (e) { fail(e) }
@@ -107,7 +129,7 @@ program
   .requiredOption('--pullNumber <number>', 'PR number', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.get({ owner: opts.owner, repo: opts.repo, pull_number: opts.pullNumber, mediaType: { format: 'diff' } })
       out(data as unknown as string)
     } catch (e) { fail(e) }
@@ -121,7 +143,7 @@ program
   .requiredOption('--pullNumber <number>', 'PR number', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.listReviews({ owner: opts.owner, repo: opts.repo, pull_number: opts.pullNumber })
       out(data.map((r) => `${r.user?.login}: ${r.state} (${r.submitted_at})`).join('\n') || 'No reviews found.')
     } catch (e) { fail(e) }
@@ -135,7 +157,7 @@ program
   .requiredOption('--pullNumber <number>', 'PR number', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.pulls.listReviewComments({ owner: opts.owner, repo: opts.repo, pull_number: opts.pullNumber })
       out(data.map((c) => `[${c.path}:${c.line ?? '?'}] ${c.user?.login}: ${c.body}`).join('\n\n') || 'No review comments found.')
     } catch (e) { fail(e) }
@@ -151,7 +173,7 @@ program
   .option('--teamReviewers <json>', 'Team slugs to request (JSON array)', '[]')
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       await octokit.pulls.requestReviewers({
         owner: opts.owner,
         repo: opts.repo,
@@ -172,7 +194,7 @@ program
   .option('--ref <ref>', 'Git ref (branch, tag, or SHA)')
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.repos.getContent({ owner: opts.owner, repo: opts.repo, path: opts.path, ref: opts.ref })
       if (Array.isArray(data)) {
         out(data.map((item) => `${item.type}\t${item.name}`).join('\n'))
@@ -194,7 +216,7 @@ program
   .option('--perPage <number>', 'Results per page (default 10)', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.actions.listWorkflowRunsForRepo({ owner: opts.owner, repo: opts.repo, branch: opts.branch, status: opts.status, per_page: opts.perPage ?? 10 })
       out(data.workflow_runs.map((r) => `#${r.id} ${r.name} (${r.status}/${r.conclusion ?? 'pending'}) — ${r.head_branch} — ${r.created_at}`).join('\n') || 'No workflow runs found.')
     } catch (e) { fail(e) }
@@ -208,7 +230,7 @@ program
   .option('--perPage <number>', 'Results per page (default 30)', parseInt)
   .action(async (opts) => {
     try {
-      const octokit = getOctokit()
+      const octokit = await getOctokit()
       const { data } = await octokit.repos.listBranches({ owner: opts.owner, repo: opts.repo, per_page: opts.perPage ?? 30 })
       out(data.map((b) => `${b.name}${b.protected ? ' (protected)' : ''}`).join('\n') || 'No branches found.')
     } catch (e) { fail(e) }

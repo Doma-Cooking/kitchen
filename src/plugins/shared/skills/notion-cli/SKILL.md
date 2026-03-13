@@ -38,4 +38,15 @@ kitchen-notion query-database --databaseId <data_source_id> --filter '{"property
 kitchen-notion append-blocks --blockId <page-id> --children '[{"type":"paragraph","paragraph":{"rich_text":[{"text":{"content":"Hello"}}]}}]'
 ```
 
+## Complex JSON Arguments
+
+For flags that take JSON arrays or objects, use a heredoc to avoid quoting issues:
+
+```bash
+kitchen-notion append-blocks --blockId <page-id> --children "$(cat <<'EOF'
+[{"type":"paragraph","paragraph":{"rich_text":[{"text":{"content":"Hello"}}]}}]
+EOF
+)"
+```
+
 Use `kitchen-notion <subcommand> --help` for full flag details.

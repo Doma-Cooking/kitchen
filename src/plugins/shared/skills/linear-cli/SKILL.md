@@ -42,4 +42,15 @@ kitchen-linear emit-activity --agentSessionId <id> --type thought --body "Analyz
 kitchen-linear update-session --agentSessionId <id> --plan '[{"content":"Step 1","status":"completed"},{"content":"Step 2","status":"inProgress"}]'
 ```
 
+## Complex JSON Arguments
+
+For flags that take JSON arrays or objects, use a heredoc to avoid quoting issues:
+
+```bash
+kitchen-linear update-session --agentSessionId <id> --plan "$(cat <<'EOF'
+[{"content":"Step 1","status":"completed"},{"content":"Step 2","status":"inProgress"}]
+EOF
+)"
+```
+
 Use `kitchen-linear <subcommand> --help` for full flag details.

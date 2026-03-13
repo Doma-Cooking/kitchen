@@ -2,13 +2,34 @@
 
 import { Command } from 'commander'
 import { LinearClient } from '@linear/sdk'
+import fs from 'node:fs'
 
 const LINEAR_TOKEN_URL = 'https://api.linear.app/oauth/token'
 const LINEAR_SCOPES = 'app:mentionable,app:assignable,read,write'
+const LINEAR_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+const CACHE_PATH = '/tmp/kitchen-tokens.json'
+
+interface TokenCache {
+  linear?: { token: string; expiresAt: number }
+  github?: { token: string; expiresAt: number }
+}
+
+function readCache(): TokenCache {
+  try { return JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8')) } catch { return {} }
+}
+
+function writeCache(cache: TokenCache): void {
+  try { fs.writeFileSync(CACHE_PATH, JSON.stringify(cache), { mode: 0o600 }) } catch { /* best-effort */ }
+}
 
 let cachedToken: string | undefined
 
 async function fetchToken(): Promise<string> {
+  const cached = readCache()
+  if (cached.linear && cached.linear.expiresAt > Date.now() + 60_000) {
+    return cached.linear.token
+  }
+
   const clientId = process.env['LINEAR_CLIENT_ID']
   const clientSecret = process.env['LINEAR_CLIENT_SECRET']
   if (!clientId || !clientSecret) throw new Error('LINEAR_CLIENT_ID and LINEAR_CLIENT_SECRET must be set')
@@ -31,6 +52,9 @@ async function fetchToken(): Promise<string> {
 
   const data = await res.json() as { access_token: string }
   cachedToken = data.access_token
+  const updated = readCache()
+  updated.linear = { token: cachedToken, expiresAt: Date.now() + LINEAR_TOKEN_TTL_MS }
+  writeCache(updated)
   return cachedToken
 }
 
@@ -48,6 +72,9 @@ async function withRetry<T>(fn: (client: LinearClient) => Promise<T>): Promise<T
     const message = err instanceof Error ? err.message : String(err)
     if (status === 401 || message.includes('401') || message.toLowerCase().includes('unauthorized')) {
       cachedToken = undefined
+      const cache = readCache()
+      delete cache.linear
+      writeCache(cache)
       const retryClient = await getClient()
       return await fn(retryClient)
     }
