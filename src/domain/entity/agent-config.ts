@@ -1,4 +1,4 @@
-import path from 'path'
+import { fileURLToPath } from 'url'
 
 export interface SlackBotConfig {
   appToken: string
@@ -46,11 +46,12 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
     }
 
     // Inject git credential helper via env-based config (no .git/config modification needed)
-    const credentialHelperPath = path.join(process.cwd(), 'src/plugins/shared/scripts/git-credential-github-app.ts')
-    const tsxPath = path.join(process.cwd(), 'node_modules/.bin/tsx')
+    const credentialHelperPath = fileURLToPath(
+      new URL('../../plugins/shared/scripts/git-credential-github-app.js', import.meta.url)
+    )
     env.GIT_CONFIG_COUNT = '1'
     env.GIT_CONFIG_KEY_0 = 'credential.helper'
-    env.GIT_CONFIG_VALUE_0 = `!${tsxPath} ${credentialHelperPath}`
+    env.GIT_CONFIG_VALUE_0 = `!node ${credentialHelperPath}`
   }
   if (agentConfig.linear) {
     env.LINEAR_CLIENT_ID = agentConfig.linear.clientId

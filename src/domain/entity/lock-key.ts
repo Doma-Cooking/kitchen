@@ -1,4 +1,4 @@
-import type { AgentEvent } from './agent-event.ts'
+import type { AgentEvent } from './agent-event.js'
 
 export type LockKeyResolver = (event: AgentEvent, defaultAgentId: string) => string[]
 

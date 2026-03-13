@@ -1,5 +1,5 @@
-import type { AgentConfig } from '../../domain/entity/agent-config.ts'
-import type { ConfigRepository } from './config.repository.ts'
+import type { AgentConfig } from '../../domain/entity/agent-config.js'
+import type { ConfigRepository } from './config.repository.js'
 
 export class AgentRepository {
   constructor(private readonly configRepository: ConfigRepository) {}

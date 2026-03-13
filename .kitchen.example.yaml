@@ -6,7 +6,7 @@ redis:
 postgres:
   url: postgres://kitchen:kitchen@postgres:5432/kitchen
 plugins:
-  path: /app/src/plugins
+  path: /app/dist/plugins
 repositories:
   - name: example
     url: https://github.com/example/example-repo

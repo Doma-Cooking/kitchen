@@ -1,9 +1,9 @@
 import { App } from '@slack/bolt'
-import type { AgentEvent } from '../../domain/entity/agent-event.ts'
-import type { SlackMessage } from '../../domain/entity/event-trigger.ts'
+import type { AgentEvent } from '../../domain/entity/agent-event.js'
+import type { SlackMessage } from '../../domain/entity/event-trigger.js'
 import type { WebClient } from '@slack/web-api'
-import type { AgentRepository } from '../../data/repository/agent.repository.ts'
-import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.ts'
+import type { AgentRepository } from '../../data/repository/agent.repository.js'
+import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
 
 export class SlackRoutes {
   private readonly apps: Map<string, App> = new Map()

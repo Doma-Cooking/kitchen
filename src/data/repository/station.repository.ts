@@ -1,5 +1,5 @@
 import type pg from 'pg'
-import type { AgentStation } from '../../domain/entity/agent-station.ts'
+import type { AgentStation } from '../../domain/entity/agent-station.js'
 
 export class StationRepository {
   private readonly pool: pg.Pool

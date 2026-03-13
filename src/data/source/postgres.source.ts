@@ -1,6 +1,6 @@
 import pg from 'pg'
-import { Migrator } from '../migration/migrator.ts'
-import { ConfigRepository } from '../repository/config.repository.ts'
+import { Migrator } from '../migration/migrator.js'
+import { ConfigRepository } from '../repository/config.repository.js'
 
 export class PostgresSource {
   readonly pool: pg.Pool

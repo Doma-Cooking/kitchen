@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import type { AgentEvent } from '../../domain/entity/agent-event.ts'
-import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.ts'
+import type { AgentEvent } from '../../domain/entity/agent-event.js'
+import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
 
 export class AgentRoutes {
   readonly router: Hono

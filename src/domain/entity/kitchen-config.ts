@@ -1,4 +1,4 @@
-import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from './agent-config.ts'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig } from './agent-config.js'
 
 export interface RepositoryConfig {
   name: string

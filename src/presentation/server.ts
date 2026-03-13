@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import type { HealthRoutes } from './routes/health.routes.ts'
-import type { AgentRoutes } from './routes/agent.routes.ts'
-import { DASHBOARD_BASE_PATH, type DashboardRoutes } from './routes/dashboard.routes.ts'
+import type { HealthRoutes } from './routes/health.routes.js'
+import type { AgentRoutes } from './routes/agent.routes.js'
+import { DASHBOARD_BASE_PATH, type DashboardRoutes } from './routes/dashboard.routes.js'
 
 export class Server {
   constructor(

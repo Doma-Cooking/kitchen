@@ -1,6 +1,6 @@
-import type { AgentEvent } from '../entity/agent-event.ts'
-import type { AgentRepository } from '../../data/repository/agent.repository.ts'
-import type { EventRepository } from '../../data/repository/event.repository.ts'
+import type { AgentEvent } from '../entity/agent-event.js'
+import type { AgentRepository } from '../../data/repository/agent.repository.js'
+import type { EventRepository } from '../../data/repository/event.repository.js'
 
 export class HandleEventUseCase {
   constructor(

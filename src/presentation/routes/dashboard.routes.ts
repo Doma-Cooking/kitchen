@@ -2,7 +2,7 @@ import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { HonoAdapter } from '@bull-board/hono'
 import { serveStatic } from '@hono/node-server/serve-static'
-import type { EventRepository } from '../../data/repository/event.repository.ts'
+import type { EventRepository } from '../../data/repository/event.repository.js'
 
 export const DASHBOARD_BASE_PATH = '/admin/queues'
 
