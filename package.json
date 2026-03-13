@@ -3,16 +3,17 @@
   "type": "module",
   "version": "1.0.0",
   "bin": {
-    "kitchen-github": "src/plugins/shared/tools/github.ts",
-    "kitchen-typescript": "src/plugins/domains/engineering/tools/typescript.ts",
-    "kitchen-slack": "src/plugins/shared/tools/slack.ts",
-    "kitchen-linear": "src/plugins/shared/tools/linear.ts",
-    "kitchen-notion": "src/plugins/shared/tools/notion.ts",
-    "kitchen-tools": "src/plugins/shared/tools/kitchen.ts"
+    "kitchen-github": "dist/plugins/shared/tools/github.js",
+    "kitchen-typescript": "dist/plugins/domains/engineering/tools/typescript.js",
+    "kitchen-slack": "dist/plugins/shared/tools/slack.js",
+    "kitchen-linear": "dist/plugins/shared/tools/linear.js",
+    "kitchen-notion": "dist/plugins/shared/tools/notion.js",
+    "kitchen-tools": "dist/plugins/shared/tools/kitchen.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@types/node": "latest",
     "@types/pg": "latest",
+    "esbuild": "^0.27.4",
     "tsx": "latest",
     "typescript": "latest"
   }
