@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "bin": {
     "kitchen-github": "dist/plugins/shared/tools/github.js",
-    "kitchen-typescript": "dist/plugins/domains/engineering/tools/typescript.js",
+    "kitchen-typescript": "dist/plugins/shared/tools/typescript.js",
     "kitchen-slack": "dist/plugins/shared/tools/slack.js",
     "kitchen-linear": "dist/plugins/shared/tools/linear.js",
     "kitchen-notion": "dist/plugins/shared/tools/notion.js",
