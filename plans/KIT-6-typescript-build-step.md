@@ -33,6 +33,8 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
 | Import extension convention | `.js` in source | Required by tsc emit; standard TypeScript ESM practice |
 | Shebang | Update in source files | tsc preserves shebangs; no post-processing needed |
 | SQL asset copy | `postbuild` npm script + minimal helper | tsc doesn't copy non-TS files; 6-line script is the minimal fix |
+| Dockerfile | Multi-stage build | Builder stage needs full `src/` to compile; runtime stage needs only `dist/` + `src/plugins/`. Multi-stage is the canonical way to separate build-time from runtime without copying TS source into the prod image. |
+| Credential helper path | `import.meta.url`-relative | `process.cwd()` breaks if the server is started from a different directory; `import.meta.url` is always relative to the compiled file's location. |
 
 ## Implementation Steps
 
@@ -56,16 +58,46 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
    - Add `"typecheck"`: `"tsc --noEmit"`
    - All 6 `bin` entries: `src/…/*.ts` → `dist/…/*.js`
 
-6. **Update `Dockerfile`**:
-   - Replace `COPY src/ ./src/` with two targeted copies:
-     - `COPY src/plugins/ ./src/plugins/` — runtime markdown assets only (SKILL.md, SOPs, agent prompts); no TS source needed in prod
-     - `COPY scripts/ ./scripts/` and `COPY tsconfig.json ./` for the build step
-   - Add `RUN npm run build` after the COPY steps
-   - Change `CMD` from `["npx", "tsx", "src/index.ts"]` → `["node", "dist/index.js"]`
+6. **Update `Dockerfile`** — convert to multi-stage build:
+   ```dockerfile
+   # Builder stage: compile TypeScript
+   FROM node:22-slim AS builder
+   WORKDIR /app
+   COPY package.json package-lock.json ./
+   RUN npm ci
+   COPY src/ ./src/
+   COPY scripts/ ./scripts/
+   COPY tsconfig.json ./
+   RUN npm run build
+
+   # Runtime stage: prod deps + compiled output only
+   FROM node:22-slim
+   RUN apt-get update && apt-get install -y git gosu zstd && rm -rf /var/lib/apt/lists/*
+   WORKDIR /app
+   COPY package.json package-lock.json ./
+   RUN npm ci --omit=dev
+   COPY --from=builder /app/dist ./dist
+   COPY src/plugins/ ./src/plugins/
+   COPY entrypoint.sh /app/entrypoint.sh
+   RUN chmod +x /app/entrypoint.sh
+   ENTRYPOINT ["/app/entrypoint.sh"]
+   CMD ["node", "dist/index.js"]
+   ```
+   This keeps the TS source and dev dependencies out of the prod image while giving the builder stage everything it needs to compile.
 
 7. **Update `agent-config.ts`** (credential helper, L49–52):
-   - Path: `src/plugins/shared/scripts/git-credential-github-app.ts` → `dist/plugins/shared/scripts/git-credential-github-app.js`
-   - Runtime: `tsx` → `node` (drop the `tsxPath` variable)
+   - Replace `process.cwd()`-based path construction with `import.meta.url`-relative resolution — robust regardless of the working directory the server is launched from:
+     ```typescript
+     import { fileURLToPath } from 'url'
+     // ...
+     const credentialHelperPath = fileURLToPath(
+       new URL('../../plugins/shared/scripts/git-credential-github-app.js', import.meta.url)
+     )
+     env.GIT_CONFIG_COUNT = '1'
+     env.GIT_CONFIG_KEY_0 = 'credential.helper'
+     env.GIT_CONFIG_VALUE_0 = `!node ${credentialHelperPath}`
+     ```
+   - Drop the `tsxPath` variable (no longer needed)
 
 8. **Remove `*-cli` SKILL.md files** — replace with `--help` + compact tool index:
    - Delete: `src/plugins/shared/skills/{kitchen,linear,notion,slack,github}-cli/`
@@ -90,5 +122,6 @@ tsc does not copy non-`.ts` assets. A minimal `scripts/copy-migrations.mjs` (~6 
 | Import rename scope | 32 files, all relative imports use `.ts` (verified). A single-pass sed or IDE rename handles this reliably. |
 | `tsc` strict mode surfaces new errors after removing `allowImportingTsExtensions` | Run `tsc --noEmit` immediately after tsconfig change to catch any new errors before proceeding. |
 | SQL migrations not found at runtime | `postbuild` script copies `.sql` files; directory structure mirrors `src/`. Graceful no-op if no migrations exist. |
-| `dist/` checked into git accidentally | Verify `dist/` is in `.gitignore`. |
-| Plugin markdown assets needed at runtime | `COPY src/plugins/ ./src/plugins/` in Dockerfile — scoped to only the runtime markdown assets; no TS source files in the prod image. |
+| `dist/` checked into git accidentally | `dist/` is already in `.gitignore` — no action needed. |
+| Plugin markdown assets needed at runtime | Multi-stage Dockerfile: `COPY src/plugins/ ./src/plugins/` in runtime stage — runtime markdown assets present, TS source not. |
+| Credential helper path wrong at runtime | Using `import.meta.url`-relative path — always resolves correctly relative to the compiled file, regardless of launch directory. |
