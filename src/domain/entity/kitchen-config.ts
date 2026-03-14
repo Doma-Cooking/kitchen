@@ -1,4 +1,4 @@
-import type { SlackBotConfig, GitHubConfig, LinearConfig } from './agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from './agent-config.js'
 
 export interface RepositoryConfig {
   name: string
@@ -34,6 +34,7 @@ export interface KitchenConfig {
       slack?: SlackBotConfig;
       github?: GitHubConfig;
       linear?: LinearConfig;
+      schedules?: ScheduleConfig[];
     }>
   }
 

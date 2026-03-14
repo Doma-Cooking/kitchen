@@ -35,3 +35,13 @@ agents:
       linear:
         clientIdEnv: TOPH_LINEAR_CLIENT_ID
         clientSecretEnv: TOPH_LINEAR_CLIENT_SECRET
+      # Cron schedules — all times are UTC
+      # Each entry fires a /${skill} event at the specified cron expression
+      schedules:
+        - cron: "0 9 * * 1-5"   # 9am UTC Mon–Fri
+          skill: daily-standup
+          name: morning-standup
+        - cron: "0 17 * * 5"    # 5pm UTC Friday
+          skill: weekly-digest
+          name: friday-digest
+          stationId: toph-weekly  # optional: use a dedicated station

@@ -7,7 +7,8 @@ export interface SlackMessage {
 export type ApiTrigger = { type: 'api' }
 export type SlackTrigger = { type: 'slack'; channelId: string; threadTs?: string; messageTs?: string; userId: string; recentMessages?: SlackMessage[] }
 export type AgentTrigger = { type: 'agent'; data: Record<string, unknown> }
-export type EventTrigger = ApiTrigger | SlackTrigger | AgentTrigger
+export type CronTrigger = { type: 'cron'; cron: string; scheduleName?: string }
+export type EventTrigger = ApiTrigger | SlackTrigger | AgentTrigger | CronTrigger
 
 export function triggerToString(trigger: EventTrigger): string {
   switch (trigger.type) {
@@ -25,6 +26,8 @@ export function triggerToString(trigger: EventTrigger): string {
     }
     case 'agent':
       return `[Source: agent | data: ${JSON.stringify(trigger.data)}]`
+    case 'cron':
+      return `[Source: cron | expression: ${trigger.cron}${trigger.scheduleName ? ` | name: ${trigger.scheduleName}` : ''}]`
     default:
       return ''
   }
