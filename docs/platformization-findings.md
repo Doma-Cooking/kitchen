@@ -30,3 +30,32 @@ Redis lock keys use the prefix `kitchen:lock:station:{stationId}` — `kitchen:`
 All SQL queries in `station.repository.ts` use parameterized values (`$1`, `$2`) with no hardcoded identifiers. No INSERT statements populate org-specific data.
 
 *No further findings. No seed scripts, fixture files, or hardcoded data initialization exist in the repository.*
+
+---
+
+## KIT-26: CI/CD and Infrastructure Config
+
+*Scan coverage: `.github/` (absent), `Dockerfile`, `entrypoint.sh`, `docker-compose.yml`, `scripts/copy-assets.mjs`, `package.json`*
+
+### Summary
+
+No GitHub Actions workflows exist in the repository — there is no `.github/` directory. No deployment scripts target Doma-specific infrastructure. No IaC files (Terraform, Helm, etc.) are present. The infrastructure files that do exist are generic and well-parameterized. One Low finding in `docker-compose.yml`.
+
+**Notable observation (not a finding per audit criteria):** Kitchen has no automated CI/CD pipeline. No build, test, or deploy workflows exist. This means there are no Doma-specific pipeline assumptions to decouple — but it also means a new org onboarding Kitchen must build their own pipeline from scratch with no reference implementation. This gap should be addressed in the Self-Serve Setup Experience project.
+
+**Findings: 1**
+
+---
+
+### KIT-26-001
+
+**Location:** `docker-compose.yml:33–35` — `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+**Category:** cicd
+**Description:** The `docker-compose.yml` hardcodes Postgres credentials as `kitchen`/`kitchen` (user/password) with database name `kitchen`. These values are not Doma-specific (they use the platform name), but they are committed to source as literals with no env var override path. The `.kitchen.example.yaml` postgres URL also hardcodes these same values (`postgres://kitchen:kitchen@postgres:5432/kitchen`). A new org following the provided setup would use these credentials in their local dev environment, which is fine — but there is no clear signal that these must be changed for any non-local deployment, and no mechanism to override them without editing the file.
+**Severity:** Low
+**Decoupling effort:** Small (hours)
+**Resolved state:** Postgres credentials in `docker-compose.yml` are sourced from env vars with documented defaults (e.g. `POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchen}`), and the `.kitchen.example.yaml` postgres URL uses a placeholder that makes clear the values should be set by the operator.
+
+---
+
+*No further findings in this scan area. `Dockerfile` is generic (no registry URLs, no Doma-specific base images, no hardcoded secrets). `entrypoint.sh` uses only parameterized env vars. `scripts/copy-assets.mjs` is a pure build utility with no org-specific references.*
