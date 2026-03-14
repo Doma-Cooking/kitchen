@@ -34,6 +34,55 @@ The config loading architecture (`config.repository.ts`) is well-designed — al
 
 ---
 
+## KIT-23: Agent Definitions and Prompts
+
+*Scan coverage: `src/plugins/agents/agents/base.md`, `src/plugins/agents/agents/toph.md`, `src/plugins/agents/agents/zuko.md`, `src/plugins/agents/agents/sokka.md`, `src/plugins/agents/agents/TEMPLATE.md`, `src/plugins/domains/engineering/` (full directory), `src/plugins/shared/` (full directory)*
+
+### Summary
+
+The highest-severity scan area. The core platform prompt infrastructure (`base.md`) hardcodes Doma's company identity, and three of Doma's agent definitions along with an entire domain plugin live directly in the Kitchen platform repo. These are tenant artifacts — content that belongs to a specific organization's configuration — not platform artifacts. A second org deploying Kitchen inherits Doma's identity, agents, and engineering processes by default.
+
+**Findings: 3**
+
+---
+
+### KIT-23-001
+
+**Location:** `src/plugins/agents/agents/base.md:3`
+**Category:** agent-prompts
+**Description:** The base prompt injected into every agent contains the literal string: `You are an AI agent at **Doma**, a food company reimagining home cooking.` This is the first substantive line of every agent's system prompt. Any organization running Kitchen — regardless of their own name, industry, or mission — has their agents identify as working for Doma. There is no config key, env var, or template variable to override this. The only fix today is editing source.
+**Severity:** High
+**Decoupling effort:** Small (hours)
+**Resolved state:** `base.md` contains a template variable for company identity (e.g. `You are an AI agent at **{{company.name}}**, {{company.description}}.`), populated at runtime from a required top-level field in `.kitchen.yaml` (e.g. `company.name`, `company.description`). Kitchen startup fails fast with a clear error if the field is absent.
+
+---
+
+### KIT-23-002
+
+**Location:** `src/plugins/agents/agents/toph.md`, `src/plugins/agents/agents/zuko.md`, `src/plugins/agents/agents/sokka.md`
+**Category:** agent-prompts
+**Description:** Doma's three production agent prompt files live in the Kitchen platform repository. These define Doma's org structure (Head of Operations, CTO, Head of Product), Doma's team communication style, Doma's tool usage patterns, and Doma's internal responsibilities. A fresh `git clone` of Kitchen ships with Doma's agents. `TEMPLATE.md` is already present in the same directory and represents the correct platform artifact. The Doma agent files are tenant config masquerading as platform code.
+**Severity:** High
+**Decoupling effort:** Medium (days)
+**Resolved state:** `toph.md`, `zuko.md`, `sokka.md` are removed from the Kitchen repo. The Kitchen repo ships only `TEMPLATE.md` as the agent authoring reference. Doma maintains its agent definitions in a Doma-owned config repository, loaded into a running Kitchen instance via a config path in `.kitchen.yaml`. Other orgs do the same with their own agents.
+
+---
+
+### KIT-23-003
+
+**Location:** `src/plugins/domains/engineering/` — full directory (7 SOPs, 3 skills, 6 templates)
+**Category:** agent-prompts
+**Description:** Doma's entire engineering domain plugin ships inside Kitchen core. This includes Doma's sprint SOPs, incident response process, code review guidelines, PR templates, and engineering skills. A new org using Kitchen must either adopt Doma's engineering practices verbatim or overwrite the entire `domains/engineering/` directory. The `domains/` directory has no mechanism to load content from outside the Kitchen repo — everything in it is treated as platform-level.
+**Severity:** Medium
+**Decoupling effort:** Medium (days)
+**Resolved state:** `domains/engineering/` is removed from the Kitchen repo (or moved to a Doma config repo). The `domains/` directory in Kitchen ships empty (or with a `README.md` explaining the authoring convention). Kitchen supports loading domain plugins from a configurable external path (e.g. `domainsPath` in `.kitchen.yaml`), so each org can point to their own domain definitions.
+
+---
+
+*Clean: `src/plugins/shared/` tools and skills are fully org-agnostic — no Doma-specific references in any shared plugin file.*
+
+---
+
 ## KIT-24: Integrations and API Clients
 
 *Scan coverage: `src/plugins/shared/tools/slack.ts`, `src/plugins/shared/tools/github.ts`, `src/plugins/shared/tools/linear.ts`, `src/plugins/shared/tools/kitchen.ts`, `src/presentation/routes/slack.routes.ts`, `src/data/repository/event.repository.ts`, `src/presentation/routes/scheduler.routes.ts`, `src/data/source/claude.source.ts`, `.kitchen.example.yaml`*
