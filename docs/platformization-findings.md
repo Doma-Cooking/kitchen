@@ -13,9 +13,9 @@
 
 ### Summary
 
-The config loading architecture (`config.repository.ts`) is well-designed — all credential resolution uses configurable env var names with no Doma-specific values hardcoded in source. Two findings, both in example/documentation files rather than runtime code.
+The config loading architecture (`config.repository.ts`) is well-designed — all credential resolution uses configurable env var names with no Doma-specific values hardcoded in source. One finding, in an example/documentation file rather than runtime code.
 
-**Findings: 2**
+**Findings: 1**
 
 ---
 
@@ -27,17 +27,6 @@ The config loading architecture (`config.repository.ts`) is well-designed — al
 **Severity:** Medium
 **Decoupling effort:** Small (hours)
 **Resolved state:** `.env.example` uses a generic placeholder prefix (e.g. `MY_AGENT_*`) with an inline comment explaining the naming convention (`# Replace MY_AGENT with your agent's name in uppercase, matching the key in .kitchen.yaml`). No Doma agent names appear in the file.
-
----
-
-### KIT-22-002
-
-**Location:** `src/data/repository/config.repository.ts:154–156`
-**Category:** env-config
-**Description:** Three infrastructure path env vars have hardcoded path defaults that assume the Docker container volume structure: `CLAUDE_CONFIG_DIR` → `'/data/claude'`, `WORKSPACES_PATH` → `'/data/workspaces'`, `SNAPSHOTS_PATH` → `'/data/snapshots'`. These paths are not Doma-specific but are tied to the opinionated Docker setup in `docker-compose.yml`. An org deploying Kitchen outside the provided Docker setup (bare metal, different container orchestrator, different base path) would silently use these paths without a clear error, potentially writing Claude session state and agent workspaces to unexpected locations.
-**Severity:** Low
-**Decoupling effort:** Small (hours)
-**Resolved state:** Defaults remain as-is (they are reasonable container conventions), but each env var is documented with an inline code comment in `config.repository.ts` explaining what the path is used for and when to override it. Alternatively, the defaults could be removed entirely to force explicit configuration for non-Docker deployments.
 
 ---
 
