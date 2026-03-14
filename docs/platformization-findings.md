@@ -7,6 +7,33 @@
 
 ---
 
+## KIT-24: Integrations and API Clients
+
+*Scan coverage: `src/plugins/shared/tools/slack.ts`, `src/plugins/shared/tools/github.ts`, `src/plugins/shared/tools/linear.ts`, `src/plugins/shared/tools/kitchen.ts`, `src/presentation/routes/slack.routes.ts`, `src/data/repository/event.repository.ts`, `src/presentation/routes/scheduler.routes.ts`, `src/data/source/claude.source.ts`, `.kitchen.example.yaml`*
+
+### Summary
+
+The integration tools are well-positioned for multi-tenancy. Slack, GitHub, Linear, and Redis credentials are all resolved from environment variables at runtime with no Doma-specific values hardcoded in source. One Medium finding in the example configuration file.
+
+**Findings: 1**
+
+---
+
+### KIT-24-001
+
+**Location:** `.kitchen.example.yaml` — `agents` section (entire block)
+**Category:** integrations
+**Description:** The example configuration uses Doma's agent `toph` as the sole agent entry, with Doma-specific credential env var names (`TOPH_SLACK_APP_TOKEN`, `TOPH_GITHUB_TOKEN`, `TOPH_LINEAR_CLIENT_ID`, etc.), Doma-specific prompt paths (`agents/agents/toph.md`, `agents/agents/base.md`), Doma-specific plugin paths (`domains/operations`), Doma-specific cron skill names (`daily-standup`, `weekly-digest`), and `defaultAgent: toph`. A new org following this example would encounter an immediate runtime failure (`defaultAgent: toph` with no toph config) and would need to identify and replace all Doma-specific values before getting a working deployment.
+**Severity:** Medium
+**Decoupling effort:** Small (hours)
+**Resolved state:** Example YAML uses generic placeholder names throughout — e.g. `defaultAgent: my-agent`, `team: my-agent:`, `MY_AGENT_SLACK_BOT_TOKEN`, `agents/agents/my-agent.md`, `domains/my-domain` — with comments indicating what each value represents. No Doma agent names, prompt paths, plugin paths, or skill names appear in the example.
+
+---
+
+*No further findings in this scan area. All credential resolution (Slack tokens, GitHub tokens, Linear OAuth, Redis URL) is sourced from env vars or `.kitchen.yaml` config with no Doma-specific defaults in source code.*
+
+---
+
 ## KIT-25: Database Schema and Seed Data
 
 *Scan coverage: `src/data/migration/migrations/001_create_agent_station.sql`, `src/data/migration/migrator.ts`, `src/data/repository/station.repository.ts`, `src/domain/entity/lock-key.ts`, `src/data/source/redis-lock.source.ts` — full search for `.sql`, `seed*`, and `fixture*` files across the repository*
