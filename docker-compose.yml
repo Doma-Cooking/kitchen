@@ -30,11 +30,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: kitchen
-      POSTGRES_USER: kitchen
-      POSTGRES_PASSWORD: kitchen
+      POSTGRES_DB: ${POSTGRES_DB:-kitchen}
+      POSTGRES_USER: ${POSTGRES_USER:-kitchen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kitchen}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kitchen"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kitchen}"]
       interval: 2s
       timeout: 5s
       retries: 5

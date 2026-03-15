@@ -18,30 +18,26 @@ docs:
   branch: main
 agents:
   basePrompt: agents/agents/base.md
-  defaultAgent: toph
+  defaultAgent: agent
   team:
-    toph:
-      displayName: "Toph"
-      agentPrompt: agents/agents/toph.md
+    agent:
+      displayName: "Agent"
+      agentPrompt: agents/agents/agent.md
       pluginPaths:
         - shared
-        - domains/operations
+        - domains/my-domain
       slack:
-        appTokenEnv: TOPH_SLACK_APP_TOKEN
-        botTokenEnv: TOPH_SLACK_BOT_TOKEN
-        userTokenEnv: TOPH_SLACK_USER_TOKEN
+        appTokenEnv: AGENT_SLACK_APP_TOKEN
+        botTokenEnv: AGENT_SLACK_BOT_TOKEN
+        userTokenEnv: AGENT_SLACK_USER_TOKEN
       github:
-        tokenEnv: TOPH_GITHUB_TOKEN
+        tokenEnv: AGENT_GITHUB_TOKEN
       linear:
-        clientIdEnv: TOPH_LINEAR_CLIENT_ID
-        clientSecretEnv: TOPH_LINEAR_CLIENT_SECRET
+        clientIdEnv: AGENT_LINEAR_CLIENT_ID
+        clientSecretEnv: AGENT_LINEAR_CLIENT_SECRET
       # Cron schedules — all times are UTC
       # Each entry fires a /${skill} event at the specified cron expression
       schedules:
         - cron: "0 9 * * 1-5"   # 9am UTC Mon–Fri
-          skill: daily-standup
-          name: morning-standup
-        - cron: "0 17 * * 5"    # 5pm UTC Friday
-          skill: weekly-digest
-          name: friday-digest
-          stationId: toph-weekly  # optional: use a dedicated station
+          skill: my-skill
+          name: my-schedule
