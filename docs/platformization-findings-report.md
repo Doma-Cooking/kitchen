@@ -78,23 +78,27 @@ The audit scope was comprehensive. These areas have no findings:
 The findings map naturally onto the remaining Hardcoding Audit projects:
 
 ### 1. Tenant Credential Isolation
-*Fixes: KIT-23-001, KIT-22-001, KIT-24-001, KIT-26-001*
+*Fixes: KIT-22-001, KIT-24-001, KIT-26-001*
 
-The small-effort fixes. Add `company.name` / `company.description` to the `.kitchen.yaml` schema and populate `base.md` from it (KIT-23-001). Replace Doma-specific prefixes and values in `.env.example` and `.kitchen.example.yaml` with generic placeholders (KIT-22-001, KIT-24-001). Add env var overrides for Postgres credentials in `docker-compose.yml` (KIT-26-001).
+The example and infrastructure fixes. Replace Doma-specific prefixes and values in `.env.example` and `.kitchen.example.yaml` with generic placeholders (KIT-22-001, KIT-24-001). Add env var overrides for Postgres credentials in `docker-compose.yml` (KIT-26-001).
 
-All four findings are in config, examples, or documentation — no runtime source changes required outside `base.md`.
+All three findings are in example files and infrastructure config — no runtime source changes required.
 
-**Recommended first.** These are the fastest wins, unblock external evaluation of Kitchen without coordination overhead, and directly inform what fields the config layer needs to expose.
+**Recommended first.** Fastest wins, unblock external evaluation of Kitchen without coordination overhead.
 
 ### 2. Multi-tenant Config Layer
-*Fixes: KIT-23-002, KIT-23-003*
+*Fixes: KIT-23-001, KIT-23-002, KIT-23-003*
 
-The structural changes. Move `toph.md`, `zuko.md`, `sokka.md` out of the Kitchen repo into a Doma-owned config repository. Move `domains/engineering/` out as well. Kitchen ships with `TEMPLATE.md` only and an empty `domains/` directory. Requires:
-- Creating the Doma config repo (or designating an existing one)
+The config identity fix and structural changes. Add `company.name` / `company.description` to the `.kitchen.yaml` schema and populate `base.md` from it (KIT-23-001). Move all tenant-specific plugins to their own repositories — two repos to create:
+
+- **Doma config repo** — Doma's agent files (`toph.md`, `zuko.md`, `sokka.md`) and engineering domain plugin with current contents (KIT-23-002, KIT-23-003)
+- **Kitchen starter repo** — a template org config for onboarding new companies (can be deferred to the Self-Serve Onboarding project)
+
+Kitchen ships with `TEMPLATE.md` only and an empty `domains/` directory. Requires:
 - Adding a `domainsPath` config key to `.kitchen.yaml` for external domain loading
 - Updating Kitchen's plugin loader to source content from outside the repo
 
-**Recommended second.** Depends on the credential isolation work (the `domainsPath` mechanism is a config layer addition). Medium effort but the highest structural impact — after this, a Kitchen clone has no Doma content by default.
+**Recommended second.** Medium effort but the highest structural impact — after this, a Kitchen clone has no Doma content by default.
 
 ---
 
