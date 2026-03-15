@@ -18,23 +18,23 @@ docs:
   branch: main
 agents:
   basePrompt: agents/agents/base.md
-  defaultAgent: my-agent  # name of the agent to use when no other routing applies
+  defaultAgent: agent
   team:
-    my-agent:  # replace with your agent's name (lowercase, matches env var prefix in uppercase)
-      displayName: "My Agent"
-      agentPrompt: agents/agents/my-agent.md  # path to your agent's prompt file
+    agent:
+      displayName: "Agent"
+      agentPrompt: agents/agents/agent.md
       pluginPaths:
         - shared
-        - domains/my-domain  # optional: domain plugin for this agent
+        - domains/my-domain
       slack:
-        appTokenEnv: MY_AGENT_SLACK_APP_TOKEN
-        botTokenEnv: MY_AGENT_SLACK_BOT_TOKEN
-        userTokenEnv: MY_AGENT_SLACK_USER_TOKEN
+        appTokenEnv: AGENT_SLACK_APP_TOKEN
+        botTokenEnv: AGENT_SLACK_BOT_TOKEN
+        userTokenEnv: AGENT_SLACK_USER_TOKEN
       github:
-        tokenEnv: MY_AGENT_GITHUB_TOKEN
+        tokenEnv: AGENT_GITHUB_TOKEN
       linear:
-        clientIdEnv: MY_AGENT_LINEAR_CLIENT_ID
-        clientSecretEnv: MY_AGENT_LINEAR_CLIENT_SECRET
+        clientIdEnv: AGENT_LINEAR_CLIENT_ID
+        clientSecretEnv: AGENT_LINEAR_CLIENT_SECRET
       # Cron schedules — all times are UTC
       # Each entry fires a /${skill} event at the specified cron expression
       schedules:
