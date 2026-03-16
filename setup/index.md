@@ -34,7 +34,15 @@ cd kitchen
 
 ## 3. Configure Kitchen
 
-Copy the example files:
+Run the setup script to scaffold your config files:
+
+```bash
+node scripts/setup.mjs
+```
+
+This copies `.kitchen.example.yaml` → `.kitchen.yaml` and `.env.example` → `.env` (skipping files that already exist), then validates your configuration.
+
+Alternatively, copy them manually:
 
 ```bash
 cp .kitchen.example.yaml .kitchen.yaml
@@ -119,11 +127,17 @@ Slack bot started: agent
 
 ---
 
-## 5. Verify your agent
+## 5. Verify your setup
 
-In Slack, @mention the bot in a channel it's been invited to, or send it a DM.
+Once the stack is running, validate your configuration:
 
-The bot should acknowledge (👀 reaction) and respond in-thread.
+```bash
+node scripts/setup.mjs --validate-only
+```
+
+All five checks should pass. If Redis or Postgres show as unreachable, ensure `docker compose up` is running before re-running the script.
+
+Then confirm the agent is responsive: @mention the bot in a Slack channel it's been invited to, or send it a DM. The bot should acknowledge (👀 reaction) and respond in-thread.
 
 ---
 
