@@ -93,9 +93,9 @@ AGENT_SLACK_USER_TOKEN=xoxp-...
 ```
 
 See the integration guides for how to get each token:
-- [Slack setup](./slack.md)
-- [GitHub setup](./github.md)
-- [Linear setup](./linear.md)
+- [Slack setup](./integrations/slack.md)
+- [GitHub setup](./integrations/github.md)
+- [Linear setup](./integrations/linear.md)
 
 ---
 
