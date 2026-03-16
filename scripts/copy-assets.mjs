@@ -14,12 +14,3 @@ if (existsSync(migrationsSource)) {
     filter: (src) => !src.endsWith('.ts'),
   })
 }
-
-// Copy all non-TS plugin assets (agent prompts, SKILL.md files, SOPs, templates)
-const pluginsSource = join(root, 'src/plugins')
-const pluginsDest = join(root, 'dist/plugins')
-mkdirSync(pluginsDest, { recursive: true })
-cpSync(pluginsSource, pluginsDest, {
-  recursive: true,
-  filter: (src) => !src.endsWith('.ts'),
-})

@@ -37,5 +37,4 @@ export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes)
 
 // Init
 
-await configRepository.init()
 await postgresSource.init()
