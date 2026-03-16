@@ -5,6 +5,10 @@
  * Usage:
  *   node scripts/setup.mjs              # scaffold + validate
  *   node scripts/setup.mjs --validate-only  # skip scaffolding, validate only
+ *
+ * Note: if Redis and Postgres are running via Docker (`docker compose up`),
+ * ensure the containers are running before validating — the connectivity
+ * checks will fail if the services are not up.
  */
 
 import { copyFileSync, existsSync, readFileSync } from 'fs'
