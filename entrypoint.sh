@@ -22,6 +22,9 @@ eval $(node -e "
 ")
 
 if [ -n "$PLUGINS_GIT_URL" ]; then
+  git config --global --add safe.directory "$PLUGINS_DIR"
+  gosu node git config --global --add safe.directory "$PLUGINS_DIR"
+  
   credential_helper="!node /app/dist/scripts/git-credential-github-app.js"
   export GIT_CONFIG_COUNT=1
   export GIT_CONFIG_KEY_0="credential.helper"
@@ -43,8 +46,6 @@ if [ -n "$PLUGINS_GIT_URL" ]; then
   fi
 
   chown -R node:node "$PLUGINS_DIR"
-  # Mark plugin dir as safe so the node user can interact with the git repo
-  gosu node git config --global --add safe.directory "$PLUGINS_DIR"
 fi
 
 exec gosu node "$@"
