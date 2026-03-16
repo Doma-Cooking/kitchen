@@ -50,7 +50,7 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
 
     // Inject git credential helper via env-based config (no .git/config modification needed)
     const credentialHelperPath = fileURLToPath(
-      new URL('../../plugins/shared/scripts/git-credential-github-app.js', import.meta.url)
+      new URL('../../scripts/git-credential-github-app.js', import.meta.url)
     )
     env.GIT_CONFIG_COUNT = '1'
     env.GIT_CONFIG_KEY_0 = 'credential.helper'

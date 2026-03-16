@@ -1,3 +1,8 @@
+import { execSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { parse } from 'yaml'
 import { ConfigRepository } from './data/repository/config.repository.js'
 import { ClaudeSource } from './data/source/claude.source.js'
 import { WorkspaceSource } from './data/source/workspace.source.js'
@@ -12,6 +17,36 @@ import { DashboardRoutes } from './presentation/routes/dashboard.routes.js'
 import { SlackRoutes } from './presentation/routes/slack.routes.js'
 import { SchedulerRoutes } from './presentation/routes/scheduler.routes.js'
 import { Server } from './presentation/server.js'
+
+function preInit(): void {
+  const raw = readFileSync('.kitchen.yaml', 'utf8')
+  const yaml = parse(raw) as { plugins: { path: string; git?: { url: string; branch?: string } } }
+  if (yaml.plugins.git) {
+    const { path: pluginsPath, git } = yaml.plugins
+    const branch = git.branch ?? 'main'
+    const credentialHelperPath = fileURLToPath(new URL('./scripts/git-credential-github-app.js', import.meta.url))
+    const env = {
+      ...process.env,
+      GIT_CONFIG_COUNT: '1',
+      GIT_CONFIG_KEY_0: 'credential.helper',
+      GIT_CONFIG_VALUE_0: `!node ${credentialHelperPath}`,
+    }
+    const gitDir = join(pluginsPath, '.git')
+    if (existsSync(gitDir)) {
+      console.log(`Pulling plugin repo at ${pluginsPath}`)
+      execSync(`git -C "${pluginsPath}" pull --ff-only origin "${branch}"`, { stdio: 'inherit', env })
+    } else {
+      console.log(`Cloning plugin repo from ${git.url} into ${pluginsPath}`)
+      execSync(`git clone --branch "${branch}" --depth 1 "${git.url}" "${pluginsPath}"`, { stdio: 'inherit', env })
+    }
+  }
+}
+
+async function postInit(): Promise<void> {
+  await postgresSource.init()
+}
+
+preInit()
 
 // Repositories
 export const configRepository = new ConfigRepository()
@@ -37,5 +72,4 @@ export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes)
 
 // Init
 
-await configRepository.init()
-await postgresSource.init()
+await postInit()

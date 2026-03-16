@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
@@ -54,13 +53,6 @@ interface EnvConfig {
 
 export class ConfigRepository {
   private cachedConfig: KitchenConfig | undefined
-
-  async init(): Promise<void> {
-    const yaml = this.loadYamlConfig()
-    if (yaml.plugins.git) {
-      this.syncPluginRepo(yaml.plugins.path, yaml.plugins.git.url, yaml.plugins.git.branch ?? 'main')
-    }
-  }
 
   getConfig(): KitchenConfig {
     if (this.cachedConfig !== undefined) {
@@ -121,17 +113,6 @@ export class ConfigRepository {
       agents: { ...yaml.agents, team: resolvedTeam },
     }
     return this.cachedConfig
-  }
-
-  private syncPluginRepo(pluginsPath: string, url: string, branch: string): void {
-    const gitDir = join(pluginsPath, '.git')
-    if (existsSync(gitDir)) {
-      console.log(`Pulling plugin repo at ${pluginsPath}`)
-      execSync(`git -C "${pluginsPath}" pull --ff-only origin "${branch}"`, { stdio: 'inherit' })
-    } else {
-      console.log(`Cloning plugin repo from ${url} into ${pluginsPath}`)
-      execSync(`git clone --branch "${branch}" --depth 1 "${url}" "${pluginsPath}"`, { stdio: 'inherit' })
-    }
   }
 
   private loadYamlConfig(): YamlConfig {
