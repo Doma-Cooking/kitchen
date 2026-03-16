@@ -20,7 +20,8 @@ export interface KitchenConfig {
   maxTurns: number
   redis: { url: string }
   postgres: { url: string }
-  plugins: { path: string }
+  plugins: { path: string; git?: { url: string; branch?: string } }
+  company?: { name?: string; description?: string }
   lockTtlSeconds: number
   lockRetryIntervalMs: number
   repositories: RepositoryConfig[]

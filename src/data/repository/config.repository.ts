@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
@@ -20,7 +21,11 @@ interface YamlConfig {
   maxTurns: number
   redis: { url: string }
   postgres: { url: string }
-  plugins: { path: string }
+  plugins: {
+    path: string
+    git?: { url: string; branch?: string }
+  }
+  company?: { name?: string; description?: string }
   lockTtlSeconds?: number
   lockRetryIntervalMs?: number
   repositories?: Array<{
@@ -35,7 +40,6 @@ interface YamlConfig {
     branch: string
   }
   agents: {
-    basePrompt?: string
     defaultAgent: string
     team: Record<string, YamlAgentConfig>
   }
@@ -51,6 +55,13 @@ interface EnvConfig {
 export class ConfigRepository {
   private cachedConfig: KitchenConfig | undefined
 
+  async init(): Promise<void> {
+    const yaml = this.loadYamlConfig()
+    if (yaml.plugins.git) {
+      this.syncPluginRepo(yaml.plugins.path, yaml.plugins.git.url, yaml.plugins.git.branch ?? 'main')
+    }
+  }
+
   getConfig(): KitchenConfig {
     if (this.cachedConfig !== undefined) {
       return this.cachedConfig
@@ -62,25 +73,36 @@ export class ConfigRepository {
     const repositories: RepositoryConfig[] = yaml.repositories ?? []
     const docs: DocsConfig | undefined = yaml.docs
 
-    let basePrompt = yaml.agents.basePrompt
-      ? readFileSync(join(yaml.plugins.path, yaml.agents.basePrompt), 'utf8')
-      : ''
+    const sections: string[] = []
+
+    if (yaml.company?.name) {
+      const description = yaml.company.description ? `, ${yaml.company.description}` : ''
+      sections.push(`## Company\n\nYou are an AI agent at **${yaml.company.name}**${description}.`)
+    }
 
     if (repositories.length > 0) {
       const rows = repositories.map((r) => `| ${r.name} | ${r.url} | ${r.description} | ${r.defaultBranch} |`).join('\n')
-      basePrompt += `\n\n## Repositories\nThe following repositories are available:\n| Name | URL | Description | Default Branch |\n| --- | --- | --- | --- |\n${rows}\n`
+      sections.push(`## Repositories\nThe following repositories are available:\n| Name | URL | Description | Default Branch |\n| --- | --- | --- | --- |\n${rows}`)
     }
 
     if (docs) {
-      basePrompt += `\n\n## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo to docs/ in your workspace, write markdown files, and push to the ${docs.branch} branch.\n`
+      sections.push(`## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo to docs/ in your workspace, write markdown files, and push to the ${docs.branch} branch.`)
     }
+
+    const baseMdPath = join(yaml.plugins.path, 'agents', 'agents', 'base.md')
+    const baseMd = existsSync(baseMdPath) ? readFileSync(baseMdPath, 'utf8').trim() : ''
+    if (baseMd) sections.push(baseMd)
+
+    const basePrompt = sections.join('\n\n')
 
     const resolvedTeam: KitchenConfig['agents']['team'] = {}
     for (const [id, agent] of Object.entries(yaml.agents.team)) {
       const prefix = id.toUpperCase()
+      const agentMd = readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8').trim()
+      const agentSections = basePrompt ? [basePrompt, agentMd] : [agentMd]
       resolvedTeam[id] = {
         displayName: agent.displayName,
-        agentPrompt: basePrompt + readFileSync(join(yaml.plugins.path, agent.agentPrompt), 'utf8'),
+        agentPrompt: agentSections.join('\n\n'),
         pluginPaths: agent.pluginPaths.map((p) => join(yaml.plugins.path, p)),
         slack: this.resolveSlackConfig(agent.slack, prefix),
         github: this.resolveGitHubConfig(agent.github, prefix),
@@ -99,6 +121,17 @@ export class ConfigRepository {
       agents: { ...yaml.agents, team: resolvedTeam },
     }
     return this.cachedConfig
+  }
+
+  private syncPluginRepo(pluginsPath: string, url: string, branch: string): void {
+    const gitDir = join(pluginsPath, '.git')
+    if (existsSync(gitDir)) {
+      console.log(`Pulling plugin repo at ${pluginsPath}`)
+      execSync(`git -C "${pluginsPath}" pull --ff-only origin "${branch}"`, { stdio: 'inherit' })
+    } else {
+      console.log(`Cloning plugin repo from ${url} into ${pluginsPath}`)
+      execSync(`git clone --branch "${branch}" --depth 1 "${url}" "${pluginsPath}"`, { stdio: 'inherit' })
+    }
   }
 
   private loadYamlConfig(): YamlConfig {
