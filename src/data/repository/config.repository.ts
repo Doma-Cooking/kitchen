@@ -76,8 +76,8 @@ export class ConfigRepository {
     const sections: string[] = []
 
     if (yaml.company?.name) {
-      const description = yaml.company.description ? `, ${yaml.company.description}` : ''
-      sections.push(`## Company\n\nYou are an AI agent at **${yaml.company.name}**${description}.`)
+      const description = yaml.company.description ? `\n\n${yaml.company.description}` : ''
+      sections.push(`## Company\n\nYou are an AI agent at **${yaml.company.name}**.${description}.`)
     }
 
     if (repositories.length > 0) {
