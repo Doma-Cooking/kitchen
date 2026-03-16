@@ -52,10 +52,12 @@ function parseYaml(path) {
 function tcpCheck(urlStr) {
   return new Promise((resolve) => {
     try {
-      // Strip protocol: redis://host:port or postgres://user:pass@host:port/db
       const url = new URL(urlStr)
-      const host = url.hostname
       const port = parseInt(url.port) || (url.protocol === 'redis:' ? 6379 : 5432)
+      // Docker service names (bare hostnames with no dots) are only resolvable inside
+      // the container. Since this script runs on the host, use localhost instead —
+      // ports are mapped to the host via docker-compose.
+      const host = url.hostname.includes('.') ? url.hostname : 'localhost'
       const socket = createConnection({ host, port }, () => {
         socket.destroy()
         resolve(true)
