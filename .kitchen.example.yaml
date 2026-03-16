@@ -6,7 +6,13 @@ redis:
 postgres:
   url: postgres://kitchen:kitchen@postgres:5432/kitchen
 plugins:
-  path: /app/dist/plugins
+  path: /data/plugins/my-kitchen
+  git:
+    url: https://github.com/my-org/my-kitchen
+    branch: main  # optional, defaults to main
+company:
+  name: My Company
+  description: a short description of what the company does
 repositories:
   - name: example
     url: https://github.com/example/example-repo
@@ -17,7 +23,6 @@ docs:
   repo: example-docs
   branch: main
 agents:
-  basePrompt: agents/agents/base.md
   defaultAgent: agent
   team:
     agent:
