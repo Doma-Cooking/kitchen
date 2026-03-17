@@ -99,22 +99,12 @@ export class MetricsRoutes {
       return c.json({ error: 'Job not found' }, 404)
     }
 
-    const state = await job.getState()
     const stationId = (job.data.stationId ?? job.data.agentId) as string
 
-    if (state === 'active') {
+    if (this.eventRepository.isRunning(stationId)) {
       this.eventRepository.interrupt(stationId)
     } else {
-      try {
-        await job.remove()
-      } catch (err) {
-        // Job became active between state check and remove — interrupt instead
-        if (err instanceof Error && err.message.includes('locked')) {
-          this.eventRepository.interrupt(stationId)
-        } else {
-          throw err
-        }
-      }
+      await job.remove()
     }
 
     return c.body(null, 204)

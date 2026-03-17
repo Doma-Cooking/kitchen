@@ -46,6 +46,10 @@ export class EventRepository {
     return this.queue
   }
 
+  isRunning(stationId: string): boolean {
+    return this.activeControllers.has(stationId)
+  }
+
   interrupt(stationId: string): void {
     const controller = this.activeControllers.get(stationId)
     if (controller) {
