@@ -92,14 +92,11 @@ export class MetricsRoutes {
     const jobId = c.req.param('jobId')
     if (!jobId) return c.json({ error: 'Missing jobId' }, 400)
 
-    const queue = this.eventRepository.getQueue()
-    const job = await queue.getJob(jobId)
+    const found = await this.eventRepository.cancelJob(jobId)
 
-    if (!job) {
+    if (!found) {
       return c.json({ error: 'Job not found' }, 404)
     }
-
-    await this.eventRepository.cancelJob(jobId)
 
     return c.body(null, 204)
   }

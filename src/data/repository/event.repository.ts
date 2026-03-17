@@ -46,15 +46,17 @@ export class EventRepository {
     return this.queue
   }
 
-  async cancelJob(jobId: string): Promise<void> {
+  async cancelJob(jobId: string): Promise<boolean> {
     const controller = this.activeControllers.get(jobId)
     if (controller) {
       controller.abort()
       this.activeControllers.delete(jobId)
-    } else {
-      const job = await this.queue.getJob(jobId)
-      await job?.remove()
+      return true
     }
+    const job = await this.queue.getJob(jobId)
+    if (!job) return false
+    await job.remove()
+    return true
   }
 
 
