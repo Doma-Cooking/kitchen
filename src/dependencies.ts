@@ -12,6 +12,7 @@ import { AgentRoutes } from './presentation/routes/agent.routes.js'
 import { DashboardRoutes } from './presentation/routes/dashboard.routes.js'
 import { MetricsRoutes } from './presentation/routes/metrics.routes.js'
 import { SlackRoutes } from './presentation/routes/slack.routes.js'
+import { SchedulerRoutes } from './presentation/routes/scheduler.routes.js'
 import { Server } from './presentation/server.js'
 import { CronSource } from './data/source/cron.source.js'
 import { SchedulerRepository } from './data/repository/scheduler.repository.js'
@@ -39,6 +40,7 @@ export const metricsRoutes = new MetricsRoutes(logRepository)
 export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
 export const cronSource = new CronSource()
 export const schedulerRepository = new SchedulerRepository(cronSource, agentRepository, handleEventUseCase)
+export const schedulerRoutes = new SchedulerRoutes(schedulerRepository)
 export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes, metricsRoutes)
 
 // Init
