@@ -53,15 +53,18 @@ function parseYaml(path) {
   return { get }
 }
 
-function tcpCheck(urlStr) {
+function tcpCheck(urlStr, { envPort } = {}) {
   return new Promise((resolve) => {
     try {
       const url = new URL(urlStr)
-      const port = parseInt(url.port) || (url.protocol === 'redis:' ? 6379 : 5432)
+      let port = parseInt(url.port) || (url.protocol === 'redis:' ? 6379 : 5432)
       // Docker service names (bare hostnames with no dots) are only resolvable inside
       // the container. Since this script runs on the host, use localhost instead —
       // ports are mapped to the host via docker-compose.
       const host = url.hostname.includes('.') ? url.hostname : 'localhost'
+      // When connecting to localhost, honour the host-port override from .env
+      // (the URL from .kitchen.yaml uses internal container ports).
+      if (host === 'localhost' && envPort) port = envPort
       const socket = createConnection({ host, port }, () => {
         socket.destroy()
         resolve(true)
@@ -153,20 +156,22 @@ async function validate() {
 
   // Redis connectivity
   const redisUrl = yaml.get('redis.url') || 'redis://localhost:6379'
-  const redisOk = await tcpCheck(redisUrl)
+  const redisPort = env['REDIS_PORT'] ? parseInt(env['REDIS_PORT']) : undefined
+  const redisOk = await tcpCheck(redisUrl, { envPort: redisPort })
   if (redisOk) {
-    pass(`Redis reachable  ${dim(`(${redisUrl})`)}`)
+    pass(`Redis reachable  ${dim(`(${redisUrl}${redisPort ? `, host port ${redisPort}` : ''})`)}`)
   } else {
-    fail(`Redis not reachable  ${dim(`(${redisUrl})`)}`, 'is docker compose up?')
+    fail(`Redis not reachable  ${dim(`(${redisUrl}${redisPort ? `, host port ${redisPort}` : ''})`)}`, 'is docker compose up?')
   }
 
   // Postgres connectivity
   const postgresUrl = yaml.get('postgres.url') || 'postgres://localhost:5432'
-  const pgOk = await tcpCheck(postgresUrl)
+  const pgPort = env['POSTGRES_PORT'] ? parseInt(env['POSTGRES_PORT']) : undefined
+  const pgOk = await tcpCheck(postgresUrl, { envPort: pgPort })
   if (pgOk) {
-    pass(`Postgres reachable  ${dim(`(${postgresUrl})`)}`)
+    pass(`Postgres reachable  ${dim(`(${postgresUrl}${pgPort ? `, host port ${pgPort}` : ''})`)}`)
   } else {
-    fail(`Postgres not reachable  ${dim(`(${postgresUrl})`)}`, 'is docker compose up?')
+    fail(`Postgres not reachable  ${dim(`(${postgresUrl}${pgPort ? `, host port ${pgPort}` : ''})`)}`, 'is docker compose up?')
   }
 }
 
