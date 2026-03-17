@@ -4,6 +4,8 @@ import type { EventRepository, AgentEventJob } from '../../data/repository/event
 import type { TaskMetric } from '../../domain/entity/task-log.js'
 import { ADMIN_PATH, ACTIVE_JOBS_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
 
+const INTERRUPT_RELOAD_DELAY_MS = 250
+
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
   '7d': { label: 'Last 7 days', hours: 168 },
@@ -156,7 +158,7 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
         hx-post="${INTERRUPT_PATH}/${escHtml(job.id ?? '')}"
         hx-swap="none"
         hx-confirm="Interrupt this job?"
-        hx-on::after-request="window.location.reload()"
+        hx-on::after-request="setTimeout(()=>window.location.reload(),${INTERRUPT_RELOAD_DELAY_MS})"
       >Interrupt</button>
     </td>
   </tr>`
@@ -178,7 +180,7 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
         hx-post="${INTERRUPT_PATH}/${escHtml(job.id ?? '')}"
         hx-swap="none"
         hx-confirm="Remove this job?"
-        hx-on::after-request="window.location.reload()"
+        hx-on::after-request="setTimeout(()=>window.location.reload(),${INTERRUPT_RELOAD_DELAY_MS})"
       >Remove</button>
     </td>
   </tr>`
