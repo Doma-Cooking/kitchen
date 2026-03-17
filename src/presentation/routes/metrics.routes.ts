@@ -127,9 +127,7 @@ export class MetricsRoutes {
   }
 }
 
-type QueueJob = AgentEventJob
-
-function renderJobsPanel(activeJobs: QueueJob[], queuedJobs: QueueJob[]): string {
+function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[]): string {
   const now = Date.now()
 
   const activeSection = (() => {
