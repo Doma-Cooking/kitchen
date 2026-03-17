@@ -16,8 +16,7 @@ console.log(`Registered agents: ${agents.map((a) => a.id).join(', ')}`)
 async function shutdown(): Promise<void> {
   console.log('Shutting down...')
   schedulerRepository.stop()
-  await slackRoutes.stop()
-  await eventRepository.closeWorkers()
+  await Promise.all([slackRoutes.stop(), eventRepository.closeWorkers()])
   await postgresSource.close()
   httpServer.close(() => {
     process.exit(0)
