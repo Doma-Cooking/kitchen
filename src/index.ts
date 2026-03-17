@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, schedulerRoutes, server } from './dependencies.js'
+import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, schedulerRoutes, schedulerRepository, server } from './dependencies.js'
 
 const config = configRepository.getConfig()
 const app = server.createApp(config)
@@ -15,9 +15,8 @@ console.log(`Registered agents: ${agents.map((a) => a.id).join(', ')}`)
 
 async function shutdown(): Promise<void> {
   console.log('Shutting down...')
-  schedulerRoutes.stop()
-  await slackRoutes.stop()
-  await eventRepository.closeWorkers()
+  schedulerRepository.stop()
+  await Promise.all([slackRoutes.stop(), eventRepository.closeWorkers()])
   await postgresSource.close()
   httpServer.close(() => {
     process.exit(0)

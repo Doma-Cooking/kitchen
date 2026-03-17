@@ -1,14 +1,13 @@
-import { Cron } from 'croner'
 import type { AgentEvent } from '../../domain/entity/agent-event.js'
 import type { AgentRepository } from '../../data/repository/agent.repository.js'
 import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
+import type { SchedulerRepository } from '../../data/repository/scheduler.repository.js'
 
 export class SchedulerRoutes {
-  private readonly jobs: Cron[] = []
-
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly handleEventUseCase: HandleEventUseCase,
+    private readonly schedulerRepository: SchedulerRepository,
   ) {}
 
   start(): void {
@@ -18,7 +17,7 @@ export class SchedulerRoutes {
       if (!agent.schedules?.length) continue
 
       for (const schedule of agent.schedules) {
-        const job = new Cron(schedule.cron, async () => {
+        this.schedulerRepository.register(`${agent.id}/${schedule.name ?? schedule.skill}`, schedule.cron, async () => {
           const event: AgentEvent = {
             id: crypto.randomUUID(),
             trigger: { type: 'cron', cron: schedule.cron, scheduleName: schedule.name },
@@ -29,18 +28,8 @@ export class SchedulerRoutes {
           }
           await this.handleEventUseCase.execute(event)
         })
-
-        this.jobs.push(job)
-        console.log(`Cron job scheduled: ${agent.id} "${schedule.name ?? schedule.skill}" @ ${schedule.cron}`)
       }
     }
   }
 
-  stop(): void {
-    for (const job of this.jobs) {
-      job.stop()
-    }
-    this.jobs.length = 0
-    console.log('Cron jobs stopped')
-  }
 }
