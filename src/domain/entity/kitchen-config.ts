@@ -46,4 +46,5 @@ export interface KitchenConfig {
   snapshotsPath: string
   adminUsername?: string
   adminPassword?: string
+  autoCompactThreshold: number
 }

@@ -51,6 +51,7 @@ interface EnvConfig {
   snapshotsPath: string
   adminUsername?: string
   adminPassword?: string
+  autoCompactThreshold: number
 }
 
 export class ConfigRepository {
@@ -172,6 +173,9 @@ export class ConfigRepository {
     const snapshotsPath = process.env['SNAPSHOTS_PATH'] ?? '/data/snapshots'
     const adminUsername = process.env['ADMIN_USERNAME']
     const adminPassword = process.env['ADMIN_PASSWORD']
-    return { apiKey, claudeConfigDir, workspacesPath, snapshotsPath, adminUsername, adminPassword }
+    const autoCompactThreshold = process.env['AUTO_COMPACT_THRESHOLD'] !== undefined
+      ? Number(process.env['AUTO_COMPACT_THRESHOLD'])
+      : 60
+    return { apiKey, claudeConfigDir, workspacesPath, snapshotsPath, adminUsername, adminPassword, autoCompactThreshold }
   }
 }
