@@ -5,11 +5,11 @@ export class SchedulerRepository {
 
   register(name: string, expression: string, fn: () => Promise<void>): void {
     this.cronSource.schedule(name, expression, fn)
-    console.log(`System job registered: "${name}" @ ${expression}`)
+    console.log(`Job registered: "${name}" @ ${expression}`)
   }
 
   stop(): void {
     this.cronSource.stop()
-    console.log('System jobs stopped')
+    console.log('Scheduled jobs stopped')
   }
 }
