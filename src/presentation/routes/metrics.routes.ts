@@ -54,7 +54,7 @@ export class MetricsRoutes {
     .active-panel { flex: 0 0 auto; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e5e5e5; }
     .active-panel h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #555; margin-bottom: 8px; }
     .active-panel table { width: 100%; border-collapse: collapse; }
-    .active-panel th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #888; padding: 4px 10px 4px 0; }
+    .active-panel th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #888; padding: 4px 10px 4px 0; text-align: left; }
     .active-panel td { padding: 4px 10px 4px 0; font-size: 13px; }
     .active-panel .empty { color: #aaa; font-size: 13px; }
     .interrupt-btn { padding: 2px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer; }
@@ -76,8 +76,13 @@ export class MetricsRoutes {
   }
 
   private async activeJobsFragment(c: Context): Promise<Response> {
-    const jobs = await this.eventRepository.getQueue().getActive()
-    return c.html(renderActiveJobs(jobs))
+    const queue = this.eventRepository.getQueue()
+    const [activeJobs, waitingJobs, delayedJobs] = await Promise.all([
+      queue.getActive(),
+      queue.getWaiting(),
+      queue.getDelayed(),
+    ])
+    return c.html(renderJobsPanel(activeJobs, [...waitingJobs, ...delayedJobs]))
   }
 
   private async interruptJob(c: Context): Promise<Response> {
@@ -122,20 +127,21 @@ export class MetricsRoutes {
   }
 }
 
-function renderActiveJobs(jobs: Awaited<ReturnType<ReturnType<EventRepository['getQueue']>['getActive']>>): string {
-  const header = '<h2>Active Executions</h2>'
+type QueueJob = Awaited<ReturnType<ReturnType<EventRepository['getQueue']>['getActive']>>[number]
 
-  if (jobs.length === 0) {
-    return `${header}<p class="empty">No active executions</p>`
-  }
-
+function renderJobsPanel(activeJobs: QueueJob[], queuedJobs: QueueJob[]): string {
   const now = Date.now()
-  const rows = jobs.map((job) => {
-    const agentId = escHtml(job.data.agentId ?? '—')
-    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
-    const trigger = escHtml(job.data.trigger?.type ?? '—')
-    const elapsed = job.processedOn ? formatElapsed(now - job.processedOn) : '—'
-    return `  <tr>
+
+  const activeSection = (() => {
+    if (activeJobs.length === 0) {
+      return `<h2>Active</h2><p class="empty">No active executions</p>`
+    }
+    const rows = activeJobs.map((job) => {
+      const agentId = escHtml(job.data.agentId ?? '—')
+      const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
+      const trigger = escHtml(job.data.trigger?.type ?? '—')
+      const elapsed = job.processedOn ? formatElapsed(now - job.processedOn) : '—'
+      return `  <tr>
     <td>${agentId}</td>
     <td>${stationId}</td>
     <td>${trigger}</td>
@@ -150,23 +156,51 @@ function renderActiveJobs(jobs: Awaited<ReturnType<ReturnType<EventRepository['g
       >Interrupt</button>
     </td>
   </tr>`
-  }).join('\n')
-
-  return `${header}
+    }).join('\n')
+    return `<h2>Active</h2>
 <table>
-  <thead>
-    <tr>
-      <th>Agent</th>
-      <th>Station</th>
-      <th>Trigger</th>
-      <th>Elapsed</th>
-      <th></th>
-    </tr>
-  </thead>
+  <thead><tr><th>Agent</th><th>Station</th><th>Trigger</th><th>Elapsed</th><th></th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
 </table>`
+  })()
+
+  const queuedSection = (() => {
+    if (queuedJobs.length === 0) {
+      return `<h2 style="margin-top:12px">Queued</h2><p class="empty">No queued jobs</p>`
+    }
+    const rows = queuedJobs.map((job) => {
+      const agentId = escHtml(job.data.agentId ?? '—')
+      const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
+      const trigger = escHtml(job.data.trigger?.type ?? '—')
+      const status = job.delay && job.delay > 0 ? 'delayed' : 'waiting'
+      return `  <tr>
+    <td>${agentId}</td>
+    <td>${stationId}</td>
+    <td>${trigger}</td>
+    <td>${status}</td>
+    <td>
+      <button
+        class="interrupt-btn"
+        hx-post="${INTERRUPT_PATH}/${escHtml(job.id ?? '')}"
+        hx-target="closest .active-panel"
+        hx-swap="innerHTML"
+        hx-confirm="Remove this job?"
+      >Remove</button>
+    </td>
+  </tr>`
+    }).join('\n')
+    return `<h2 style="margin-top:12px">Queued</h2>
+<table>
+  <thead><tr><th>Agent</th><th>Station</th><th>Trigger</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+${rows}
+  </tbody>
+</table>`
+  })()
+
+  return `${activeSection}\n${queuedSection}`
 }
 
 function formatElapsed(ms: number): string {
