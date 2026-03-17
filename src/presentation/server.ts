@@ -3,7 +3,7 @@ import { basicAuth } from 'hono/basic-auth'
 import type { KitchenConfig } from '../domain/entity/kitchen-config.js'
 import type { HealthRoutes } from './routes/health.routes.js'
 import type { AgentRoutes } from './routes/agent.routes.js'
-import { DASHBOARD_BASE_PATH, type DashboardRoutes } from './routes/dashboard.routes.js'
+import { ADMIN_BASE_PATH, DASHBOARD_BASE_PATH, type DashboardRoutes } from './routes/dashboard.routes.js'
 import type { MetricsRoutes } from './routes/metrics.routes.js'
 
 export class Server {
@@ -21,7 +21,7 @@ export class Server {
     app.route('/', this.agentRoutes.router)
 
     if (config.adminUsername && config.adminPassword) {
-      app.use('/admin/*', basicAuth({ username: config.adminUsername, password: config.adminPassword }))
+      app.use(`${ADMIN_BASE_PATH}/*`, basicAuth({ username: config.adminUsername, password: config.adminPassword }))
     }
 
     app.route(DASHBOARD_BASE_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())

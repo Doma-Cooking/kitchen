@@ -84,6 +84,7 @@ export class LogRepository {
       createdAt: row.created_at,
     }))
   }
+
   async getMetrics(params: { from: Date; to?: Date }): Promise<TaskMetric[]> {
     const values: unknown[] = [params.from]
     const toCondition = params.to ? `AND created_at <= $2` : ''

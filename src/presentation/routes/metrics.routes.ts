@@ -1,6 +1,9 @@
 import { Hono, type Context } from 'hono'
+import { ADMIN_BASE_PATH, DASHBOARD_BASE_PATH } from './dashboard.routes.js'
 import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
+
+export const METRICS_BASE_PATH = `${ADMIN_BASE_PATH}/metrics`
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
@@ -13,8 +16,8 @@ export class MetricsRoutes {
 
   constructor(private readonly logRepository: LogRepository) {
     this.router = new Hono()
-    this.router.get('/admin/metrics', (c) => this.fullPage(c))
-    this.router.get('/admin/metrics/table', (c) => this.tableFragment(c))
+    this.router.get(METRICS_BASE_PATH, (c) => this.fullPage(c))
+    this.router.get(`${METRICS_BASE_PATH}/table`, (c) => this.tableFragment(c))
   }
 
   private async fullPage(c: Context): Promise<Response> {
@@ -70,8 +73,8 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
 <body>
   <header>
     <h1>Kitchen Admin</h1>
-    <a href="/admin/queues">Queue Inspector</a>
-    <a href="/admin/metrics">Metrics</a>
+    <a href="${DASHBOARD_BASE_PATH}">Queue Inspector</a>
+    <a href="${METRICS_BASE_PATH}">Metrics</a>
   </header>
   <main>
     <div class="toolbar">
@@ -79,7 +82,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
       <select
         id="range"
         name="range"
-        hx-get="/admin/metrics/table"
+        hx-get="${METRICS_BASE_PATH}/table"
         hx-target="#metrics-table"
         hx-trigger="change"
         hx-include="[name='range']"
