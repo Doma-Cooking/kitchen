@@ -103,7 +103,16 @@ export class MetricsRoutes {
     if (state === 'active') {
       this.eventRepository.interrupt(stationId)
     } else {
-      await job.remove()
+      try {
+        await job.remove()
+      } catch (err) {
+        // Job became active between state check and remove — interrupt instead
+        if (err instanceof Error && err.message.includes('locked')) {
+          this.eventRepository.interrupt(stationId)
+        } else {
+          throw err
+        }
+      }
     }
 
     return c.body(null, 204)
