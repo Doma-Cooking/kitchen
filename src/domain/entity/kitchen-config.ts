@@ -44,4 +44,6 @@ export interface KitchenConfig {
   claudeConfigDir: string
   workspacesPath: string
   snapshotsPath: string
+  adminUsername?: string
+  adminPassword?: string
 }

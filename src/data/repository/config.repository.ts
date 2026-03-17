@@ -49,6 +49,8 @@ interface EnvConfig {
   claudeConfigDir: string
   workspacesPath: string
   snapshotsPath: string
+  adminUsername?: string
+  adminPassword?: string
 }
 
 export class ConfigRepository {
@@ -168,6 +170,8 @@ export class ConfigRepository {
     const claudeConfigDir = process.env['CLAUDE_CONFIG_DIR'] ?? '/data/claude'
     const workspacesPath = process.env['WORKSPACES_PATH'] ?? '/data/workspaces'
     const snapshotsPath = process.env['SNAPSHOTS_PATH'] ?? '/data/snapshots'
-    return { apiKey, claudeConfigDir, workspacesPath, snapshotsPath }
+    const adminUsername = process.env['ADMIN_USERNAME']
+    const adminPassword = process.env['ADMIN_PASSWORD']
+    return { apiKey, claudeConfigDir, workspacesPath, snapshotsPath, adminUsername, adminPassword }
   }
 }

@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { configRepository, agentRepository, eventRepository, postgresSource, slackRoutes, schedulerRoutes, server } from './dependencies.js'
 
 const config = configRepository.getConfig()
-const app = server.createApp()
+const app = server.createApp(config)
 
 const httpServer = serve({ fetch: app.fetch, port: config.port })
 await slackRoutes.start()
