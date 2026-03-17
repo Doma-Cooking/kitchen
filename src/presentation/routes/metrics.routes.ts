@@ -149,9 +149,9 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
   const now = Date.now()
 
   const activeRows = activeJobs.map((job) => {
-    const agentId = escHtml(job.data.agentId ?? '—')
-    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
-    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const agentId = escHtml(job.data?.agentId ?? '—')
+    const stationId = escHtml(job.data?.stationId ?? job.data?.agentId ?? '—')
+    const trigger = escHtml(job.data?.trigger?.type ?? '—')
     const elapsed = job.processedOn ? formatElapsed(now - job.processedOn) : '—'
     return `  <tr>
     <td>${agentId}</td>
@@ -171,9 +171,9 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
   })
 
   const queuedRows = queuedJobs.map((job) => {
-    const agentId = escHtml(job.data.agentId ?? '—')
-    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
-    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const agentId = escHtml(job.data?.agentId ?? '—')
+    const stationId = escHtml(job.data?.stationId ?? job.data?.agentId ?? '—')
+    const trigger = escHtml(job.data?.trigger?.type ?? '—')
     const status = job.delay && job.delay > 0 ? 'delayed' : 'waiting'
     return `  <tr>
     <td>${agentId}</td>
