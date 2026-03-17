@@ -9,11 +9,11 @@ import { LogRepository } from './data/repository/log.repository.js'
 import { HandleEventUseCase } from './domain/usecase/handle-event.use-case.js'
 import { HealthRoutes } from './presentation/routes/health.routes.js'
 import { AgentRoutes } from './presentation/routes/agent.routes.js'
-import { DashboardRoutes, DASHBOARD_RELATIVE_PATH } from './presentation/routes/dashboard.routes.js'
-import { MetricsRoutes, METRICS_RELATIVE_PATH } from './presentation/routes/metrics.routes.js'
+import { DashboardRoutes } from './presentation/routes/dashboard.routes.js'
+import { MetricsRoutes } from './presentation/routes/metrics.routes.js'
 import { SlackRoutes } from './presentation/routes/slack.routes.js'
 import { SchedulerRoutes } from './presentation/routes/scheduler.routes.js'
-import { ADMIN_BASE_PATH, Server } from './presentation/server.js'
+import { Server } from './presentation/server.js'
 
 // Repositories
 export const configRepository = new ConfigRepository()
@@ -34,11 +34,7 @@ export const handleEventUseCase = new HandleEventUseCase(agentRepository, eventR
 export const healthRoutes = new HealthRoutes()
 export const agentRoutes = new AgentRoutes(handleEventUseCase)
 export const dashboardRoutes = new DashboardRoutes(eventRepository)
-export const metricsRoutes = new MetricsRoutes(
-  logRepository,
-  `${ADMIN_BASE_PATH}${DASHBOARD_RELATIVE_PATH}`,
-  `${ADMIN_BASE_PATH}${METRICS_RELATIVE_PATH}`,
-)
+export const metricsRoutes = new MetricsRoutes(logRepository)
 export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
 export const schedulerRoutes = new SchedulerRoutes(agentRepository, handleEventUseCase)
 export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes, metricsRoutes)

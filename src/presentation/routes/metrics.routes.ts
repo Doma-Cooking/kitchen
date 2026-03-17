@@ -1,8 +1,7 @@
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
-
-export const METRICS_RELATIVE_PATH = '/metrics'
+import { DASHBOARD_PATH, METRICS_PATH } from './routes.js'
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
@@ -13,20 +12,16 @@ const RANGES: Record<string, { label: string; hours: number }> = {
 export class MetricsRoutes {
   readonly router: Hono
 
-  constructor(
-    private readonly logRepository: LogRepository,
-    private readonly queuesPath: string,
-    private readonly metricsPath: string,
-  ) {
+  constructor(private readonly logRepository: LogRepository) {
     this.router = new Hono()
-    this.router.get('/', (c) => this.fullPage(c))
-    this.router.get('/table', (c) => this.tableFragment(c))
+    this.router.get(METRICS_PATH, (c) => this.fullPage(c))
+    this.router.get(`${METRICS_PATH}/table`, (c) => this.tableFragment(c))
   }
 
   private async fullPage(c: Context): Promise<Response> {
     const range = c.req.query('range') ?? '7d'
     const metrics = await this.fetchMetrics(range)
-    return c.html(renderPage(metrics, range, this.queuesPath, this.metricsPath))
+    return c.html(renderPage(metrics, range))
   }
 
   private async tableFragment(c: Context): Promise<Response> {
@@ -42,7 +37,7 @@ export class MetricsRoutes {
   }
 }
 
-function renderPage(metrics: TaskMetric[], selectedRange: string, queuesPath: string, metricsPath: string): string {
+function renderPage(metrics: TaskMetric[], selectedRange: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,8 +71,8 @@ function renderPage(metrics: TaskMetric[], selectedRange: string, queuesPath: st
 <body>
   <header>
     <h1>Kitchen Admin</h1>
-    <a href="${queuesPath}">Queue Inspector</a>
-    <a href="${metricsPath}">Metrics</a>
+    <a href="${DASHBOARD_PATH}">Queue Inspector</a>
+    <a href="${METRICS_PATH}">Metrics</a>
   </header>
   <main>
     <div class="toolbar">
@@ -85,7 +80,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string, queuesPath: st
       <select
         id="range"
         name="range"
-        hx-get="${metricsPath}/table"
+        hx-get="${METRICS_PATH}/table"
         hx-target="#metrics-table"
         hx-trigger="change"
         hx-include="[name='range']"

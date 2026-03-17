@@ -3,10 +3,9 @@ import { basicAuth } from 'hono/basic-auth'
 import type { KitchenConfig } from '../domain/entity/kitchen-config.js'
 import type { HealthRoutes } from './routes/health.routes.js'
 import type { AgentRoutes } from './routes/agent.routes.js'
-import { DASHBOARD_RELATIVE_PATH, type DashboardRoutes } from './routes/dashboard.routes.js'
-import { METRICS_RELATIVE_PATH, type MetricsRoutes } from './routes/metrics.routes.js'
-
-export const ADMIN_BASE_PATH = '/admin'
+import type { DashboardRoutes } from './routes/dashboard.routes.js'
+import type { MetricsRoutes } from './routes/metrics.routes.js'
+import { ADMIN_PATH, DASHBOARD_PATH } from './routes/routes.js'
 
 export class Server {
   constructor(
@@ -23,13 +22,11 @@ export class Server {
     app.route('/', this.agentRoutes.router)
 
     if (config.adminUsername && config.adminPassword) {
-      app.use(`${ADMIN_BASE_PATH}/*`, basicAuth({ username: config.adminUsername, password: config.adminPassword }))
+      app.use(`${ADMIN_PATH}/*`, basicAuth({ username: config.adminUsername, password: config.adminPassword }))
     }
 
-    const dashboardPath = `${ADMIN_BASE_PATH}${DASHBOARD_RELATIVE_PATH}`
-    this.dashboardRoutes.serverAdapter.setBasePath(dashboardPath)
-    app.route(dashboardPath, this.dashboardRoutes.serverAdapter.registerPlugin())
-    app.route(`${ADMIN_BASE_PATH}${METRICS_RELATIVE_PATH}`, this.metricsRoutes.router)
+    app.route(DASHBOARD_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())
+    app.route('/', this.metricsRoutes.router)
 
     return app
   }

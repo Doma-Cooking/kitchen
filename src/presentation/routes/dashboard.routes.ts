@@ -3,8 +3,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { HonoAdapter } from '@bull-board/hono'
 import { serveStatic } from '@hono/node-server/serve-static'
 import type { EventRepository } from '../../data/repository/event.repository.js'
-
-export const DASHBOARD_RELATIVE_PATH = '/queues'
+import { DASHBOARD_PATH } from './routes.js'
 
 export class DashboardRoutes {
   readonly serverAdapter: HonoAdapter
@@ -16,5 +15,7 @@ export class DashboardRoutes {
       queues: [new BullMQAdapter(eventRepository.getQueue())],
       serverAdapter: this.serverAdapter,
     })
+
+    this.serverAdapter.setBasePath(DASHBOARD_PATH)
   }
 }
