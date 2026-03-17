@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { basicAuth } from 'hono/basic-auth'
 import type { HealthRoutes } from './routes/health.routes.js'
 import type { AgentRoutes } from './routes/agent.routes.js'
 import { DASHBOARD_BASE_PATH, type DashboardRoutes } from './routes/dashboard.routes.js'
@@ -15,6 +16,13 @@ export class Server {
 
     app.route('/', this.healthRoutes.router)
     app.route('/', this.agentRoutes.router)
+
+    const adminUsername = process.env.ADMIN_USERNAME
+    const adminPassword = process.env.ADMIN_PASSWORD
+    if (adminUsername && adminPassword) {
+      app.use('/admin/*', basicAuth({ username: adminUsername, password: adminPassword }))
+    }
+
     app.route(DASHBOARD_BASE_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())
 
     return app
