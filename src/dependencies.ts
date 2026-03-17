@@ -5,6 +5,7 @@ import { PostgresSource } from './data/source/postgres.source.js'
 import { AgentRepository } from './data/repository/agent.repository.js'
 import { EventRepository } from './data/repository/event.repository.js'
 import { StationRepository } from './data/repository/station.repository.js'
+import { LogRepository } from './data/repository/log.repository.js'
 import { HandleEventUseCase } from './domain/usecase/handle-event.use-case.js'
 import { HealthRoutes } from './presentation/routes/health.routes.js'
 import { AgentRoutes } from './presentation/routes/agent.routes.js'
@@ -22,7 +23,8 @@ export const postgresSource = new PostgresSource(configRepository)
 export const workspaceSource = new WorkspaceSource(configRepository)
 export const agentRepository = new AgentRepository(configRepository)
 export const stationRepository = new StationRepository(postgresSource.pool)
-export const eventRepository = new EventRepository(configRepository, agentRepository, claudeSource, stationRepository, workspaceSource)
+export const logRepository = new LogRepository(postgresSource.pool)
+export const eventRepository = new EventRepository(configRepository, agentRepository, claudeSource, stationRepository, workspaceSource, logRepository)
 
 // Use cases
 export const handleEventUseCase = new HandleEventUseCase(agentRepository, eventRepository)

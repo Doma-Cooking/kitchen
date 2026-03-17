@@ -10,6 +10,7 @@ import type { ClaudeSource } from '../source/claude.source.js'
 import type { ConfigRepository } from './config.repository.js'
 import type { StationRepository } from './station.repository.js'
 import type { WorkspaceSource } from '../source/workspace.source.js'
+import type { LogRepository } from './log.repository.js'
 
 const QUEUE_NAME = 'agent-events'
 
@@ -25,6 +26,7 @@ export class EventRepository {
     private readonly claudeSource: ClaudeSource,
     private readonly stationRepository: StationRepository,
     private readonly workspaceSource: WorkspaceSource,
+    private readonly logRepository: LogRepository,
   ) {
     const config = this.configRepository.getConfig()
 
@@ -61,6 +63,7 @@ export class EventRepository {
           const lockId = job.id ?? crypto.randomUUID()
           this.activeLocks.set(lockId, { keys: lockKeys, tokens })
 
+          const startMs = Date.now()
           try {
             const agentConfig = this.agentRepository.getAgentConfig(agentId)
             if (agentConfig === undefined) {
@@ -95,7 +98,23 @@ export class EventRepository {
 
             if (sessionId) await this.stationRepository.setStation(stationId, { sessionId })
 
+            this.logRepository.writeTaskLog({
+              agentId,
+              trigger: event.trigger,
+              outcome: 'success',
+              durationMs: Date.now() - startMs,
+            })
+
             return { result, sessionId }
+          } catch (err) {
+            this.logRepository.writeTaskLog({
+              agentId,
+              trigger: event.trigger,
+              outcome: 'failure',
+              durationMs: Date.now() - startMs,
+              error: err instanceof Error ? err.message : String(err),
+            })
+            throw err
           } finally {
             const finalStationId = event.stationId ?? agentId
             await this.workspaceSource.snapshot(finalStationId).catch((err) => {
