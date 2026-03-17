@@ -46,15 +46,14 @@ export class EventRepository {
     return this.queue
   }
 
-  isRunning(stationId: string): boolean {
-    return this.activeControllers.has(stationId)
-  }
-
-  interrupt(stationId: string): void {
-    const controller = this.activeControllers.get(stationId)
+  async cancelJob(jobId: string): Promise<void> {
+    const controller = this.activeControllers.get(jobId)
     if (controller) {
       controller.abort()
-      this.activeControllers.delete(stationId)
+      this.activeControllers.delete(jobId)
+    } else {
+      const job = await this.queue.getJob(jobId)
+      await job?.remove()
     }
   }
 
@@ -86,7 +85,7 @@ export class EventRepository {
           }
 
           const abortController = new AbortController()
-          this.activeControllers.set(stationId, abortController)
+          this.activeControllers.set(job.id!, abortController)
           this.activeLocks.set(stationId, { keys: lockKeys, tokens })
 
           const startMs = Date.now()
@@ -148,7 +147,7 @@ export class EventRepository {
             })
             await this.redisLock.releaseAll(lockKeys, tokens)
             this.activeLocks.delete(stationId)
-            this.activeControllers.delete(stationId)
+            this.activeControllers.delete(job.id!)
           }
         },
         {

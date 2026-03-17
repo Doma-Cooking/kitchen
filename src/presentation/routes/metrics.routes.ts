@@ -99,13 +99,7 @@ export class MetricsRoutes {
       return c.json({ error: 'Job not found' }, 404)
     }
 
-    const stationId = (job.data.stationId ?? job.data.agentId) as string
-
-    if (this.eventRepository.isRunning(stationId)) {
-      this.eventRepository.interrupt(stationId)
-    } else {
-      await job.remove()
-    }
+    await this.eventRepository.cancelJob(jobId)
 
     return c.body(null, 204)
   }
