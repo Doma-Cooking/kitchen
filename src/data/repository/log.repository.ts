@@ -1,5 +1,5 @@
 import type pg from 'pg'
-import type { TaskLog, TaskOutcome } from '../../domain/entity/task-log.js'
+import type { TaskLog, TaskMetric, TaskOutcome } from '../../domain/entity/task-log.js'
 import type { EventTrigger } from '../../domain/entity/event-trigger.js'
 
 export class LogRepository {
@@ -83,6 +83,40 @@ export class LogRepository {
       metadata: row.metadata,
       createdAt: row.created_at,
     }))
+  }
+  async getMetrics(params: { from: Date; to?: Date }): Promise<TaskMetric[]> {
+    const values: unknown[] = [params.from]
+    const toCondition = params.to ? `AND created_at <= $2` : ''
+    if (params.to) values.push(params.to)
+
+    const result = await this.pool.query(
+      `SELECT
+         agent_id,
+         task_type,
+         COUNT(*)                                          AS total,
+         COUNT(*) FILTER (WHERE outcome = 'success')      AS success_count,
+         COUNT(*) FILTER (WHERE outcome = 'failure')      AS failure_count,
+         ROUND(AVG(duration_ms))                          AS avg_duration_ms
+       FROM task_logs
+       WHERE created_at >= $1 ${toCondition}
+       GROUP BY agent_id, task_type
+       ORDER BY agent_id, task_type`,
+      values,
+    )
+
+    return result.rows.map((row) => {
+      const total = Number(row.total)
+      const successCount = Number(row.success_count)
+      return {
+        agentId: row.agent_id,
+        taskType: row.task_type,
+        total,
+        successCount,
+        failureCount: Number(row.failure_count),
+        successRate: total > 0 ? Math.round((successCount / total) * 100) : 0,
+        avgDurationMs: Number(row.avg_duration_ms),
+      }
+    })
   }
 }
 
