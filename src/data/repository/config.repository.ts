@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
 import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
+import type { AlertConfig, AlertOverride } from '../../domain/entity/alert-config.js'
 
 interface YamlAgentConfig {
   displayName: string
@@ -41,6 +42,14 @@ interface YamlConfig {
   agents: {
     defaultAgent: string
     team: Record<string, YamlAgentConfig>
+  }
+  alerting?: {
+    channel: string
+    schedule: string
+    windowHours: number
+    minJobs: number
+    successRateFloor: number
+    overrides?: Array<{ agentId: string; taskType: string; successRateFloor: number }>
   }
 }
 
@@ -106,11 +115,27 @@ export class ConfigRepository {
       }
     }
 
+    const alerting: AlertConfig | undefined = yaml.alerting
+      ? {
+          channel: yaml.alerting.channel,
+          schedule: yaml.alerting.schedule,
+          windowHours: yaml.alerting.windowHours,
+          minJobs: yaml.alerting.minJobs,
+          successRateFloor: yaml.alerting.successRateFloor,
+          overrides: (yaml.alerting.overrides ?? []).map<AlertOverride>((o) => ({
+            agentId: o.agentId,
+            taskType: o.taskType,
+            successRateFloor: o.successRateFloor,
+          })),
+        }
+      : undefined
+
     this.cachedConfig = {
       ...yaml,
       ...env,
       repositories,
       docs,
+      alerting,
       lockTtlSeconds: yaml.lockTtlSeconds ?? 1800,
       lockRetryIntervalMs: yaml.lockRetryIntervalMs ?? 5000,
       agents: { ...yaml.agents, team: resolvedTeam },
