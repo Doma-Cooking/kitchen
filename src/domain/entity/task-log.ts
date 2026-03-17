@@ -10,3 +10,13 @@ export interface TaskLog {
   metadata: Record<string, unknown>
   createdAt: Date
 }
+
+export interface TaskMetric {
+  agentId: string
+  taskType: string
+  total: number
+  successCount: number
+  failureCount: number
+  successRate: number
+  avgDurationMs: number
+}
