@@ -5,7 +5,7 @@ import type { HealthRoutes } from './routes/health.routes.js'
 import type { AgentRoutes } from './routes/agent.routes.js'
 import type { DashboardRoutes } from './routes/dashboard.routes.js'
 import type { MetricsRoutes } from './routes/metrics.routes.js'
-import { ADMIN_PATH, DASHBOARD_PATH } from './routes/routes.js'
+import { ADMIN_PATH, DASHBOARD_BOARD_PATH } from './routes/routes.js'
 
 export class Server {
   constructor(
@@ -25,7 +25,7 @@ export class Server {
       app.use(`${ADMIN_PATH}/*`, basicAuth({ username: config.adminUsername, password: config.adminPassword }))
     }
 
-    app.route(DASHBOARD_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())
+    app.route(DASHBOARD_BOARD_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())
     app.route('/', this.metricsRoutes.router)
 
     return app

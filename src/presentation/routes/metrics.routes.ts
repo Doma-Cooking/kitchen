@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
-import { DASHBOARD_PATH, METRICS_PATH } from './routes.js'
+import { DASHBOARD_BOARD_PATH, DASHBOARD_PATH, METRICS_PATH } from './routes.js'
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
@@ -9,13 +9,47 @@ const RANGES: Record<string, { label: string; hours: number }> = {
   '30d': { label: 'Last 30 days', hours: 720 },
 }
 
+const SHARED_STYLES = `
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; font-size: 14px; background: #f5f5f5; color: #111; }
+    header { background: #111; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
+    header a { color: #aaa; text-decoration: none; font-size: 13px; }
+    header a:hover { color: #fff; }
+    h1 { font-size: 16px; font-weight: 600; }`
+
+const SHARED_NAV = `
+  <header>
+    <h1>Kitchen Admin</h1>
+    <a href="${DASHBOARD_PATH}">Queue Inspector</a>
+    <a href="${METRICS_PATH}">Metrics</a>
+  </header>`
+
 export class MetricsRoutes {
   readonly router: Hono
 
   constructor(private readonly logRepository: LogRepository) {
     this.router = new Hono()
+    this.router.get(DASHBOARD_PATH, (c) => this.queuesPage(c))
     this.router.get(METRICS_PATH, (c) => this.fullPage(c))
     this.router.get(`${METRICS_PATH}/table`, (c) => this.tableFragment(c))
+  }
+
+  private queuesPage(c: Context): Response {
+    return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen — Queue Inspector</title>
+  <style>${SHARED_STYLES}
+    body, html { height: 100%; overflow: hidden; }
+    iframe { display: block; width: 100%; height: calc(100vh - 48px); border: none; }</style>
+</head>
+<body>
+  ${SHARED_NAV}
+  <iframe src="${DASHBOARD_BOARD_PATH}" title="Queue Inspector"></iframe>
+</body>
+</html>`)
   }
 
   private async fullPage(c: Context): Promise<Response> {
@@ -45,13 +79,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Metrics</title>
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; font-size: 14px; background: #f5f5f5; color: #111; }
-    header { background: #111; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
-    header a { color: #aaa; text-decoration: none; font-size: 13px; }
-    header a:hover { color: #fff; }
-    h1 { font-size: 16px; font-weight: 600; }
+  <style>${SHARED_STYLES}
     main { padding: 24px; }
     .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     label { font-weight: 500; }
@@ -69,11 +97,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
   </style>
 </head>
 <body>
-  <header>
-    <h1>Kitchen Admin</h1>
-    <a href="${DASHBOARD_PATH}">Queue Inspector</a>
-    <a href="${METRICS_PATH}">Metrics</a>
-  </header>
+  ${SHARED_NAV}
   <main>
     <div class="toolbar">
       <label for="range">Time range</label>
