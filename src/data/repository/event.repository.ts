@@ -75,7 +75,7 @@ export class EventRepository {
             const env: Record<string, string> = {
               CLAUDE_CONFIG_DIR: config.claudeConfigDir,
               REDIS_URL: config.redis.url,
-              CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: String(config.autoCompactThreshold),
+              CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: config.autoCompactThreshold,
               ...agentConfigToEnv(agentConfig),
             }
 
