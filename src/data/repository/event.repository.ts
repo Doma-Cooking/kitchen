@@ -78,9 +78,9 @@ export class EventRepository {
             throw new DelayedError()
           }
 
-          this.activeLocks.set(stationId, { keys: lockKeys, tokens })
           const abortController = new AbortController()
           this.activeControllers.set(stationId, abortController)
+          this.activeLocks.set(stationId, { keys: lockKeys, tokens })
 
           const startMs = Date.now()
           try {
