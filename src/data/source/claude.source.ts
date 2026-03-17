@@ -38,7 +38,7 @@ export class ClaudeSource {
     onMessage: (msg: AgentMessage) => void,
     abortController?: AbortController,
   ): Promise<{ result: string; sessionId: string }> {
-    const messages = query({ prompt, options, ...(abortController ? { abortController } : {}) })
+    const messages = query({ prompt, options: { ...options, ...(abortController ? { abortController } : {}) } })
 
     let result = ''
     let resolvedSessionId = ''
