@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { join, dirname } from 'node:path'
 import { parse } from 'yaml'
 import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
 import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
@@ -81,6 +81,8 @@ export class ConfigRepository {
       sections.push(`## Document Store\nDocuments are stored in the GitHub repository ${docs.owner}/${docs.repo}.\nClone the repo to docs/ in your workspace, write markdown files, and push to the ${docs.branch} branch.`)
     }
 
+    this.mergePluginSettings(yaml.plugins.path, env.claudeConfigDir)
+
     const baseMdPath = join(yaml.plugins.path, 'agents', 'agents', 'base.md')
     const baseMd = existsSync(baseMdPath) ? readFileSync(baseMdPath, 'utf8').trim() : ''
     if (baseMd) sections.push(baseMd)
@@ -113,6 +115,46 @@ export class ConfigRepository {
       agents: { ...yaml.agents, team: resolvedTeam },
     }
     return this.cachedConfig
+  }
+
+  private mergePluginSettings(pluginPath: string, claudeConfigDir: string): void {
+    const pluginSettingsPath = join(pluginPath, 'settings.json')
+    if (!existsSync(pluginSettingsPath)) return
+
+    const raw = readFileSync(pluginSettingsPath, 'utf8').replaceAll('${PLUGIN_PATH}', pluginPath)
+    const pluginSettings = JSON.parse(raw) as Record<string, unknown>
+
+    const targetPath = join(claudeConfigDir, 'settings.json')
+    const existing = existsSync(targetPath)
+      ? JSON.parse(readFileSync(targetPath, 'utf8')) as Record<string, unknown>
+      : {}
+
+    const merged = this.deepMergeHooks(existing, pluginSettings)
+    mkdirSync(dirname(targetPath), { recursive: true })
+    writeFileSync(targetPath, JSON.stringify(merged, null, 2))
+  }
+
+  private deepMergeHooks(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const result = { ...target }
+    for (const [key, value] of Object.entries(source)) {
+      if (Array.isArray(value) && Array.isArray(result[key])) {
+        // Merge hook arrays by appending entries not already present (by command)
+        const existing = result[key] as Array<{ hooks?: Array<{ command?: string }> }>
+        const existingCommands = new Set(existing.flatMap((e) => e.hooks?.map((h) => h.command) ?? []))
+        const newEntries = (value as Array<{ hooks?: Array<{ command?: string }> }>).filter(
+          (e) => !e.hooks?.every((h) => h.command && existingCommands.has(h.command)),
+        )
+        result[key] = [...existing, ...newEntries]
+      } else if (value !== null && typeof value === 'object' && !Array.isArray(value) && typeof result[key] === 'object' && result[key] !== null) {
+        result[key] = this.deepMergeHooks(result[key] as Record<string, unknown>, value as Record<string, unknown>)
+      } else {
+        result[key] = value
+      }
+    }
+    return result
   }
 
   private loadYamlConfig(): YamlConfig {
