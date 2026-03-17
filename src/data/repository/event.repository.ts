@@ -19,6 +19,7 @@ export class EventRepository {
   private readonly workers: Worker[]
   private readonly redisLock: RedisLock
   private readonly activeLocks = new Map<string, { keys: string[]; tokens: string[] }>()
+  private readonly activeControllers = new Map<string, AbortController>()
 
   constructor(
     private readonly configRepository: ConfigRepository,
@@ -42,6 +43,22 @@ export class EventRepository {
     return this.queue
   }
 
+  interrupt(stationId: string): void {
+    const controller = this.activeControllers.get(stationId)
+    if (controller) {
+      controller.abort()
+      this.activeControllers.delete(stationId)
+    }
+  }
+
+  async releaseLock(stationId: string): Promise<void> {
+    const lock = this.activeLocks.get(stationId)
+    if (lock) {
+      await this.redisLock.releaseAll(lock.keys, lock.tokens)
+      this.activeLocks.delete(stationId)
+    }
+  }
+
   private createWorkers(count: number, redisUrl: string): Worker[] {
     const config = this.configRepository.getConfig()
 
@@ -51,6 +68,7 @@ export class EventRepository {
         async (job) => {
           const event: AgentEvent = job.data
           const agentId = event.agentId || config.agents.defaultAgent
+          const stationId = event.stationId ?? agentId
 
           const lockKeys = defaultLockKeyResolver(event, config.agents.defaultAgent)
           const tokens = await this.redisLock.acquireAll(lockKeys, config.lockTtlSeconds)
@@ -60,8 +78,9 @@ export class EventRepository {
             throw new DelayedError()
           }
 
-          const lockId = job.id ?? crypto.randomUUID()
-          this.activeLocks.set(lockId, { keys: lockKeys, tokens })
+          this.activeLocks.set(stationId, { keys: lockKeys, tokens })
+          const abortController = new AbortController()
+          this.activeControllers.set(stationId, abortController)
 
           const startMs = Date.now()
           try {
@@ -79,7 +98,6 @@ export class EventRepository {
               ...agentConfigToEnv(agentConfig),
             }
 
-            const stationId = event.stationId ?? agentId
             const station = await this.stationRepository.getStation(stationId)
 
             const workspacePath = await this.workspaceSource.restore(stationId)
@@ -95,6 +113,7 @@ export class EventRepository {
               station?.sessionId,
               config.maxTurns,
               workspacePath,
+              abortController,
             )
 
             if (sessionId) await this.stationRepository.setStation(stationId, { sessionId })
@@ -117,12 +136,12 @@ export class EventRepository {
             })
             throw err
           } finally {
-            const finalStationId = event.stationId ?? agentId
-            await this.workspaceSource.snapshot(finalStationId).catch((err) => {
-              console.error(`Failed to snapshot workspace for station ${finalStationId}:`, err)
+            await this.workspaceSource.snapshot(stationId).catch((err) => {
+              console.error(`Failed to snapshot workspace for station ${stationId}:`, err)
             })
             await this.redisLock.releaseAll(lockKeys, tokens)
-            this.activeLocks.delete(lockId)
+            this.activeLocks.delete(stationId)
+            this.activeControllers.delete(stationId)
           }
         },
         {
@@ -142,7 +161,11 @@ export class EventRepository {
   }
 
   async closeWorkers(): Promise<void> {
-    // Release any active locks before closing workers
+    for (const controller of this.activeControllers.values()) {
+      controller.abort()
+    }
+    this.activeControllers.clear()
+
     for (const [, { keys, tokens }] of this.activeLocks) {
       await this.redisLock.releaseAll(keys, tokens)
     }
