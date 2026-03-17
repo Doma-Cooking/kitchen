@@ -57,13 +57,6 @@ export class EventRepository {
     }
   }
 
-  async releaseLock(stationId: string): Promise<void> {
-    const lock = this.activeLocks.get(stationId)
-    if (lock) {
-      await this.redisLock.releaseAll(lock.keys, lock.tokens)
-      this.activeLocks.delete(stationId)
-    }
-  }
 
   private createWorkers(count: number, redisUrl: string): Worker[] {
     const config = this.configRepository.getConfig()
