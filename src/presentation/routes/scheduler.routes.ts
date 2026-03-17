@@ -32,7 +32,4 @@ export class SchedulerRoutes {
     }
   }
 
-  stop(): void {
-    this.schedulerRepository.stop()
-  }
 }
