@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
-import { DASHBOARD_BOARD_PATH, DASHBOARD_PATH, METRICS_PATH } from './routes.js'
+import { ADMIN_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, METRICS_PATH } from './routes.js'
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
@@ -29,6 +29,7 @@ export class MetricsRoutes {
 
   constructor(private readonly logRepository: LogRepository) {
     this.router = new Hono()
+    this.router.get(ADMIN_PATH, (c) => c.redirect(DASHBOARD_PATH))
     this.router.get(DASHBOARD_PATH, (c) => this.queuesPage(c))
     this.router.get(METRICS_PATH, (c) => this.fullPage(c))
     this.router.get(`${METRICS_PATH}/table`, (c) => this.tableFragment(c))
