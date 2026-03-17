@@ -38,9 +38,9 @@ export const agentRoutes = new AgentRoutes(handleEventUseCase)
 export const dashboardRoutes = new DashboardRoutes(eventRepository)
 export const metricsRoutes = new MetricsRoutes(logRepository)
 export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
+export const schedulerRoutes = new SchedulerRoutes(agentRepository, handleEventUseCase)
 export const cronSource = new CronSource()
-export const schedulerRepository = new SchedulerRepository(cronSource, agentRepository, handleEventUseCase)
-export const schedulerRoutes = new SchedulerRoutes(schedulerRepository)
+export const schedulerRepository = new SchedulerRepository(cronSource)
 export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes, metricsRoutes)
 
 // Init

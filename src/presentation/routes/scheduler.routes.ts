@@ -1,13 +1,46 @@
-import type { SchedulerRepository } from '../../data/repository/scheduler.repository.js'
+import { Cron } from 'croner'
+import type { AgentEvent } from '../../domain/entity/agent-event.js'
+import type { AgentRepository } from '../../data/repository/agent.repository.js'
+import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
 
 export class SchedulerRoutes {
-  constructor(private readonly schedulerRepository: SchedulerRepository) {}
+  private readonly jobs: Cron[] = []
+
+  constructor(
+    private readonly agentRepository: AgentRepository,
+    private readonly handleEventUseCase: HandleEventUseCase,
+  ) {}
 
   start(): void {
-    this.schedulerRepository.start()
+    const agents = this.agentRepository.getAllAgents()
+
+    for (const agent of agents) {
+      if (!agent.schedules?.length) continue
+
+      for (const schedule of agent.schedules) {
+        const job = new Cron(schedule.cron, async () => {
+          const event: AgentEvent = {
+            id: crypto.randomUUID(),
+            trigger: { type: 'cron', cron: schedule.cron, scheduleName: schedule.name },
+            agentId: agent.id,
+            stationId: schedule.stationId,
+            message: `/${schedule.skill}`,
+            timestamp: new Date().toISOString(),
+          }
+          await this.handleEventUseCase.execute(event)
+        })
+
+        this.jobs.push(job)
+        console.log(`Cron job scheduled: ${agent.id} "${schedule.name ?? schedule.skill}" @ ${schedule.cron}`)
+      }
+    }
   }
 
   stop(): void {
-    this.schedulerRepository.stop()
+    for (const job of this.jobs) {
+      job.stop()
+    }
+    this.jobs.length = 0
+    console.log('Cron jobs stopped')
   }
 }
