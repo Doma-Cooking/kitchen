@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
-import type { EventRepository } from '../../data/repository/event.repository.js'
+import type { EventRepository, AgentEventJob } from '../../data/repository/event.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
 import { ADMIN_PATH, ACTIVE_JOBS_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
 
@@ -127,7 +127,7 @@ export class MetricsRoutes {
   }
 }
 
-type QueueJob = Awaited<ReturnType<ReturnType<EventRepository['getQueue']>['getActive']>>[number]
+type QueueJob = AgentEventJob
 
 function renderJobsPanel(activeJobs: QueueJob[], queuedJobs: QueueJob[]): string {
   const now = Date.now()

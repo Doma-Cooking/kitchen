@@ -1,4 +1,5 @@
 import { Queue, Worker, DelayedError } from 'bullmq'
+import type { Job } from 'bullmq'
 import type { AgentEvent } from '../../domain/entity/agent-event.js'
 import { triggerToString } from '../../domain/entity/event-trigger.js'
 import { agentConfigToEnv } from '../../domain/entity/agent-config.js'
@@ -12,10 +13,12 @@ import type { StationRepository } from './station.repository.js'
 import type { WorkspaceSource } from '../source/workspace.source.js'
 import type { LogRepository } from './log.repository.js'
 
+export type AgentEventJob = Job<AgentEvent>
+
 const QUEUE_NAME = 'agent-events'
 
 export class EventRepository {
-  private readonly queue: Queue
+  private readonly queue: Queue<AgentEvent>
   private readonly workers: Worker[]
   private readonly redisLock: RedisLock
   private readonly activeLocks = new Map<string, { keys: string[]; tokens: string[] }>()
@@ -31,7 +34,7 @@ export class EventRepository {
   ) {
     const config = this.configRepository.getConfig()
 
-    this.queue = new Queue(QUEUE_NAME, {
+    this.queue = new Queue<AgentEvent>(QUEUE_NAME, {
       connection: { url: config.redis.url },
     })
 
@@ -39,7 +42,7 @@ export class EventRepository {
     this.workers = this.createWorkers(config.workers, config.redis.url)
   }
 
-  getQueue(): Queue {
+  getQueue(): Queue<AgentEvent> {
     return this.queue
   }
 
