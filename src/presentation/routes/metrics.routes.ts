@@ -4,7 +4,7 @@ import type { EventRepository, AgentEventJob } from '../../data/repository/event
 import type { TaskMetric } from '../../domain/entity/task-log.js'
 import { ADMIN_PATH, ACTIVE_JOBS_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
 
-const INTERRUPT_RELOAD_DELAY_MS = 250
+const INTERRUPT_RELOAD_DELAY_MS = 500
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
