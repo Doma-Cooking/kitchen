@@ -66,7 +66,7 @@ export class EventRepository {
     return Array.from({ length: count }, () =>
       new Worker(
         QUEUE_NAME,
-        async (job) => {
+        async (job, token) => {
           const event: AgentEvent = job.data
           const agentId = event.agentId || config.agents.defaultAgent
           const stationId = event.stationId ?? agentId
@@ -75,7 +75,7 @@ export class EventRepository {
           const tokens = await this.redisLock.acquireAll(lockKeys, config.lockTtlSeconds)
 
           if (tokens === null) {
-            await job.moveToDelayed(Date.now() + config.lockRetryIntervalMs)
+            await job.moveToDelayed(Date.now() + config.lockRetryIntervalMs, token)
             throw new DelayedError()
           }
 
