@@ -27,9 +27,10 @@ const SHARED_STYLES = `
     [data-theme="dark"] .theme-toggle::before { content: '☀'; }
     [data-theme="dark"] body { background: #111; color: #e5e5e5; }
     [data-theme="dark"] .active-panel { background: #1a1a1a; border-color: #2e2e2e; }
+    [data-theme="dark"] .active-panel h2 { color: #ccc; }
     [data-theme="dark"] .active-panel th { color: #999; }
     [data-theme="dark"] .active-panel .section-label { color: #999; }
-    [data-theme="dark"] .active-panel .empty { color: #666; }
+    [data-theme="dark"] .active-panel .empty { color: #888; }
     [data-theme="dark"] .interrupt-btn { background: #3a1212; color: #f87171; border-color: #7f1d1d; }
     [data-theme="dark"] .interrupt-btn:hover { background: #4a1818; }
     [data-theme="dark"] table { background: #1a1a1a; }
@@ -37,7 +38,7 @@ const SHARED_STYLES = `
     [data-theme="dark"] td { border-color: #2e2e2e; }
     [data-theme="dark"] tr:hover td { background: #202020; }
     [data-theme="dark"] select { background: #1a1a1a; border-color: #3a3a3a; color: #e5e5e5; }
-    [data-theme="dark"] .empty { background: #1a1a1a; color: #666; }`
+    [data-theme="dark"] .empty { background: #1a1a1a; color: #888; }`
 
 const THEME_TOGGLE_SCRIPT = `<script>function toggleTheme(){var h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n)}</script>`
 
