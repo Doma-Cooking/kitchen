@@ -22,6 +22,18 @@ docs:
   owner: example-org
   repo: example-docs
   branch: main
+# Alerting — evaluate agent success rates on a cron schedule
+# Slack delivery is configured separately (see KIT-47)
+alerting:
+  channel: "#kitchen-alerts"
+  schedule: "0 * * * *"   # how often to evaluate (hourly)
+  windowHours: 1
+  minJobs: 5
+  successRateFloor: 0.9   # global threshold (90% success rate)
+  overrides:              # per-agent/task-type threshold overrides
+    - agentId: agent
+      taskType: slack
+      successRateFloor: 0.85
 agents:
   defaultAgent: agent
   team:
@@ -46,16 +58,3 @@ agents:
         - cron: "0 9 * * 1-5"   # 9am UTC Mon–Fri
           skill: my-skill
           name: my-schedule
-
-# Alerting — evaluate agent success rates on a cron schedule
-# Slack delivery is configured separately (see KIT-47)
-# alerting:
-#   channel: "#kitchen-alerts"      # Slack channel to post degraded alerts
-#   schedule: "0 * * * *"           # cron expression — how often to evaluate (hourly)
-#   windowHours: 1                  # look-back window for metric aggregation
-#   minJobs: 5                      # minimum job count to include a combination
-#   successRateFloor: 0.9           # global threshold (90% success rate)
-#   overrides:                      # per-agent/task-type threshold overrides
-#     - agentId: agent
-#       taskType: slack
-#       successRateFloor: 0.85
