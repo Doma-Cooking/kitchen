@@ -9,7 +9,7 @@ plugins:
   path: /data/plugins/my-kitchen
   git:
     url: https://github.com/my-org/my-kitchen
-    branch: main  # optional, defaults to main
+    branch: main
 company:
   name: My Company
   description: a short description of what the company does
@@ -22,15 +22,13 @@ docs:
   owner: example-org
   repo: example-docs
   branch: main
-# Alerting — evaluate agent success rates on a cron schedule
-# Slack delivery is configured separately (see KIT-47)
 alerting:
   channel: "#kitchen-alerts"
-  schedule: "0 * * * *"   # how often to evaluate (hourly)
+  schedule: "0 * * * *"
   windowHours: 1
   minJobs: 5
-  successRateFloor: 0.9   # global threshold (90% success rate)
-  overrides:              # per-agent/task-type threshold overrides
+  successRateFloor: 0.9
+  overrides:
     - agentId: agent
       taskType: slack
       successRateFloor: 0.85
