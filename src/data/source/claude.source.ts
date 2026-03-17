@@ -11,6 +11,7 @@ export class ClaudeSource {
     sessionId?: string,
     maxTurns?: number,
     cwd?: string,
+    abortController?: AbortController,
   ): Promise<{ result: string; sessionId: string }> {
     const baseOptions = {
       systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: agentPrompt },
@@ -23,11 +24,11 @@ export class ClaudeSource {
     }
 
     try {
-      return await this.executeQuery(prompt, { ...baseOptions, ...(sessionId ? { resume: sessionId } : {}) }, onMessage)
+      return await this.executeQuery(prompt, { ...baseOptions, ...(sessionId ? { resume: sessionId } : {}) }, onMessage, abortController)
     } catch (error) {
       if (!sessionId) throw error
       console.warn(`Failed to resume session ${sessionId}, starting fresh`)
-      return await this.executeQuery(prompt, baseOptions, onMessage)
+      return await this.executeQuery(prompt, baseOptions, onMessage, abortController)
     }
   }
 
@@ -35,8 +36,9 @@ export class ClaudeSource {
     prompt: string,
     options: Parameters<typeof query>[0]['options'],
     onMessage: (msg: AgentMessage) => void,
+    abortController?: AbortController,
   ): Promise<{ result: string; sessionId: string }> {
-    const messages = query({ prompt, options })
+    const messages = query({ prompt, options: { ...options, ...(abortController ? { abortController } : {}) } })
 
     let result = ''
     let resolvedSessionId = ''

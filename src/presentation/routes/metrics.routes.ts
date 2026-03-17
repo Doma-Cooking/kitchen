@@ -1,7 +1,10 @@
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
+import type { EventRepository, AgentEventJob } from '../../data/repository/event.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
-import { ADMIN_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, METRICS_PATH } from './routes.js'
+import { ADMIN_PATH, ACTIVE_JOBS_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
+
+const INTERRUPT_RELOAD_DELAY_MS = 500
 
 const RANGES: Record<string, { label: string; hours: number }> = {
   '24h': { label: 'Last 24 hours', hours: 24 },
@@ -27,10 +30,15 @@ const SHARED_NAV = `
 export class MetricsRoutes {
   readonly router: Hono
 
-  constructor(private readonly logRepository: LogRepository) {
+  constructor(
+    private readonly logRepository: LogRepository,
+    private readonly eventRepository: EventRepository,
+  ) {
     this.router = new Hono()
     this.router.get(ADMIN_PATH, (c) => c.redirect(DASHBOARD_PATH))
     this.router.get(DASHBOARD_PATH, (c) => this.queuesPage(c))
+    this.router.get(ACTIVE_JOBS_PATH, (c) => this.activeJobsFragment(c))
+    this.router.post(`${INTERRUPT_PATH}/:jobId`, (c) => this.interruptJob(c))
     this.router.get(METRICS_PATH, (c) => this.fullPage(c))
     this.router.get(`${METRICS_PATH}/table`, (c) => this.tableFragment(c))
   }
@@ -42,15 +50,55 @@ export class MetricsRoutes {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Queue Inspector</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   <style>${SHARED_STYLES}
-    body, html { height: 100%; overflow: hidden; }
-    iframe { display: block; width: 100%; height: calc(100vh - 48px); border: none; }</style>
+    body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .active-panel { flex: 0 0 auto; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e5e5e5; }
+    .active-panel h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #555; margin-bottom: 8px; }
+    .active-panel table { width: 100%; border-collapse: collapse; }
+    .active-panel th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #888; padding: 4px 10px 4px 0; text-align: left; }
+    .active-panel td { padding: 4px 10px 4px 0; font-size: 13px; }
+    .active-panel .empty { color: #aaa; font-size: 13px; }
+    .active-panel .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #555; padding: 8px 0 4px; }
+    .interrupt-btn { padding: 2px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer; }
+    .interrupt-btn:hover { background: #fecaca; }
+    iframe { flex: 1; border: none; }
+  </style>
 </head>
 <body>
   ${SHARED_NAV}
+  <div
+    class="active-panel"
+    hx-get="${ACTIVE_JOBS_PATH}"
+    hx-trigger="load, every 3s"
+    hx-swap="innerHTML"
+  ></div>
   <iframe src="${DASHBOARD_BOARD_PATH}" title="Queue Inspector"></iframe>
 </body>
 </html>`)
+  }
+
+  private async activeJobsFragment(c: Context): Promise<Response> {
+    const queue = this.eventRepository.getQueue()
+    const [activeJobs, waitingJobs, delayedJobs] = await Promise.all([
+      queue.getActive(),
+      queue.getWaiting(),
+      queue.getDelayed(),
+    ])
+    return c.html(renderJobsPanel(activeJobs, [...waitingJobs, ...delayedJobs]))
+  }
+
+  private async interruptJob(c: Context): Promise<Response> {
+    const jobId = c.req.param('jobId')
+    if (!jobId) return c.json({ error: 'Missing jobId' }, 400)
+
+    const found = await this.eventRepository.cancelJob(jobId)
+
+    if (!found) {
+      return c.json({ error: 'Job not found' }, 404)
+    }
+
+    return c.body(null, 204)
   }
 
   private async fullPage(c: Context): Promise<Response> {
@@ -70,6 +118,80 @@ export class MetricsRoutes {
     const from = new Date(Date.now() - hours * 60 * 60 * 1000)
     return this.logRepository.getMetrics({ from })
   }
+}
+
+function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[]): string {
+  const now = Date.now()
+
+  const activeRows = activeJobs.map((job) => {
+    const agentId = escHtml(job.data.agentId ?? '—')
+    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
+    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const elapsed = job.processedOn ? formatElapsed(now - job.processedOn) : '—'
+    return `  <tr>
+    <td>${agentId}</td>
+    <td>${stationId}</td>
+    <td>${trigger}</td>
+    <td>${elapsed}</td>
+    <td>
+      <button
+        class="interrupt-btn"
+        hx-post="${INTERRUPT_PATH}/${escHtml(job.id ?? '')}"
+        hx-swap="none"
+        hx-confirm="Interrupt this job?"
+        hx-on::after-request="setTimeout(()=>window.location.reload(),${INTERRUPT_RELOAD_DELAY_MS})"
+      >Interrupt</button>
+    </td>
+  </tr>`
+  })
+
+  const queuedRows = queuedJobs.map((job) => {
+    const agentId = escHtml(job.data.agentId ?? '—')
+    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
+    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const status = job.delay && job.delay > 0 ? 'delayed' : 'waiting'
+    return `  <tr>
+    <td>${agentId}</td>
+    <td>${stationId}</td>
+    <td>${trigger}</td>
+    <td>${status}</td>
+    <td>
+      <button
+        class="interrupt-btn"
+        hx-post="${INTERRUPT_PATH}/${escHtml(job.id ?? '')}"
+        hx-swap="none"
+        hx-confirm="Remove this job?"
+        hx-on::after-request="setTimeout(()=>window.location.reload(),${INTERRUPT_RELOAD_DELAY_MS})"
+      >Remove</button>
+    </td>
+  </tr>`
+  })
+
+  const activeBody = activeRows.length > 0
+    ? activeRows.join('\n')
+    : `  <tr><td colspan="5" class="empty">No active executions</td></tr>`
+
+  const queuedBody = queuedRows.length > 0
+    ? queuedRows.join('\n')
+    : `  <tr><td colspan="5" class="empty">No queued jobs</td></tr>`
+
+  return `<table>
+  <thead><tr><th>Agent</th><th>Station</th><th>Trigger</th><th>Info</th><th></th></tr></thead>
+  <tbody>
+    <tr><td colspan="5" class="section-label">Active</td></tr>
+${activeBody}
+    <tr><td colspan="5" class="section-label">Queued</td></tr>
+${queuedBody}
+  </tbody>
+</table>`
+}
+
+function formatElapsed(ms: number): string {
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ${s % 60}s`
+  return `${Math.floor(m / 60)}h ${m % 60}m`
 }
 
 function renderPage(metrics: TaskMetric[], selectedRange: string): string {

@@ -1,4 +1,5 @@
 import { Queue, Worker, DelayedError } from 'bullmq'
+import type { Job } from 'bullmq'
 import type { AgentEvent } from '../../domain/entity/agent-event.js'
 import { triggerToString } from '../../domain/entity/event-trigger.js'
 import { agentConfigToEnv } from '../../domain/entity/agent-config.js'
@@ -12,13 +13,16 @@ import type { StationRepository } from './station.repository.js'
 import type { WorkspaceSource } from '../source/workspace.source.js'
 import type { LogRepository } from './log.repository.js'
 
+export type AgentEventJob = Job<AgentEvent>
+
 const QUEUE_NAME = 'agent-events'
 
 export class EventRepository {
-  private readonly queue: Queue
+  private readonly queue: Queue<AgentEvent>
   private readonly workers: Worker[]
   private readonly redisLock: RedisLock
   private readonly activeLocks = new Map<string, { keys: string[]; tokens: string[] }>()
+  private readonly activeControllers = new Map<string, AbortController>()
 
   constructor(
     private readonly configRepository: ConfigRepository,
@@ -30,7 +34,7 @@ export class EventRepository {
   ) {
     const config = this.configRepository.getConfig()
 
-    this.queue = new Queue(QUEUE_NAME, {
+    this.queue = new Queue<AgentEvent>(QUEUE_NAME, {
       connection: { url: config.redis.url },
     })
 
@@ -38,9 +42,23 @@ export class EventRepository {
     this.workers = this.createWorkers(config.workers, config.redis.url)
   }
 
-  getQueue(): Queue {
+  getQueue(): Queue<AgentEvent> {
     return this.queue
   }
+
+  async cancelJob(jobId: string): Promise<boolean> {
+    const controller = this.activeControllers.get(jobId)
+    if (controller) {
+      controller.abort()
+      this.activeControllers.delete(jobId)
+      return true
+    }
+    const job = await this.queue.getJob(jobId)
+    if (!job) return false
+    await job.remove()
+    return true
+  }
+
 
   private createWorkers(count: number, redisUrl: string): Worker[] {
     const config = this.configRepository.getConfig()
@@ -48,20 +66,22 @@ export class EventRepository {
     return Array.from({ length: count }, () =>
       new Worker(
         QUEUE_NAME,
-        async (job) => {
+        async (job, token) => {
           const event: AgentEvent = job.data
           const agentId = event.agentId || config.agents.defaultAgent
+          const stationId = event.stationId ?? agentId
 
           const lockKeys = defaultLockKeyResolver(event, config.agents.defaultAgent)
           const tokens = await this.redisLock.acquireAll(lockKeys, config.lockTtlSeconds)
 
           if (tokens === null) {
-            await job.moveToDelayed(Date.now() + config.lockRetryIntervalMs)
+            await job.moveToDelayed(Date.now() + config.lockRetryIntervalMs, token)
             throw new DelayedError()
           }
 
-          const lockId = job.id ?? crypto.randomUUID()
-          this.activeLocks.set(lockId, { keys: lockKeys, tokens })
+          const abortController = new AbortController()
+          this.activeControllers.set(job.id!, abortController)
+          this.activeLocks.set(stationId, { keys: lockKeys, tokens })
 
           const startMs = Date.now()
           try {
@@ -79,7 +99,6 @@ export class EventRepository {
               ...agentConfigToEnv(agentConfig),
             }
 
-            const stationId = event.stationId ?? agentId
             const station = await this.stationRepository.getStation(stationId)
 
             const workspacePath = await this.workspaceSource.restore(stationId)
@@ -95,6 +114,7 @@ export class EventRepository {
               station?.sessionId,
               config.maxTurns,
               workspacePath,
+              abortController,
             )
 
             if (sessionId) await this.stationRepository.setStation(stationId, { sessionId })
@@ -117,12 +137,12 @@ export class EventRepository {
             })
             throw err
           } finally {
-            const finalStationId = event.stationId ?? agentId
-            await this.workspaceSource.snapshot(finalStationId).catch((err) => {
-              console.error(`Failed to snapshot workspace for station ${finalStationId}:`, err)
+            await this.workspaceSource.snapshot(stationId).catch((err) => {
+              console.error(`Failed to snapshot workspace for station ${stationId}:`, err)
             })
             await this.redisLock.releaseAll(lockKeys, tokens)
-            this.activeLocks.delete(lockId)
+            this.activeLocks.delete(stationId)
+            this.activeControllers.delete(job.id!)
           }
         },
         {
@@ -142,7 +162,11 @@ export class EventRepository {
   }
 
   async closeWorkers(): Promise<void> {
-    // Release any active locks before closing workers
+    for (const controller of this.activeControllers.values()) {
+      controller.abort()
+    }
+    this.activeControllers.clear()
+
     for (const [, { keys, tokens }] of this.activeLocks) {
       await this.redisLock.releaseAll(keys, tokens)
     }
