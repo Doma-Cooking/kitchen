@@ -39,6 +39,12 @@ services:
       timeout: 5s
       retries: 5
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel ${CLOUDFLARED_TUNNEL_TOKEN:+run --token $CLOUDFLARED_TUNNEL_TOKEN} ${CLOUDFLARED_TUNNEL_TOKEN:-tunnel --no-autoupdate --url http://app:3000}
+    depends_on:
+      - app
+
 volumes:
   claude-data:
   workspace-data:
