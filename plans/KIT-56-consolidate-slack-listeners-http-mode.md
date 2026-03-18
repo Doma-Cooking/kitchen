@@ -24,7 +24,11 @@ URL path (`/slack/events/:agentId`) is simpler: we know which agent to use befor
 `appToken` is only meaningful for socket mode. HTTP mode uses a `signingSecret` for request verification. The env var convention changes from `ZUKO_SLACK_APP_TOKEN` to `ZUKO_SLACK_SIGNING_SECRET`. Agents without a `signingSecret` simply don't mount an HTTP listener (same behaviour as missing `appToken` today).
 
 **Dev environment**
-Socket mode is convenient locally because it requires no public URL. HTTP mode requires Slack to reach the Kitchen server. The recommended local solution is [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/) (`cloudflared tunnel --url http://localhost:3000`) — zero account required for ephemeral tunnels. A `tunnel` npm script will be added as a convenience. A setup doc will cover end-to-end Slack App configuration for HTTP mode.
+Socket mode is convenient locally because it requires no public URL. HTTP mode requires Slack to reach the Kitchen server. A `cloudflared` sidecar in `docker-compose.yml` handles this automatically — no separate process to manage. Two modes are supported:
+- **Named tunnel** (set `CLOUDFLARED_TUNNEL_TOKEN`): uses a pre-configured Cloudflare tunnel with a custom domain for a stable URL that doesn't change between restarts.
+- **Ephemeral tunnel** (no token): falls back to `cloudflared tunnel --url` for a random `trycloudflare.com` URL — no account needed, but the URL rotates on restart.
+
+A setup doc will cover both workflows end-to-end.
 
 ## Implementation Steps
 
@@ -36,12 +40,21 @@ Socket mode is convenient locally because it requires no public URL. HTTP mode r
    - Returns 200 immediately after enqueuing (Slack requires a <3s acknowledgement)
    - Parses the event and dispatches to `HandleEventUseCase`
 4. **Mount the route in `Server`** — add `app.route('/slack', slackRoutes.router)` (currently `SlackRoutes` runs outside the Hono app)
-5. **Add `tunnel` npm script** — `"tunnel": "cloudflared tunnel --url http://localhost:3000"` in `package.json`
-6. **Write setup doc** — `setup/slack-http-mode.md` covering: creating a Slack App for HTTP mode, configuring the event subscription URL, required bot scopes, env vars (`SIGNING_SECRET`, `BOT_TOKEN`), and the local dev tunnel workflow
+5. **Add `tunnel` service to `docker-compose.yml`** — a `cloudflare/cloudflared` sidecar that tunnels to the `app` service. Support two modes via env vars:
+   - **Named tunnel (custom domain):** set `CLOUDFLARED_TUNNEL_TOKEN` in `.env` to use a pre-configured Cloudflare tunnel with a stable URL (e.g. `kitchen.doma.dev`). No URL rotation — ideal for persistent Slack App configs.
+   - **Ephemeral tunnel (no account):** omit the token to fall back to `cloudflared tunnel --url http://app:3000`, which generates a random `trycloudflare.com` URL logged on startup. Good for quick local testing but the URL changes on restart.
+   ```yaml
+   tunnel:
+     image: cloudflare/cloudflared:latest
+     command: tunnel ${CLOUDFLARED_TUNNEL_TOKEN:+run --token $CLOUDFLARED_TUNNEL_TOKEN} ${CLOUDFLARED_TUNNEL_TOKEN:-tunnel --no-autoupdate --url http://app:3000}
+     depends_on:
+       - app
+   ```
+6. **Write setup doc** — `setup/slack-http-mode.md` covering: creating a Slack App for HTTP mode, configuring the event subscription URL, required bot scopes, env vars (`SIGNING_SECRET`, `BOT_TOKEN`), and both tunnel modes (named tunnel with custom domain vs ephemeral)
 
 ## Testing Strategy
 
-- Start Kitchen locally with `npm run tunnel`, configure a test Slack App to point at the tunnel URL, send a DM — verify the agent receives and processes it
+- Start Kitchen with `docker compose up`, configure a test Slack App to point at the tunnel URL (custom domain or ephemeral URL from `docker compose logs tunnel`), send a DM — verify the agent receives and processes it
 - Verify a tampered request (bad signature) returns 403
 - Verify a missing agent ID returns 404
 - Confirm all existing events (`message`, `app_mention`) continue to fire correctly
