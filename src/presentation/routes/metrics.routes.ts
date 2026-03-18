@@ -1,8 +1,14 @@
+import { readFileSync } from 'fs'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { Hono, type Context } from 'hono'
 import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { EventRepository, AgentEventJob } from '../../data/repository/event.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
 import { ADMIN_PATH, ACTIVE_JOBS_PATH, DASHBOARD_BOARD_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const faviconBuffer = readFileSync(join(__dirname, '../assets/favicon.png'))
 
 const INTERRUPT_RELOAD_DELAY_MS = 500
 
@@ -12,7 +18,7 @@ const RANGES: Record<string, { label: string; hours: number }> = {
   '30d': { label: 'Last 30 days', hours: 720 },
 }
 
-const FAVICON = `<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">`
+const FAVICON = `<link rel="icon" href="/favicon.png" type="image/png">`
 
 const DARK_MODE_INIT = `<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')</script>`
 
@@ -60,6 +66,7 @@ export class MetricsRoutes {
     private readonly eventRepository: EventRepository,
   ) {
     this.router = new Hono()
+    this.router.get('/favicon.png', () => new Response(faviconBuffer, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' } }))
     this.router.get(ADMIN_PATH, (c) => c.redirect(DASHBOARD_PATH))
     this.router.get(DASHBOARD_PATH, (c) => this.queuesPage(c))
     this.router.get(ACTIVE_JOBS_PATH, (c) => this.activeJobsFragment(c))
