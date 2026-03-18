@@ -12,19 +12,42 @@ const RANGES: Record<string, { label: string; hours: number }> = {
   '30d': { label: 'Last 30 days', hours: 720 },
 }
 
+const DARK_MODE_INIT = `<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')</script>`
+
 const SHARED_STYLES = `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; font-size: 14px; background: #f5f5f5; color: #111; }
     header { background: #111; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
     header a { color: #aaa; text-decoration: none; font-size: 13px; }
     header a:hover { color: #fff; }
-    h1 { font-size: 16px; font-weight: 600; }`
+    h1 { font-size: 16px; font-weight: 600; }
+    .theme-toggle { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px; line-height: 1; color: #aaa; }
+    .theme-toggle:hover { color: #fff; }
+    .theme-toggle::before { content: '☽'; }
+    [data-theme="dark"] .theme-toggle::before { content: '☀'; }
+    [data-theme="dark"] body { background: #111; color: #e5e5e5; }
+    [data-theme="dark"] .active-panel { background: #1a1a1a; border-color: #2e2e2e; }
+    [data-theme="dark"] .active-panel h2 { color: #ccc; }
+    [data-theme="dark"] .active-panel th { color: #ccc; }
+    [data-theme="dark"] .active-panel .section-label { color: #ccc; }
+    [data-theme="dark"] .active-panel .empty { color: #aaa; }
+    [data-theme="dark"] .interrupt-btn { background: #3a1212; color: #f87171; border-color: #7f1d1d; }
+    [data-theme="dark"] .interrupt-btn:hover { background: #4a1818; }
+    [data-theme="dark"] table { background: #1a1a1a; }
+    [data-theme="dark"] th { background: #222; color: #ccc; }
+    [data-theme="dark"] td { border-color: #2e2e2e; }
+    [data-theme="dark"] tr:hover td { background: #202020; }
+    [data-theme="dark"] select { background: #1a1a1a; border-color: #3a3a3a; color: #e5e5e5; }
+    [data-theme="dark"] .empty { background: #1a1a1a; color: #aaa; }`
+
+const THEME_TOGGLE_SCRIPT = `<script>function toggleTheme(){var h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n)}</script>`
 
 const SHARED_NAV = `
   <header>
     <h1>Kitchen Admin</h1>
     <a href="${DASHBOARD_PATH}">Queue Inspector</a>
     <a href="${METRICS_PATH}">Metrics</a>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
   </header>`
 
 export class MetricsRoutes {
@@ -50,7 +73,9 @@ export class MetricsRoutes {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Queue Inspector</title>
+  ${DARK_MODE_INIT}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  ${THEME_TOGGLE_SCRIPT}
   <style>${SHARED_STYLES}
     body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .active-panel { flex: 0 0 auto; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e5e5e5; }
@@ -124,9 +149,9 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
   const now = Date.now()
 
   const activeRows = activeJobs.map((job) => {
-    const agentId = escHtml(job.data.agentId ?? '—')
-    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
-    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const agentId = escHtml(job.data?.agentId ?? '—')
+    const stationId = escHtml(job.data?.stationId ?? job.data?.agentId ?? '—')
+    const trigger = escHtml(job.data?.trigger?.type ?? '—')
     const elapsed = job.processedOn ? formatElapsed(now - job.processedOn) : '—'
     return `  <tr>
     <td>${agentId}</td>
@@ -146,9 +171,9 @@ function renderJobsPanel(activeJobs: AgentEventJob[], queuedJobs: AgentEventJob[
   })
 
   const queuedRows = queuedJobs.map((job) => {
-    const agentId = escHtml(job.data.agentId ?? '—')
-    const stationId = escHtml(job.data.stationId ?? job.data.agentId ?? '—')
-    const trigger = escHtml(job.data.trigger?.type ?? '—')
+    const agentId = escHtml(job.data?.agentId ?? '—')
+    const stationId = escHtml(job.data?.stationId ?? job.data?.agentId ?? '—')
+    const trigger = escHtml(job.data?.trigger?.type ?? '—')
     const status = job.delay && job.delay > 0 ? 'delayed' : 'waiting'
     return `  <tr>
     <td>${agentId}</td>
@@ -201,7 +226,9 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Metrics</title>
+  ${DARK_MODE_INIT}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  ${THEME_TOGGLE_SCRIPT}
   <style>${SHARED_STYLES}
     main { padding: 24px; }
     .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -234,8 +261,8 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
         hx-indicator="#spinner"
       >
         ${Object.entries(RANGES).map(([value, { label }]) =>
-          `<option value="${value}"${value === selectedRange ? ' selected' : ''}>${label}</option>`
-        ).join('\n        ')}
+    `<option value="${value}"${value === selectedRange ? ' selected' : ''}>${label}</option>`
+  ).join('\n        ')}
       </select>
       <span id="spinner" class="htmx-indicator" style="color:#888">Loading…</span>
     </div>
