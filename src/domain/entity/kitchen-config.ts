@@ -1,4 +1,5 @@
 import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from './agent-config.js'
+import type { AlertConfig } from './alert-config.js'
 
 export interface RepositoryConfig {
   name: string
@@ -38,6 +39,8 @@ export interface KitchenConfig {
       schedules?: ScheduleConfig[];
     }>
   }
+
+  alerting?: AlertConfig
 
   // Env Config
   apiKey: string
