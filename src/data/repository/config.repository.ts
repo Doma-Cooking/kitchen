@@ -130,12 +130,15 @@ export class ConfigRepository {
         }
       : undefined
 
+    const defaultSlackBotToken = resolvedTeam[yaml.agents.defaultAgent]?.slack?.botToken
+
     this.cachedConfig = {
       ...yaml,
       ...env,
       repositories,
       docs,
       alerting,
+      defaultSlackBotToken,
       lockTtlSeconds: yaml.lockTtlSeconds ?? 1800,
       lockRetryIntervalMs: yaml.lockRetryIntervalMs ?? 5000,
       agents: { ...yaml.agents, team: resolvedTeam },

@@ -1,14 +1,18 @@
 import type { AlertConfig, AlertResult } from '../entity/alert-config.js'
 import type { LogRepository } from '../../data/repository/log.repository.js'
+import type { AlertRepository } from '../../data/repository/alert.repository.js'
 
 export class EvaluateAlertsUseCase {
-  constructor(private readonly logRepository: LogRepository) {}
+  constructor(
+    private readonly logRepository: LogRepository,
+    private readonly alertRepository: AlertRepository,
+  ) {}
 
-  async execute(config: AlertConfig): Promise<AlertResult[]> {
+  async execute(config: AlertConfig): Promise<void> {
     const from = new Date(Date.now() - config.windowHours * 60 * 60 * 1000)
     const metrics = await this.logRepository.getMetrics({ from })
 
-    return metrics
+    const results: AlertResult[] = metrics
       .filter((m) => m.total >= config.minJobs)
       .map((m) => {
         const override = config.overrides?.find(
@@ -25,5 +29,7 @@ export class EvaluateAlertsUseCase {
           isDegraded: successRate < threshold,
         }
       })
+
+    await this.alertRepository.processResults(results, config)
   }
 }
