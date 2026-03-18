@@ -4,7 +4,7 @@ export class SchedulerRepository {
   constructor(private readonly cronSource: CronSource) {}
 
   register(name: string, expression: string, fn: () => Promise<void>): void {
-    this.cronSource.schedule(name, expression, fn)
+    this.cronSource.schedule(expression, fn)
     console.log(`Job registered: "${name}" @ ${expression}`)
   }
 

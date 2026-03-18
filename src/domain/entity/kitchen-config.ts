@@ -27,6 +27,8 @@ export interface KitchenConfig {
   lockRetryIntervalMs: number
   repositories: RepositoryConfig[]
   docs?: DocsConfig
+  alerting?: AlertConfig
+  defaultSlackBotToken?: string
   agents: {
     defaultAgent: string
     team: Record<string, {
@@ -39,9 +41,6 @@ export interface KitchenConfig {
       schedules?: ScheduleConfig[];
     }>
   }
-
-  alerting?: AlertConfig
-  defaultSlackBotToken?: string
 
   // Env Config
   apiKey: string
