@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url'
 
 export interface SlackBotConfig {
-  appToken: string
+  signingSecret: string
   botToken: string
   userToken?: string  // xoxp-* token for user-token-only APIs (e.g. search.messages)
 }

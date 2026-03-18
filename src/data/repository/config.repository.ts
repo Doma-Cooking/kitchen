@@ -9,7 +9,7 @@ interface YamlAgentConfig {
   displayName: string
   agentPrompt: string
   pluginPaths: string[]
-  slack?: { appTokenEnv?: string; botTokenEnv?: string; userTokenEnv?: string } | boolean
+  slack?: { signingSecretEnv?: string; botTokenEnv?: string; userTokenEnv?: string } | boolean
   github?: { tokenEnv?: string; appIdEnv?: string; privateKeyEnv?: string; installationIdEnv?: string } | boolean
   linear?: { clientIdEnv?: string; clientSecretEnv?: string } | boolean
   schedules?: ScheduleConfig[]
@@ -154,14 +154,14 @@ export class ConfigRepository {
   private resolveSlackConfig(slack: YamlAgentConfig['slack'], prefix: string): SlackBotConfig | undefined {
     const cfg = typeof slack === 'object' ? slack : {}
 
-    const appToken = process.env[cfg.appTokenEnv ?? `${prefix}_SLACK_APP_TOKEN`]
+    const signingSecret = process.env[cfg.signingSecretEnv ?? `${prefix}_SLACK_SIGNING_SECRET`]
     const botToken = process.env[cfg.botTokenEnv ?? `${prefix}_SLACK_BOT_TOKEN`]
 
-    if (!appToken || !botToken) return undefined
+    if (!signingSecret || !botToken) return undefined
 
     const userToken = process.env[cfg.userTokenEnv ?? `${prefix}_SLACK_USER_TOKEN`]
 
-    return { appToken, botToken, userToken }
+    return { signingSecret, botToken, userToken }
   }
 
   private resolveGitHubConfig(github: YamlAgentConfig['github'], prefix: string): GitHubConfig | undefined {
