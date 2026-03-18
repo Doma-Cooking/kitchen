@@ -38,13 +38,7 @@ export class SchedulerRoutes {
     const { alerting } = this.configRepository.getConfig()
     if (alerting) {
       this.schedulerRepository.register('alerting/evaluate', alerting.schedule, async () => {
-        const results = await this.evaluateAlertsUseCase.execute(alerting)
-        const degraded = results.filter((r) => r.isDegraded)
-        if (degraded.length > 0) {
-          console.log(`[alerting] ${degraded.length} degraded combination(s):`, degraded)
-        } else {
-          console.log(`[alerting] all ${results.length} combination(s) healthy`)
-        }
+        await this.evaluateAlertsUseCase.execute(alerting)
       })
     }
   }

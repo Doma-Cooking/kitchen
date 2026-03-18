@@ -3,7 +3,9 @@ import { ClaudeSource } from './data/source/claude.source.js'
 import { WorkspaceSource } from './data/source/workspace.source.js'
 import { PostgresSource } from './data/source/postgres.source.js'
 import { CronSource } from './data/source/cron.source.js'
+import { SlackSource } from './data/source/slack.source.js'
 import { AgentRepository } from './data/repository/agent.repository.js'
+import { AlertRepository } from './data/repository/alert.repository.js'
 import { EventRepository } from './data/repository/event.repository.js'
 import { StationRepository } from './data/repository/station.repository.js'
 import { LogRepository } from './data/repository/log.repository.js'
@@ -26,7 +28,9 @@ export const claudeSource = new ClaudeSource()
 export const postgresSource = new PostgresSource(configRepository)
 export const workspaceSource = new WorkspaceSource(configRepository)
 export const cronSource = new CronSource()
+export const slackSource = new SlackSource(configRepository)
 export const agentRepository = new AgentRepository(configRepository)
+export const alertRepository = new AlertRepository(slackSource)
 export const stationRepository = new StationRepository(postgresSource.pool)
 export const logRepository = new LogRepository(postgresSource.pool)
 export const schedulerRepository = new SchedulerRepository(cronSource)
@@ -34,7 +38,7 @@ export const eventRepository = new EventRepository(configRepository, agentReposi
 
 // Use cases
 export const handleEventUseCase = new HandleEventUseCase(agentRepository, eventRepository)
-export const evaluateAlertsUseCase = new EvaluateAlertsUseCase(logRepository)
+export const evaluateAlertsUseCase = new EvaluateAlertsUseCase(logRepository, alertRepository)
 
 // Presentation
 export const healthRoutes = new HealthRoutes()

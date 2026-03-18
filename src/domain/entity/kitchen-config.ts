@@ -41,6 +41,7 @@ export interface KitchenConfig {
   }
 
   alerting?: AlertConfig
+  defaultSlackBotToken?: string
 
   // Env Config
   apiKey: string
