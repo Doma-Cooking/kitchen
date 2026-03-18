@@ -10,7 +10,7 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY tsconfig.json ./
 
-RUN npm run build
+RUN npm run build && cp -r src/presentation/assets dist/presentation/assets
 
 # Runtime stage: prod deps + compiled output only
 FROM node:22-slim
