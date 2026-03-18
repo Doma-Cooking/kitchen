@@ -12,6 +12,8 @@ const RANGES: Record<string, { label: string; hours: number }> = {
   '30d': { label: 'Last 30 days', hours: 720 },
 }
 
+const FAVICON = `<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">`
+
 const DARK_MODE_INIT = `<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')</script>`
 
 const SHARED_STYLES = `
@@ -73,6 +75,7 @@ export class MetricsRoutes {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Queue Inspector</title>
+  ${FAVICON}
   ${DARK_MODE_INIT}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   ${THEME_TOGGLE_SCRIPT}
@@ -226,6 +229,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kitchen — Metrics</title>
+  ${FAVICON}
   ${DARK_MODE_INIT}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   ${THEME_TOGGLE_SCRIPT}
