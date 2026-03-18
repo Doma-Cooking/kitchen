@@ -28,17 +28,17 @@ const SHARED_STYLES = `
     [data-theme="dark"] body { background: #111; color: #e5e5e5; }
     [data-theme="dark"] .active-panel { background: #1a1a1a; border-color: #2e2e2e; }
     [data-theme="dark"] .active-panel h2 { color: #ccc; }
-    [data-theme="dark"] .active-panel th { color: #999; }
-    [data-theme="dark"] .active-panel .section-label { color: #999; }
-    [data-theme="dark"] .active-panel .empty { color: #888; }
+    [data-theme="dark"] .active-panel th { color: #ccc; }
+    [data-theme="dark"] .active-panel .section-label { color: #ccc; }
+    [data-theme="dark"] .active-panel .empty { color: #aaa; }
     [data-theme="dark"] .interrupt-btn { background: #3a1212; color: #f87171; border-color: #7f1d1d; }
     [data-theme="dark"] .interrupt-btn:hover { background: #4a1818; }
     [data-theme="dark"] table { background: #1a1a1a; }
-    [data-theme="dark"] th { background: #222; color: #aaa; }
+    [data-theme="dark"] th { background: #222; color: #ccc; }
     [data-theme="dark"] td { border-color: #2e2e2e; }
     [data-theme="dark"] tr:hover td { background: #202020; }
     [data-theme="dark"] select { background: #1a1a1a; border-color: #3a3a3a; color: #e5e5e5; }
-    [data-theme="dark"] .empty { background: #1a1a1a; color: #888; }`
+    [data-theme="dark"] .empty { background: #1a1a1a; color: #aaa; }`
 
 const THEME_TOGGLE_SCRIPT = `<script>function toggleTheme(){var h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n)}</script>`
 
@@ -261,8 +261,8 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
         hx-indicator="#spinner"
       >
         ${Object.entries(RANGES).map(([value, { label }]) =>
-          `<option value="${value}"${value === selectedRange ? ' selected' : ''}>${label}</option>`
-        ).join('\n        ')}
+    `<option value="${value}"${value === selectedRange ? ' selected' : ''}>${label}</option>`
+  ).join('\n        ')}
       </select>
       <span id="spinner" class="htmx-indicator" style="color:#888">Loading…</span>
     </div>
