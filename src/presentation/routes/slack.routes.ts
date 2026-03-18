@@ -28,7 +28,7 @@ export class SlackRoutes {
       app.message(async ({ message, client }) => {
         if (message.subtype !== undefined) return
 
-        const threadTs = ('thread_ts' in message ? message.thread_ts : undefined) ?? message.ts
+        const threadTs = 'thread_ts' in message ? message.thread_ts : undefined
         const recentMessages = await this.fetchRecentMessages(client, message.channel, threadTs)
 
         const event: AgentEvent = {
