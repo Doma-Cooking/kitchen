@@ -33,6 +33,7 @@ oauth_config:
       - channels:manage
       - channels:read
       - chat:write
+      - files:read
       - files:write
       - groups:history
       - groups:read
@@ -78,6 +79,7 @@ settings:
    - `mpim:history` — receive group DMs
    - `reactions:write` — add emoji reactions
    - `users:read` — look up user info
+   - `files:read` — read file metadata for attachments sent in messages
    - `files:write` — upload files
 4. Go to **OAuth & Permissions** → **User Token Scopes** and add:
    - `search:read` — search messages across the workspace
