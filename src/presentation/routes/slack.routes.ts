@@ -1,66 +1,90 @@
-import { App } from '@slack/bolt'
+import { Hono } from 'hono'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { WebClient } from '@slack/web-api'
 import type { AgentEvent } from '../../domain/entity/agent-event.js'
 import type { SlackMessage } from '../../domain/entity/event-trigger.js'
-import type { WebClient } from '@slack/web-api'
 import type { AgentRepository } from '../../data/repository/agent.repository.js'
 import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
 
 export class SlackRoutes {
-  private readonly apps: Map<string, App> = new Map()
+  readonly router = new Hono()
 
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly handleEventUseCase: HandleEventUseCase,
-  ) {}
+  ) {
+    this.router.post('/events/:agentId', async (c) => {
+      const agentId = c.req.param('agentId')
+      const agent = this.agentRepository.getAgentConfig(agentId)
 
-  async start(): Promise<void> {
-    const agents = this.agentRepository.getAllAgents()
+      if (!agent?.slack) {
+        return c.json({ error: 'not found' }, 404)
+      }
 
-    for (const agent of agents) {
-      if (!agent.slack) continue
+      const rawBody = await c.req.text()
 
-      const app = new App({
-        token: agent.slack.botToken,
-        appToken: agent.slack.appToken,
-        socketMode: true,
-      })
+      if (!this.verifySignature(c.req.header('x-slack-request-timestamp') ?? '', rawBody, c.req.header('x-slack-signature') ?? '', agent.slack.signingSecret)) {
+        return c.json({ error: 'invalid signature' }, 403)
+      }
 
-      app.message(async ({ message, client }) => {
-        if (message.subtype !== undefined) return
+      const body = JSON.parse(rawBody)
 
-        const threadTs = 'thread_ts' in message ? message.thread_ts : undefined
-        const recentMessages = await this.fetchRecentMessages(client, message.channel, threadTs)
+      // Handle Slack URL verification challenge
+      if (body.type === 'url_verification') {
+        return c.json({ challenge: body.challenge })
+      }
+
+      if (body.type !== 'event_callback') {
+        return c.json({ ok: true })
+      }
+
+      const slackEvent = body.event
+      const client = new WebClient(agent.slack.botToken)
+
+      if (slackEvent.type === 'message' && !slackEvent.subtype && !slackEvent.bot_id) {
+        const threadTs = slackEvent.thread_ts as string | undefined
+        const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: message.channel, threadTs, messageTs: message.ts, userId: message.user!, recentMessages },
+          trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages },
           agentId: agent.id,
-          message: 'text' in message ? message.text ?? '' : '',
+          message: slackEvent.text ?? '',
           timestamp: new Date().toISOString(),
         }
 
         await this.handleEventUseCase.execute(event)
-      })
-
-      app.event('app_mention', async ({ event: mentionEvent, client }) => {
-        const threadTs = mentionEvent.thread_ts ?? mentionEvent.ts
-        const recentMessages = await this.fetchRecentMessages(client, mentionEvent.channel, threadTs)
+      } else if (slackEvent.type === 'app_mention') {
+        const threadTs = (slackEvent.thread_ts ?? slackEvent.ts) as string
+        const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: mentionEvent.channel, threadTs, messageTs: mentionEvent.ts, userId: mentionEvent.user!, recentMessages },
+          trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages },
           agentId: agent.id,
-          message: mentionEvent.text ?? '',
+          message: slackEvent.text ?? '',
           timestamp: new Date().toISOString(),
         }
 
         await this.handleEventUseCase.execute(event)
-      })
+      }
 
-      await app.start()
-      this.apps.set(agent.id, app)
-      console.log(`Slack bot started: ${agent.id}`)
-    }
+      return c.json({ ok: true })
+    })
+  }
+
+  private verifySignature(timestamp: string, rawBody: string, signature: string, signingSecret: string): boolean {
+    if (!timestamp || !signature) return false
+
+    // Reject requests older than 5 minutes to prevent replay attacks
+    const now = Math.floor(Date.now() / 1000)
+    if (Math.abs(now - Number(timestamp)) > 300) return false
+
+    const basestring = `v0:${timestamp}:${rawBody}`
+    const expected = `v0=${createHmac('sha256', signingSecret).update(basestring).digest('hex')}`
+
+    if (expected.length !== signature.length) return false
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
   }
 
   private async fetchRecentMessages(client: WebClient, channelId: string, threadTs?: string): Promise<SlackMessage[]> {
@@ -77,13 +101,5 @@ export class SlackRoutes {
       : all.slice(1, 6).reverse()
 
     return prior.map((m) => ({ user: m.user ?? 'unknown', text: m.text ?? '', ts: m.ts }))
-  }
-
-  async stop(): Promise<void> {
-    for (const [id, app] of this.apps) {
-      await app.stop()
-      console.log(`Slack bot stopped: ${id}`)
-    }
-    this.apps.clear()
   }
 }

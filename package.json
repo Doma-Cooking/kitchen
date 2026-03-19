@@ -16,7 +16,7 @@
     "@hono/node-server": "latest",
     "@modelcontextprotocol/sdk": "latest",
     "@octokit/auth-app": "^8.2.0",
-    "@slack/bolt": "latest",
+    "@slack/web-api": "latest",
     "bullmq": "latest",
     "croner": "^10.0.1",
     "hono": "latest",

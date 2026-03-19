@@ -47,7 +47,7 @@ export const dashboardRoutes = new DashboardRoutes(eventRepository)
 export const metricsRoutes = new MetricsRoutes(logRepository, eventRepository)
 export const slackRoutes = new SlackRoutes(agentRepository, handleEventUseCase)
 export const schedulerRoutes = new SchedulerRoutes(agentRepository, handleEventUseCase, schedulerRepository, configRepository, evaluateAlertsUseCase)
-export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes, metricsRoutes)
+export const server = new Server(healthRoutes, agentRoutes, dashboardRoutes, metricsRoutes, slackRoutes)
 
 // Init
 

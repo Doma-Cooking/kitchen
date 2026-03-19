@@ -42,7 +42,7 @@ agents:
         - shared
         - domains/my-domain
       slack:
-        appTokenEnv: AGENT_SLACK_APP_TOKEN
+        signingSecretEnv: AGENT_SLACK_SIGNING_SECRET
         botTokenEnv: AGENT_SLACK_BOT_TOKEN
         userTokenEnv: AGENT_SLACK_USER_TOKEN
       github:
