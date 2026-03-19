@@ -6,6 +6,7 @@ import type { LogRepository } from '../../data/repository/log.repository.js'
 import type { EventRepository, AgentEventJob } from '../../data/repository/event.repository.js'
 import type { TaskMetric } from '../../domain/entity/task-log.js'
 import { ACTIVE_JOBS_PATH, ACTIVE_JOBS_SUMMARY_PATH, DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
+import { KITCHEN_STRIP_BLOCK } from './header.routes.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const faviconBuffer = readFileSync(join(__dirname, '../assets/favicon.png'))
@@ -215,6 +216,7 @@ function renderPage(metrics: TaskMetric[], selectedRange: string): string {
 </head>
 <body>
   ${SHARED_NAV}
+  ${KITCHEN_STRIP_BLOCK}
   <main>
     <div class="toolbar">
       <label for="range">Time range</label>
