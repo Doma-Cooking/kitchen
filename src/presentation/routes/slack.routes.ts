@@ -41,7 +41,7 @@ export class SlackRoutes {
       const slackEvent = body.event
       const client = new WebClient(agent.slack.botToken)
 
-      if (slackEvent.type === 'message' && !slackEvent.subtype) {
+      if (slackEvent.type === 'message' && !slackEvent.subtype && !slackEvent.bot_id) {
         const threadTs = slackEvent.thread_ts as string | undefined
         const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
 
