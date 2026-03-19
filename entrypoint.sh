@@ -45,6 +45,11 @@ if [ -n "$PLUGINS_GIT_URL" ]; then
     cd /app
   fi
 
+  if [ -f "$PLUGINS_DIR/requirements.txt" ]; then
+    echo "Installing Python plugin dependencies..."
+    pip3 install -r "$PLUGINS_DIR/requirements.txt" --break-system-packages -q
+  fi
+
   chown -R node:node "$PLUGINS_DIR"
 fi
 
