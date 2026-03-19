@@ -1,18 +1,8 @@
 import type { Context, Next } from 'hono'
 import { DASHBOARD_PATH, INTERRUPT_PATH, METRICS_PATH } from './routes.js'
 
-// Injected into every text/html response served by Bull Board under /admin/queues/*.
-// Self-contained: includes scoped styles, dark-mode init, theme toggle, and collapsible active-jobs strip.
-const KITCHEN_ADMIN_HEADER = `<style>
-  #kitchen-header-root{position:relative;z-index:9999;font-family:system-ui,sans-serif;font-size:14px}
-  #kitchen-header-root header{background:#111;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:24px;box-shadow:0 1px 0 #222}
-  #kitchen-header-root h1{font-size:16px;font-weight:600;margin:0;padding:0}
-  #kitchen-header-root header a{color:#aaa;text-decoration:none;font-size:13px}
-  #kitchen-header-root header a:hover{color:#fff}
-  #kitchen-theme-btn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;padding:4px;line-height:1;color:#aaa}
-  #kitchen-theme-btn:hover{color:#fff}
-  #kitchen-theme-btn::before{content:'☽'}
-  [data-theme="dark"] #kitchen-theme-btn::before{content:'☀'}
+// Self-contained strip: styles + script + DOM. Usable on any admin page.
+export const KITCHEN_STRIP_BLOCK = `<style>
   #kitchen-strip{background:#1c1c1c;border-bottom:1px solid #2e2e2e;padding:6px 24px;display:flex;align-items:flex-start;gap:8px;min-height:32px}
   [data-theme="light"] #kitchen-strip{background:#f5f5f5;border-bottom:1px solid #e5e5e5}
   #kitchen-strip-toggle{background:none;border:none;cursor:pointer;font-size:11px;color:#888;padding:2px 4px;margin-top:1px;flex-shrink:0}
@@ -29,11 +19,6 @@ const KITCHEN_ADMIN_HEADER = `<style>
   [data-theme="light"] .kitchen-interrupt-btn:hover{background:#fecaca}
 </style>
 <script>;(function(){
-  document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark');
-  window.toggleKitchenTheme=function(){
-    var h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';
-    h.setAttribute('data-theme',n);localStorage.setItem('theme',n);
-  };
   var kitchenStripExpanded=false;
   function kitchenFetchStrip(){
     fetch(kitchenStripExpanded?'${DASHBOARD_PATH}/active':'${DASHBOARD_PATH}/active/summary')
@@ -57,6 +42,31 @@ const KITCHEN_ADMIN_HEADER = `<style>
   function kitchenInitStrip(){kitchenFetchStrip();setInterval(kitchenFetchStrip,3000);}
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',kitchenInitStrip);}else{kitchenInitStrip();}
 })();</script>
+<div id="kitchen-strip">
+  <button id="kitchen-strip-toggle" onclick="toggleKitchenStrip()" aria-label="Toggle active jobs">▼</button>
+  <div id="kitchen-strip-content">Loading…</div>
+</div>`
+
+// Full block injected into Bull Board pages: scoped nav header + strip.
+// Bull Board has no Kitchen Admin header of its own, so we inject the whole thing.
+const KITCHEN_ADMIN_HEADER = `<style>
+  #kitchen-header-root{position:relative;z-index:9999;font-family:system-ui,sans-serif;font-size:14px}
+  #kitchen-header-root header{background:#111;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:24px;box-shadow:0 1px 0 #222}
+  #kitchen-header-root h1{font-size:16px;font-weight:600;margin:0;padding:0}
+  #kitchen-header-root header a{color:#aaa;text-decoration:none;font-size:13px}
+  #kitchen-header-root header a:hover{color:#fff}
+  #kitchen-theme-btn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;padding:4px;line-height:1;color:#aaa}
+  #kitchen-theme-btn:hover{color:#fff}
+  #kitchen-theme-btn::before{content:'☽'}
+  [data-theme="dark"] #kitchen-theme-btn::before{content:'☀'}
+</style>
+<script>;(function(){
+  document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark');
+  window.toggleKitchenTheme=function(){
+    var h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';
+    h.setAttribute('data-theme',n);localStorage.setItem('theme',n);
+  };
+})();</script>
 <div id="kitchen-header-root">
   <header>
     <h1>Kitchen Admin</h1>
@@ -64,18 +74,20 @@ const KITCHEN_ADMIN_HEADER = `<style>
     <a href="${METRICS_PATH}">Metrics</a>
     <button id="kitchen-theme-btn" onclick="toggleKitchenTheme()" aria-label="Toggle theme"></button>
   </header>
-  <div id="kitchen-strip">
-    <button id="kitchen-strip-toggle" onclick="toggleKitchenStrip()" aria-label="Toggle active jobs">▼</button>
-    <div id="kitchen-strip-content">Loading…</div>
-  </div>
+  ${KITCHEN_STRIP_BLOCK}
 </div>`
 
 export async function injectAdminHeader(c: Context, next: Next): Promise<void> {
   await next()
   const ct = c.res.headers.get('content-type') ?? ''
   if (!ct.includes('text/html')) return
+  const { status, headers } = c.res
   const text = await c.res.text()
-  if (!text.includes('<body')) return
+  // Skip fragments (no <body>) and skip if already injected (double-middleware guard)
+  if (!text.includes('<body') || text.includes('kitchen-header-root')) {
+    c.res = new Response(text, { status, headers: new Headers(headers) })
+    return
+  }
   const injected = text.replace(/<body[^>]*>/, (m) => `${m}\n${KITCHEN_ADMIN_HEADER}`)
-  c.res = new Response(injected, { status: c.res.status, headers: new Headers(c.res.headers) })
+  c.res = new Response(injected, { status, headers: new Headers(headers) })
 }

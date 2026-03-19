@@ -34,7 +34,8 @@ export class Server {
     app.route('/', this.metricsRoutes.router)
 
     // Inject shared header into Bull Board HTML responses
-    app.use(`${DASHBOARD_PATH}*`, injectAdminHeader)
+    app.use(`${DASHBOARD_PATH}/*`, injectAdminHeader)
+    app.use(DASHBOARD_PATH, injectAdminHeader)
 
     // Bull Board served directly at /admin/queues — refresh preserves sub-route
     app.route(DASHBOARD_PATH, this.dashboardRoutes.serverAdapter.registerPlugin())
