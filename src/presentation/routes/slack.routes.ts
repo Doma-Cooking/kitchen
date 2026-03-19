@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { WebClient } from '@slack/web-api'
 import type { AgentEvent } from '../../domain/entity/agent-event.js'
-import type { SlackMessage } from '../../domain/entity/event-trigger.js'
+import type { SlackAttachment, SlackMessage } from '../../domain/entity/event-trigger.js'
 import type { AgentRepository } from '../../data/repository/agent.repository.js'
 import type { HandleEventUseCase } from '../../domain/usecase/handle-event.use-case.js'
 
@@ -41,13 +41,16 @@ export class SlackRoutes {
       const slackEvent = body.event
       const client = new WebClient(agent.slack.botToken)
 
-      if (slackEvent.type === 'message' && !slackEvent.subtype && !slackEvent.bot_id) {
+      const isMessage = slackEvent.type === 'message' && !slackEvent.bot_id && (!slackEvent.subtype || slackEvent.subtype === 'file_share')
+
+      if (isMessage) {
         const threadTs = slackEvent.thread_ts as string | undefined
         const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
+        const attachments = await this.fetchAttachments(client, slackEvent.files ?? [])
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
-          trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages },
+          trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages, attachments },
           agentId: agent.id,
           message: slackEvent.text ?? '',
           timestamp: new Date().toISOString(),
@@ -85,6 +88,31 @@ export class SlackRoutes {
 
     if (expected.length !== signature.length) return false
     return timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  }
+
+  private async fetchAttachments(client: WebClient, files: Array<{ id?: string }>): Promise<SlackAttachment[]> {
+    if (!files.length) return []
+
+    const attachments: SlackAttachment[] = []
+
+    for (const file of files) {
+      if (!file.id) continue
+      try {
+        const info = await client.files.info({ file: file.id })
+        if (info.file) {
+          attachments.push({
+            id: info.file.id ?? file.id,
+            name: info.file.name ?? 'unknown',
+            mimetype: info.file.mimetype ?? 'application/octet-stream',
+            url: info.file.url_private_download ?? info.file.url_private ?? '',
+          })
+        }
+      } catch {
+        // Skip files we can't fetch info for
+      }
+    }
+
+    return attachments
   }
 
   private async fetchRecentMessages(client: WebClient, channelId: string, threadTs?: string): Promise<SlackMessage[]> {
