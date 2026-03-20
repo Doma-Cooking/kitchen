@@ -22,6 +22,7 @@ export class Server {
     const app = new Hono()
 
     app.get('/', (c) => c.redirect(DASHBOARD_PATH))
+    app.get(ADMIN_PATH, (c) => c.redirect(DASHBOARD_PATH))
     app.route('/', this.healthRoutes.router)
     app.route('/', this.agentRoutes.router)
     app.route('/slack', this.slackRoutes.router)
