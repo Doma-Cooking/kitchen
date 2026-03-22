@@ -15,6 +15,10 @@ export interface LinearConfig {
   clientSecret: string        // OAuth2 client secret from Linear app settings
 }
 
+export interface NotionConfig {
+  apiKey: string              // Notion internal integration secret
+}
+
 export interface ScheduleConfig {
   cron: string
   skill: string
@@ -30,6 +34,7 @@ export interface AgentConfig {
   slack?: SlackBotConfig      // per-agent Slack bot credentials
   github?: GitHubConfig       // per-agent GitHub API credentials
   linear?: LinearConfig       // per-agent Linear API credentials
+  notion?: NotionConfig       // per-agent Notion integration credentials
   schedules?: ScheduleConfig[] // per-agent cron schedules
 }
 
@@ -59,6 +64,9 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
   if (agentConfig.linear) {
     env.LINEAR_CLIENT_ID = agentConfig.linear.clientId
     env.LINEAR_CLIENT_SECRET = agentConfig.linear.clientSecret
+  }
+  if (agentConfig.notion) {
+    env.NOTION_API_KEY = agentConfig.notion.apiKey
   }
   return env
 }

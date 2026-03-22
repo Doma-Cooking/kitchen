@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { SlackBotConfig, GitHubConfig, LinearConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
 import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
 import type { AlertConfig, AlertOverride } from '../../domain/entity/alert-config.js'
 
@@ -12,6 +12,7 @@ interface YamlAgentConfig {
   slack?: { signingSecretEnv?: string; botTokenEnv?: string; userTokenEnv?: string } | boolean
   github?: { tokenEnv?: string; appIdEnv?: string; privateKeyEnv?: string; installationIdEnv?: string } | boolean
   linear?: { clientIdEnv?: string; clientSecretEnv?: string } | boolean
+  notion?: { apiKeyEnv?: string } | boolean
   schedules?: ScheduleConfig[]
 }
 
@@ -111,6 +112,7 @@ export class ConfigRepository {
         slack: this.resolveSlackConfig(agent.slack, prefix),
         github: this.resolveGitHubConfig(agent.github, prefix),
         linear: this.resolveLinearConfig(agent.linear, prefix),
+        notion: this.resolveNotionConfig(agent.notion, prefix),
         schedules: agent.schedules,
       }
     }
@@ -189,6 +191,15 @@ export class ConfigRepository {
     if (!clientId || !clientSecret) return undefined
 
     return { clientId, clientSecret }
+  }
+
+  private resolveNotionConfig(notion: YamlAgentConfig['notion'], prefix: string): NotionConfig | undefined {
+    const cfg = typeof notion === 'object' ? notion : {}
+
+    const apiKey = process.env[cfg.apiKeyEnv ?? `${prefix}_NOTION_API_KEY`]
+    if (!apiKey) return undefined
+
+    return { apiKey }
   }
 
   private loadEnvConfig(): EnvConfig {

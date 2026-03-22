@@ -27,13 +27,23 @@ Pages nested under a connected parent are automatically accessible.
 
 ## 3. Configure Kitchen
 
-Add to your `.env`:
+Add the `notion` block to each agent in `.kitchen.yaml`:
+
+```yaml
+agents:
+  team:
+    agent:
+      notion:
+        apiKeyEnv: AGENT_NOTION_API_KEY
+```
+
+Add the API key to your `.env`:
 
 ```
-NOTION_API_KEY=secret_...
+AGENT_NOTION_API_KEY=secret_...
 ```
 
-No `.kitchen.yaml` change is needed — Notion uses a single shared integration key, not per-agent credentials.
+Replace `AGENT` with your agent's name in uppercase (matching the key in `.kitchen.yaml`). Example: if your agent key is `aria`, use `ARIA_NOTION_API_KEY`.
 
 ## Available Tools
 
@@ -41,7 +51,7 @@ Run `kitchen-notion --help` to see all available commands.
 
 ## Troubleshooting
 
-- **"NOTION_API_KEY not set"**: Add `NOTION_API_KEY` to your `.env` and restart
+- **"NOTION_API_KEY not set"**: Add the per-agent key to your `.env` and confirm the `notion.apiKeyEnv` in `.kitchen.yaml` matches
 - **"Could not find page" / 404**: The integration hasn't been connected to that page — follow step 2 above
 - **"Unauthorized" / 401**: The API key is wrong or has been rotated — update `NOTION_API_KEY` in `.env`
 - **"API version" errors**: Override the version header with `NOTION_API_VERSION=<version>` in `.env` (default is `2022-06-28`, Notion's stable public version)
