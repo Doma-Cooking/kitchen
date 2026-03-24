@@ -15,7 +15,11 @@ RUN npm run build && cp -r src/presentation/assets dist/presentation/assets
 # Runtime stage: prod deps + compiled output only
 FROM node:22-slim
 
-RUN apt-get update && apt-get install -y git gosu zstd python3 python3-pip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git gosu zstd python3 python3-pip python3-venv && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/venv \
+    && chown -R node:node /opt/venv
+
+ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 

@@ -47,7 +47,7 @@ if [ -n "$PLUGINS_GIT_URL" ]; then
 
   if [ -f "$PLUGINS_DIR/requirements.txt" ]; then
     echo "Installing Python dependencies from plugins..."
-    gosu node pip3 install --user -q -r "$PLUGINS_DIR/requirements.txt"
+    gosu node /opt/venv/bin/pip3 install -q -r "$PLUGINS_DIR/requirements.txt"
   fi
 
   chown -R node:node "$PLUGINS_DIR"
