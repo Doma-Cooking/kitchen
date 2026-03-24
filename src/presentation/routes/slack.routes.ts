@@ -48,10 +48,14 @@ export class SlackRoutes {
         const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
         const attachments = await this.fetchAttachments(client, slackEvent.files ?? [])
 
+        const effectiveThreadTs = threadTs ?? slackEvent.ts
+        const stationId = `${agent.id}:slack:${slackEvent.channel}:${effectiveThreadTs}`
+
         const event: AgentEvent = {
           id: crypto.randomUUID(),
           trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages, attachments },
           agentId: agent.id,
+          stationId,
           message: slackEvent.text ?? '',
           timestamp: new Date().toISOString(),
         }
@@ -60,11 +64,13 @@ export class SlackRoutes {
       } else if (slackEvent.type === 'app_mention') {
         const threadTs = (slackEvent.thread_ts ?? slackEvent.ts) as string
         const recentMessages = await this.fetchRecentMessages(client, slackEvent.channel, threadTs)
+        const stationId = `${agent.id}:slack:${slackEvent.channel}:${threadTs}`
 
         const event: AgentEvent = {
           id: crypto.randomUUID(),
           trigger: { type: 'slack', channelId: slackEvent.channel, threadTs, messageTs: slackEvent.ts, userId: slackEvent.user, recentMessages },
           agentId: agent.id,
+          stationId,
           message: slackEvent.text ?? '',
           timestamp: new Date().toISOString(),
         }
