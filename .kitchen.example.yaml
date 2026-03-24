@@ -50,6 +50,8 @@ agents:
       linear:
         clientIdEnv: AGENT_LINEAR_CLIENT_ID
         clientSecretEnv: AGENT_LINEAR_CLIENT_SECRET
+      notion:
+        apiKeyEnv: AGENT_NOTION_API_KEY
       # Cron schedules — all times are UTC
       # Each entry fires a /${skill} event at the specified cron expression
       schedules:
