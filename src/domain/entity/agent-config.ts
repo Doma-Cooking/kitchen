@@ -19,6 +19,12 @@ export interface NotionConfig {
   apiKey: string              // Notion internal integration secret
 }
 
+export interface GwsConfig {
+  clientId: string            // OAuth2 client ID
+  clientSecret: string        // OAuth2 client secret
+  refreshToken: string        // OAuth2 refresh token
+}
+
 export interface ScheduleConfig {
   cron: string
   skill: string
@@ -35,6 +41,7 @@ export interface AgentConfig {
   github?: GitHubConfig       // per-agent GitHub API credentials
   linear?: LinearConfig       // per-agent Linear API credentials
   notion?: NotionConfig       // per-agent Notion integration credentials
+  gws?: GwsConfig             // per-agent Google Workspace credentials
   schedules?: ScheduleConfig[] // per-agent cron schedules
 }
 
@@ -67,6 +74,11 @@ export function agentConfigToEnv(agentConfig: AgentConfig): Record<string, strin
   }
   if (agentConfig.notion) {
     env.NOTION_API_KEY = agentConfig.notion.apiKey
+  }
+  if (agentConfig.gws) {
+    env.GWS_CLIENT_ID = agentConfig.gws.clientId
+    env.GWS_CLIENT_SECRET = agentConfig.gws.clientSecret
+    env.GWS_REFRESH_TOKEN = agentConfig.gws.refreshToken
   }
   return env
 }

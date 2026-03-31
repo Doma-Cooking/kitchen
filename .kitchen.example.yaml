@@ -52,6 +52,10 @@ agents:
         clientSecretEnv: AGENT_LINEAR_CLIENT_SECRET
       notion:
         apiKeyEnv: AGENT_NOTION_API_KEY
+      gws:
+        clientIdEnv: AGENT_GWS_CLIENT_ID
+        clientSecretEnv: AGENT_GWS_CLIENT_SECRET
+        refreshTokenEnv: AGENT_GWS_REFRESH_TOKEN
       # Cron schedules — all times are UTC
       # Each entry fires a /${skill} event at the specified cron expression
       schedules:

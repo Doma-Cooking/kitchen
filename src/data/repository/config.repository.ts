@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig, GwsConfig, ScheduleConfig } from '../../domain/entity/agent-config.js'
 import type { KitchenConfig, RepositoryConfig, DocsConfig } from '../../domain/entity/kitchen-config.js'
 import type { AlertConfig, AlertOverride } from '../../domain/entity/alert-config.js'
 
@@ -13,6 +13,7 @@ interface YamlAgentConfig {
   github?: { tokenEnv?: string; appIdEnv?: string; privateKeyEnv?: string; installationIdEnv?: string } | boolean
   linear?: { clientIdEnv?: string; clientSecretEnv?: string } | boolean
   notion?: { apiKeyEnv?: string } | boolean
+  gws?: { clientIdEnv?: string; clientSecretEnv?: string; refreshTokenEnv?: string } | boolean
   schedules?: ScheduleConfig[]
 }
 
@@ -113,6 +114,7 @@ export class ConfigRepository {
         github: this.resolveGitHubConfig(agent.github, prefix),
         linear: this.resolveLinearConfig(agent.linear, prefix),
         notion: this.resolveNotionConfig(agent.notion, prefix),
+        gws: this.resolveGwsConfig(agent.gws, prefix),
         schedules: agent.schedules,
       }
     }
@@ -200,6 +202,17 @@ export class ConfigRepository {
     if (!apiKey) return undefined
 
     return { apiKey }
+  }
+
+  private resolveGwsConfig(gws: YamlAgentConfig['gws'], prefix: string): GwsConfig | undefined {
+    const cfg = typeof gws === 'object' ? gws : {}
+
+    const clientId = process.env[cfg.clientIdEnv ?? `${prefix}_GWS_CLIENT_ID`]
+    const clientSecret = process.env[cfg.clientSecretEnv ?? `${prefix}_GWS_CLIENT_SECRET`]
+    const refreshToken = process.env[cfg.refreshTokenEnv ?? `${prefix}_GWS_REFRESH_TOKEN`]
+    if (!clientId || !clientSecret || !refreshToken) return undefined
+
+    return { clientId, clientSecret, refreshToken }
   }
 
   private loadEnvConfig(): EnvConfig {

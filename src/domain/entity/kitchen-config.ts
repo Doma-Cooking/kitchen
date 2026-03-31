@@ -1,4 +1,4 @@
-import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig, ScheduleConfig } from './agent-config.js'
+import type { SlackBotConfig, GitHubConfig, LinearConfig, NotionConfig, GwsConfig, ScheduleConfig } from './agent-config.js'
 import type { AlertConfig } from './alert-config.js'
 
 export interface RepositoryConfig {
@@ -39,6 +39,7 @@ export interface KitchenConfig {
       github?: GitHubConfig;
       linear?: LinearConfig;
       notion?: NotionConfig;
+      gws?: GwsConfig;
       schedules?: ScheduleConfig[];
     }>
   }
